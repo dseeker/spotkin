@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sceneText = document.getElementById('scene-text');
     const detectionList = document.getElementById('detection-list');
     const alertStatus = document.getElementById('alert-status');
+    const aiStatus = document.getElementById('ai-status');
 
     // Camera State
     let currentStream = null;
@@ -19,13 +20,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let canvasContext = canvas.getContext('2d');
     let imageCapture = null;
 
-    // Initialize the camera
+    // Initialize the camera and check for Puter AI availability
     initCamera();
+    checkPuterAIAvailability();
 
     // Set up event listeners
     takeSnapshotBtn.addEventListener('click', takeSnapshot);
     toggleCameraBtn.addEventListener('click', toggleCamera);
     uploadImageBtn.addEventListener('click', handleImageUpload);
+    
+    // Function to check if Puter AI is available
+    function checkPuterAIAvailability() {
+        if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
+            console.log('Puter AI is available');
+            aiStatus.textContent = 'AI Ready';
+            aiStatus.classList.remove('hidden');
+            aiStatus.classList.add('bg-green-700');
+            
+            // Hide status after 3 seconds
+            setTimeout(() => {
+                aiStatus.classList.add('hidden');
+            }, 3000);
+        } else {
+            console.error('Puter AI is not available');
+            aiStatus.textContent = 'AI Unavailable';
+            aiStatus.classList.remove('hidden');
+            aiStatus.classList.add('bg-red-700');
+        }
+    }
 
     // Camera initialization function
     async function initCamera() {
@@ -139,72 +161,164 @@ document.addEventListener('DOMContentLoaded', function() {
         input.click();
     }
 
-    // Process the image with AI (mock implementation for demo)
+    // Process the image with AI using Puter's AI vision API
     function processImageWithAI(imageData) {
-        // In a real implementation, this would send the image to an AI service
-        // For this demo, we'll simulate a response after a delay
-        
-        setTimeout(() => {
-            // Mock AI analysis results
-            const mockResults = generateMockResults();
-            displayResults(mockResults);
-        }, 2000); // Simulate processing delay
-    }
+        // Create AI prompt for detecting pets and babies
+        const prompt = `
+            Analyze this image for monitoring pets and babies. Describe the scene, identify key objects/subjects, 
+            and assess safety or concerning situations. For each detected subject, provide the following:
+            
+            1. Subject type (e.g., "Baby", "Dog", "Cat")
+            2. Current state (e.g., "Sleeping", "Playing", "Crying", "Eating")
+            3. Relevant objects in scene (e.g., "Crib", "Toy", "Furniture")
+            4. Any safety concerns or potential hazards
+            
+            Format your response as a structured description including:
+            - Overall scene description
+            - List of detected objects with confidence estimates
+            - Alert status (info, warning, or danger) with explanatory message
+            
+            Focus especially on:
+            - Baby sleeping position (back is safest)
+            - Pet behavior (calm, agitated, curious)
+            - Potential hazards in reach of babies or pets
+            - Signs of distress in either babies or pets
+        `;
 
-    // Generate mock AI analysis results
-    function generateMockResults() {
-        // Array of possible mock scenarios
-        const scenarios = [
-            {
-                scene: "Pet (dog) sleeping peacefully on bed",
-                objects: [
-                    { type: "Dog", state: "Sleeping", confidence: 0.96 },
-                    { type: "Bed", state: "Static", confidence: 0.98 }
-                ],
-                alert: { type: "info", message: "Pet is resting normally. No action needed." }
-            },
-            {
-                scene: "Baby sleeping on back in crib",
-                objects: [
-                    { type: "Baby", state: "Sleeping on back", confidence: 0.94 },
-                    { type: "Crib", state: "Static", confidence: 0.99 },
-                    { type: "Blanket", state: "Covering legs", confidence: 0.87 }
-                ],
-                alert: { type: "info", message: "Baby is sleeping safely on back. All looks good." }
-            },
-            {
-                scene: "Pet (cat) playing with toy near furniture",
-                objects: [
-                    { type: "Cat", state: "Active/Playing", confidence: 0.93 },
-                    { type: "Toy", state: "Moving", confidence: 0.85 },
-                    { type: "Furniture", state: "Static", confidence: 0.97 }
-                ],
-                alert: { type: "info", message: "Pet is active and playing. No concerns detected." }
-            },
-            {
-                scene: "Baby awake and crying in crib",
-                objects: [
-                    { type: "Baby", state: "Awake/Crying", confidence: 0.92 },
-                    { type: "Crib", state: "Static", confidence: 0.99 }
-                ],
-                alert: { type: "warning", message: "Baby appears to be crying. Attention may be needed." }
-            },
-            {
-                scene: "Pet (dog) near potentially hazardous item",
-                objects: [
-                    { type: "Dog", state: "Curious/Sniffing", confidence: 0.91 },
-                    { type: "Unknown Object", state: "Static", confidence: 0.84 }
-                ],
-                alert: { type: "warning", message: "Pet near unidentified object. May require supervision." }
-            }
-        ];
+        // Call Puter AI vision API
+        console.log("Sending image to Puter AI...");
         
-        // Return a random scenario
-        return scenarios[Math.floor(Math.random() * scenarios.length)];
+        // Use Puter's AI chat API with the image
+        puter.ai.chat(prompt, imageData)
+            .then(response => {
+                console.log("AI Response:", response);
+                
+                try {
+                    // Parse the AI response to create a structured result
+                    const aiResult = parseAIResponse(response);
+                    displayResults(aiResult);
+                } catch (parseError) {
+                    console.error("Error parsing AI response:", parseError);
+                    showErrorState("Failed to understand AI response. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error("AI API Error:", error);
+                showErrorState("Error connecting to AI service. Please try again later.");
+            });
+    }
+    
+    // Parse the AI response text into a structured format for our app
+    function parseAIResponse(response) {
+        let responseText = '';
+        
+        // Extract the text content from the response (handle different possible formats)
+        if (typeof response === 'string') {
+            responseText = response;
+        } else if (typeof response === 'object' && response !== null) {
+            responseText = response.content || response.text || 
+                          (response.message && response.message.content) || 
+                          JSON.stringify(response);
+        }
+        
+        console.log("Parsing AI response text:", responseText);
+        
+        // Default result structure (fallback in case parsing fails)
+        const defaultResult = {
+            scene: "Could not clearly identify scene",
+            objects: [
+                { type: "Unknown", state: "Unrecognized", confidence: 0.5 }
+            ],
+            alert: { type: "info", message: "Scene analysis inconclusive. Please try again." }
+        };
+        
+        try {
+            // Simple parsing strategy - identify key sections in the AI response
+            const result = {
+                scene: "",
+                objects: [],
+                alert: { type: "info", message: "" }
+            };
+            
+            // Extract the scene description (usually first paragraph)
+            const lines = responseText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length > 0) {
+                result.scene = lines[0].trim();
+            }
+            
+            // Look for object descriptions
+            const objectPattern = /(Baby|Pet|Dog|Cat|Child|Infant|Person|Object|Furniture|Toy|Crib)/gi;
+            const statePattern = /(sleeping|playing|sitting|standing|crying|eating|resting|active|awake|moving)/gi;
+            
+            let objects = [];
+            for (const line of lines) {
+                const typeMatches = line.match(objectPattern);
+                const stateMatches = line.match(statePattern);
+                
+                if (typeMatches && typeMatches.length > 0) {
+                    // Calculate a mock confidence based on certainty language in the text
+                    let confidence = 0.85; // Default reasonable confidence
+                    if (line.includes("clearly") || line.includes("definitely")) confidence = 0.95;
+                    if (line.includes("appears to") || line.includes("seems to")) confidence = 0.75;
+                    if (line.includes("possibly") || line.includes("might be")) confidence = 0.6;
+                    
+                    objects.push({
+                        type: typeMatches[0],
+                        state: stateMatches ? stateMatches[0] : "Unknown state",
+                        confidence: confidence
+                    });
+                }
+            }
+            
+            // If we found objects, use them; otherwise add a generic object
+            result.objects = objects.length > 0 ? objects : defaultResult.objects;
+            
+            // Determine alert type based on keywords in response
+            let alertType = "info";
+            let alertMessage = "No issues detected.";
+            
+            if (responseText.match(/(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)/gi)) {
+                alertType = "warning";
+                
+                // Extract a sentence containing the alert-related keyword
+                const warningMatch = responseText.match(/[^.!?]*?(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)[^.!?]*[.!?]/gi);
+                if (warningMatch && warningMatch.length > 0) {
+                    alertMessage = warningMatch[0].trim();
+                } else {
+                    alertMessage = "Potential issue detected. Check the image carefully.";
+                }
+            }
+            
+            // Look for more serious issues
+            if (responseText.match(/(emergency|immediate|urgent|critical|serious|severe)/gi)) {
+                alertType = "danger";
+                
+                const dangerMatch = responseText.match(/[^.!?]*?(emergency|immediate|urgent|critical|serious|severe)[^.!?]*[.!?]/gi);
+                if (dangerMatch && dangerMatch.length > 0) {
+                    alertMessage = dangerMatch[0].trim();
+                } else {
+                    alertMessage = "Critical issue detected! Immediate attention recommended.";
+                }
+            }
+            
+            result.alert = { type: alertType, message: alertMessage };
+            
+            return result;
+        } catch (error) {
+            console.error("Error during AI response parsing:", error);
+            return defaultResult;
+        }
     }
 
     // Display the analysis results in the UI
     function displayResults(results) {
+        // Handle invalid results
+        if (!results || !results.scene || !Array.isArray(results.objects) || !results.alert) {
+            console.error("Invalid results format:", results);
+            showErrorState("Received invalid analysis results. Please try again.");
+            return;
+        }
+        
         // Hide loading state and placeholder
         resultsPlaceholder.classList.add('hidden');
         
@@ -213,43 +327,55 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear and populate detection list
         detectionList.innerHTML = '';
-        results.objects.forEach(obj => {
-            const listItem = document.createElement('li');
-            listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
-            
-            const confidencePercent = Math.round(obj.confidence * 100);
-            let confidenceClass = 'text-green-700 bg-green-100';
-            if (confidencePercent < 75) {
-                confidenceClass = 'text-yellow-700 bg-yellow-100';
-            }
-            
-            listItem.innerHTML = `
-                <div>
-                    <span class="font-medium">${obj.type}</span>
-                    <span class="text-gray-500 text-sm ml-2">${obj.state}</span>
-                </div>
-                <span class="text-sm ${confidenceClass} px-2 py-1 rounded">
-                    ${confidencePercent}%
-                </span>
-            `;
-            
-            detectionList.appendChild(listItem);
-        });
+        
+        // Check if we have objects to display
+        if (results.objects.length === 0) {
+            const emptyItem = document.createElement('li');
+            emptyItem.className = 'bg-gray-50 p-3 rounded-md text-gray-500 text-center';
+            emptyItem.textContent = 'No specific objects detected';
+            detectionList.appendChild(emptyItem);
+        } else {
+            // Add each detected object to the list
+            results.objects.forEach(obj => {
+                const listItem = document.createElement('li');
+                listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
+                
+                const confidencePercent = Math.round((obj.confidence || 0.5) * 100);
+                let confidenceClass = 'text-green-700 bg-green-100';
+                if (confidencePercent < 75) {
+                    confidenceClass = 'text-yellow-700 bg-yellow-100';
+                }
+                
+                listItem.innerHTML = `
+                    <div>
+                        <span class="font-medium">${obj.type || 'Unknown'}</span>
+                        <span class="text-gray-500 text-sm ml-2">${obj.state || 'Unspecified'}</span>
+                    </div>
+                    <span class="text-sm ${confidenceClass} px-2 py-1 rounded">
+                        ${confidencePercent}%
+                    </span>
+                `;
+                
+                detectionList.appendChild(listItem);
+            });
+        }
         
         // Set alert status based on alert type
-        const { type, message } = results.alert;
+        const type = results.alert.type || 'info';
+        const message = results.alert.message || 'Analysis complete.';
+        
         let alertClass = '';
         let alertIcon = '';
         
         if (type === 'warning') {
             alertClass = 'bg-yellow-100 border-yellow-400 text-yellow-800';
-            alertIcon = 'fa-exclamation-triangle';
+            alertIcon = 'fa-triangle-exclamation';
         } else if (type === 'danger') {
             alertClass = 'bg-red-100 border-red-400 text-red-800';
-            alertIcon = 'fa-exclamation-circle';
+            alertIcon = 'fa-circle-exclamation';
         } else { // info
             alertClass = 'bg-blue-100 border-blue-400 text-blue-800';
-            alertIcon = 'fa-info-circle';
+            alertIcon = 'fa-circle-info';
         }
         
         alertStatus.className = `p-4 rounded-md border-l-4 ${alertClass}`;
@@ -279,28 +405,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show error state when processing fails
     function showErrorState(errorMessage) {
+        // Hide analysis results and show error placeholder
         resultsPlaceholder.classList.remove('hidden');
         analysisResults.classList.add('hidden');
         
+        // Create error message with retry button
         resultsPlaceholder.innerHTML = `
             <div class="bg-red-100 text-red-800 p-4 rounded-md">
                 <div class="flex items-center mb-2">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <i class="fas fa-circle-exclamation mr-2"></i>
                     <p class="font-medium">Error</p>
                 </div>
                 <p>${errorMessage}</p>
-                <button id="retry-button" class="mt-3 bg-red-200 px-4 py-2 rounded hover:bg-red-300 transition">
-                    Try Again
-                </button>
+                <div class="flex mt-3">
+                    <button id="retry-button" class="bg-red-200 px-4 py-2 rounded hover:bg-red-300 transition">
+                        <i class="fas fa-redo mr-2"></i>Try Again
+                    </button>
+                    <button id="new-snapshot-button" class="bg-indigo-200 text-indigo-800 px-4 py-2 rounded hover:bg-indigo-300 transition ml-2">
+                        <i class="fas fa-camera mr-2"></i>New Snapshot
+                    </button>
+                </div>
             </div>
         `;
         
-        // Add retry button functionality
+        // Add retry button functionality - just reset the placeholder
         document.getElementById('retry-button').addEventListener('click', () => {
             resultsPlaceholder.innerHTML = `
                 <i class="fas fa-search text-4xl text-gray-400 mb-3"></i>
                 <p class="text-gray-500">Capture an image to see real-time analysis of what's happening in the scene.</p>
             `;
+        });
+        
+        // Add new snapshot button - take a new picture immediately
+        document.getElementById('new-snapshot-button').addEventListener('click', () => {
+            takeSnapshot();
         });
     }
 });
