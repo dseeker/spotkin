@@ -124,8 +124,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Draw the current video frame to the canvas
             canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Get the image data as a base64 string
-            const imageData = canvas.toDataURL('image/jpeg');
+            // Get the image data as a base64 string (use PNG for higher quality)
+            const imageData = canvas.toDataURL('image/png');
             
             // Process the image with AI
             processImageWithAI(imageData);
@@ -191,6 +191,12 @@ document.addEventListener('DOMContentLoaded', function() {
         puter.ai.chat(prompt, imageData)
             .then(response => {
                 console.log("AI Response:", response);
+                console.log("AI Response type:", typeof response);
+                if (typeof response === 'object') {
+                    console.log("AI Response structure:", Object.keys(response));
+                    if (response.message) console.log("Response message:", response.message);
+                    if (response.content) console.log("Response content:", response.content);
+                }
                 
                 try {
                     // Check for refusal or failure to analyze
