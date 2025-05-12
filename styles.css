@@ -78,6 +78,100 @@ button:focus {
     }
 }
 
+/* For the history timeline */
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6366F1;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 20px;
+    width: 2px;
+    height: calc(100% + 10px);
+    background-color: #E0E7FF;
+}
+
+/* Tab styling */
+.tab-content {
+    transition: opacity 0.3s ease;
+}
+
+/* Monitoring status indicators */
+.monitoring-active {
+    color: #10B981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Animation for new timeline items */
+@keyframes slideIn {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.timeline-new-item {
+    animation: slideIn 0.4s ease;
+}
+
+/* Empty state styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6B7280;
+    background-color: #F9FAFB;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    #camera-container, 
+    #results-container {
+        height: 300px;
+    }
+}
+
 /* For the history timeline (if added later) */
 .timeline-item {
     position: relative;

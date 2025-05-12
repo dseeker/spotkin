@@ -130,33 +130,79 @@
                             </span>
                         </div>
                     </div>
-                    <div class="mt-4 flex justify-between">
-                        <button id="toggle-camera" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
-                            <i class="fas fa-sync-alt mr-2"></i>Switch Camera
-                        </button>
-                        <button id="upload-image" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
-                            <i class="fas fa-upload mr-2"></i>Upload Image
-                        </button>
+                    <div class="mt-4 flex flex-col space-y-3">
+                        <div class="flex justify-between">
+                            <button id="toggle-camera" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
+                                <i class="fas fa-sync-alt mr-2"></i>Switch Camera
+                            </button>
+                            <button id="upload-image" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
+                                <i class="fas fa-upload mr-2"></i>Upload Image
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-gray-100 rounded-md">
+                            <button id="toggle-monitoring" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                                <i class="fas fa-play mr-2"></i><span id="monitoring-status-text">Start Monitoring</span>
+                            </button>
+                            <div class="flex items-center">
+                                <label for="refresh-rate" class="text-sm text-gray-600 mr-2">Refresh:</label>
+                                <select id="refresh-rate" class="bg-white border border-gray-300 text-gray-700 rounded-md px-2 py-1 text-sm">
+                                    <option value="5000">5s</option>
+                                    <option value="10000" selected>10s</option>
+                                    <option value="15000">15s</option>
+                                    <option value="30000">30s</option>
+                                    <option value="60000">60s</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Analysis Results -->
                 <div id="results-container" class="bg-white p-4 rounded-lg shadow-md">
-                    <h3 class="text-xl font-semibold mb-4">Scene Analysis</h3>
-                    <div id="results-placeholder" class="bg-gray-100 p-6 rounded-md text-center">
-                        <i class="fas fa-search text-4xl text-gray-400 mb-3"></i>
-                        <p class="text-gray-500">Capture an image to see real-time analysis of what's happening in the scene.</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Scene Analysis</h3>
+                        <div class="flex">
+                            <button id="tab-current" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-l-md font-medium">Current</button>
+                            <button id="tab-history" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-r-md font-medium">History</button>
+                        </div>
                     </div>
-                    <div id="analysis-results" class="hidden">
-                        <div id="scene-description" class="p-4 bg-indigo-50 rounded-md mb-4">
-                            <h4 class="font-semibold text-lg text-indigo-700 mb-2">Scene Description</h4>
-                            <p id="scene-text" class="text-gray-800"></p>
+                    
+                    <!-- Current Analysis Tab -->
+                    <div id="current-tab" class="tab-content">
+                        <div id="results-placeholder" class="bg-gray-100 p-6 rounded-md text-center">
+                            <i class="fas fa-search text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-500">Capture an image to see real-time analysis of what's happening in the scene.</p>
                         </div>
-                        <div id="detection-results" class="mb-4">
-                            <h4 class="font-semibold text-lg mb-2">Detected Objects</h4>
-                            <ul id="detection-list" class="space-y-2"></ul>
+                        <div id="analysis-results" class="hidden">
+                            <div id="scene-description" class="p-4 bg-indigo-50 rounded-md mb-4">
+                                <h4 class="font-semibold text-lg text-indigo-700 mb-2">Scene Description</h4>
+                                <p id="scene-text" class="text-gray-800"></p>
+                            </div>
+                            <div id="detection-results" class="mb-4">
+                                <h4 class="font-semibold text-lg mb-2">Detected Objects</h4>
+                                <ul id="detection-list" class="space-y-2"></ul>
+                            </div>
+                            <div id="alert-status" class="p-4 rounded-md"></div>
                         </div>
-                        <div id="alert-status" class="p-4 rounded-md"></div>
+                    </div>
+                    
+                    <!-- History Tab -->
+                    <div id="history-tab" class="tab-content hidden">
+                        <div class="flex justify-between mb-3">
+                            <h4 class="font-semibold text-lg">Event Timeline</h4>
+                            <button id="clear-history" class="text-xs text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash-alt mr-1"></i>Clear
+                            </button>
+                        </div>
+                        <div id="history-empty" class="bg-gray-100 p-6 rounded-md text-center">
+                            <i class="fas fa-history text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-500">No monitoring history available yet.</p>
+                        </div>
+                        <div id="timeline-container" class="hidden">
+                            <div id="timeline-list" class="space-y-3 pl-8 relative">
+                                <!-- Timeline items will be inserted here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

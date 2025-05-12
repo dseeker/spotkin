@@ -12,22 +12,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const detectionList = document.getElementById('detection-list');
     const alertStatus = document.getElementById('alert-status');
     const aiStatus = document.getElementById('ai-status');
-
+    
+    // Tab Elements
+    const tabCurrent = document.getElementById('tab-current');
+    const tabHistory = document.getElementById('tab-history');
+    const currentTab = document.getElementById('current-tab');
+    const historyTab = document.getElementById('history-tab');
+    
+    // Monitoring Elements
+    const toggleMonitoringBtn = document.getElementById('toggle-monitoring');
+    const monitoringStatusText = document.getElementById('monitoring-status-text');
+    const refreshRateSelect = document.getElementById('refresh-rate');
+    const historyEmptyMsg = document.getElementById('history-empty');
+    const timelineContainer = document.getElementById('timeline-container');
+    const timelineList = document.getElementById('timeline-list');
+    const clearHistoryBtn = document.getElementById('clear-history');
+    
     // Camera State
     let currentStream = null;
     let facingMode = 'environment'; // Start with rear camera
     let canvas = document.createElement('canvas');
     let canvasContext = canvas.getContext('2d');
     let imageCapture = null;
+    
+    // Monitoring State
+    let isMonitoring = false;
+    let monitoringInterval = null;
+    let historyData = [];
+    const MAX_HISTORY_ITEMS = 50; // Maximum number of history items to store
 
     // Initialize the camera and check for Puter AI availability
     initCamera();
     checkPuterAIAvailability();
+    loadHistoryFromLocalStorage();
 
     // Set up event listeners
     takeSnapshotBtn.addEventListener('click', takeSnapshot);
     toggleCameraBtn.addEventListener('click', toggleCamera);
     uploadImageBtn.addEventListener('click', handleImageUpload);
+    
+    // Monitoring event listeners
+    toggleMonitoringBtn.addEventListener('click', toggleMonitoring);
+    refreshRateSelect.addEventListener('change', updateMonitoringInterval);
+    
+    // Tab event listeners
+    tabCurrent.addEventListener('click', () => switchTab('current'));
+    tabHistory.addEventListener('click', () => switchTab('history'));
+    
+    // History event listeners
+    clearHistoryBtn.addEventListener('click', clearHistory);
     
     // Function to check if Puter AI is available
     function checkPuterAIAvailability() {
@@ -46,6 +79,46 @@ document.addEventListener('DOMContentLoaded', function() {
             aiStatus.textContent = 'AI Unavailable';
             aiStatus.classList.remove('hidden');
             aiStatus.classList.add('bg-red-700');
+            
+            // Create a mock for testing when Puter API is not available
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log('Creating mock Puter AI for local testing');
+                window.puter = window.puter || {};
+                window.puter.ai = window.puter.ai || {};
+                window.puter.ai.chat = function(prompt, imageData, _, options) {
+                    console.log('Mock AI called with prompt:', prompt);
+                    console.log('Mock AI image data length:', imageData ? imageData.length : 0);
+                    
+                    // Return a promise that resolves with a mock response
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            // Generate random test scenarios
+                            const scenarios = [
+                                // No pets or babies
+                                "The image shows an empty room with furniture, including a couch and a table. There are no pets or babies/children present in this scene. This is not a pet/baby monitoring situation.",
+                                
+                                // Baby scenario
+                                "In this image, I can see a baby sleeping peacefully in a crib. The baby appears to be about 6-8 months old and is lying on their back with a light blanket covering them. The crib has standard rails and the room appears to be a nursery with soft lighting.",
+                                
+                                // Pet scenario
+                                "The image shows a small brown dog resting on what appears to be a bed or couch. The dog looks to be a terrier mix and is lying down in a relaxed state. There are no people or other animals visible in the frame.",
+                                
+                                // Warning scenario
+                                "In this image, I can see a baby sitting unsupervised near what appears to be electrical cords or cables on the floor. The baby seems to be reaching toward these cords, which could pose a safety hazard as babies often put things in their mouths."
+                            ];
+                            
+                            // Pick a random scenario
+                            const randomResponse = scenarios[Math.floor(Math.random() * scenarios.length)];
+                            resolve(randomResponse);
+                        }, 1000); // Simulate network delay
+                    });
+                };
+                
+                // Update the AI status indicator
+                aiStatus.textContent = 'Mock AI Ready';
+                aiStatus.classList.remove('bg-red-700');
+                aiStatus.classList.add('bg-yellow-700');
+            }
         }
     }
 
@@ -192,7 +265,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Call Puter AI vision API
         console.log("Sending image to Puter AI...");
-        takeSnapshotBtn.disabled = true; // Disable the button while processing
+        
+        // Disable the button during processing (only if not in monitoring mode)
+        if (!isMonitoring) {
+            takeSnapshotBtn.disabled = true;
+        }
         
         // Use Puter's AI chat API with the image
         puter.ai.chat(prompt, imageData, false, options)
@@ -238,6 +315,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Parse the AI response to create a structured result
                     const aiResult = parseAIResponse(responseText);
                     displayResults(aiResult);
+                    
+                    // If in monitoring mode and we detect babies/pets, make a sound alert
+                    if (isMonitoring && aiResult.hasPetsOrBabies) {
+                        // Simple browser alert for now
+                        if (aiResult.alert && (aiResult.alert.type === 'warning' || aiResult.alert.type === 'danger')) {
+                            playAlertSound();
+                        }
+                    }
                 } catch (parseError) {
                     console.error("Error parsing AI response:", parseError);
                     showErrorState("The AI couldn't analyze this image properly. Please try a clearer image or different angle.");
@@ -248,9 +333,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 showErrorState("Error connecting to AI service. Please try again later.");
             })
             .finally(() => {
-                // Re-enable the snapshot button regardless of success or failure
-                takeSnapshotBtn.disabled = false;
+                // Re-enable the button if not in monitoring mode
+                if (!isMonitoring) {
+                    takeSnapshotBtn.disabled = false;
+                }
             });
+    }
+    
+    // Play a sound alert for important notifications
+    function playAlertSound() {
+        try {
+            // Create a simple beep sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 800;
+            gainNode.gain.value = 0.5;
+            
+            oscillator.start();
+            
+            // Stop the sound after 300ms
+            setTimeout(() => {
+                oscillator.stop();
+            }, 300);
+        } catch (error) {
+            console.error('Failed to play alert sound:', error);
+        }
     }
     
     // Parse the AI response text into a structured format for our app
@@ -280,6 +393,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 result.scene = lines[0].trim();
             }
             
+            // Check if the response mentions no pets or babies
+            const noPetsOrBabies = responseText.toLowerCase().includes('no pets') || 
+                                   responseText.toLowerCase().includes('no babies') ||
+                                   responseText.toLowerCase().includes('no children') ||
+                                   (responseText.toLowerCase().includes('not a pet') && responseText.toLowerCase().includes('monitoring situation'));
+            
             // Look for subject/object descriptions - common patterns
             const subjectTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'];
             const statePatterns = [
@@ -288,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             
             let objects = [];
-            let foundAnyObject = false;
+            let foundPetOrBaby = false;
             
             // First pass: Look for specific mentions of subjects with states
             for (const line of lines) {
@@ -317,7 +436,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             confidence: confidence
                         });
                         
-                        foundAnyObject = true;
+                        foundPetOrBaby = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'].includes(subjectType);
+                        
                         break; // Found subject in this line, move to next line
                     }
                 }
@@ -325,16 +445,97 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // If we didn't find any subjects but have an image description,
             // extract general objects from the scene
-            if (!foundAnyObject && responseText.length > 30) {
-                // Look for common objects in the scene
-                const commonObjects = [
-                    'furniture', 'table', 'chair', 'bed', 'crib', 'toy', 'room',
-                    'window', 'door', 'wall', 'floor', 'light', 'plant', 'food'
-                ];
+            if (objects.length === 0 && responseText.length > 30) {
+                // Add a "No pets or babies" object if explicitly mentioned
+                if (noPetsOrBabies) {
+                    objects.push({
+                        type: "Scene",
+                        state: "No pets or babies present",
+                        confidence: 0.95
+                    });
+                } else {
+                    // Look for common objects in the scene
+                    const commonObjects = [
+                        'furniture', 'table', 'chair', 'bed', 'crib', 'toy', 'room',
+                        'window', 'door', 'wall', 'floor', 'light', 'plant', 'food'
+                    ];
+                    
+                    for (const object of commonObjects) {
+                        if (responseText.toLowerCase().includes(object)) {
+                            const type = object.charAt(0).toUpperCase() + object.slice(1);
+                            objects.push({
+                                type: type,
+                                state: "Present",
+                                confidence: 0.7
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Ensure we have at least one object
+            if (objects.length === 0) {
+                // Check if this is an "empty scene" or "cannot determine" situation
+                if (responseText.includes("can't see") || 
+                    responseText.includes("empty") ||
+                    responseText.includes("unable to identify")) {
+                    
+                    objects.push({
+                        type: "Scene",
+                        state: "Empty or unclear",
+                        confidence: 0.8
+                    });
+                } else {
+                    // Add a generic object as fallback
+                    objects.push({
+                        type: "Image",
+                        state: "Processed",
+                        confidence: 0.7
+                    });
+                }
+            }
+            
+            // Assign objects to result
+            result.objects = objects;
+            
+            // Determine alert type based on keywords in response
+            let alertType = "info";
+            let alertMessage = "Analysis complete. No issues detected.";
+            
+            // Check for safety concerns or warnings
+            if (responseText.match(/(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)/gi)) {
+                alertType = "warning";
                 
-                for (const object of commonObjects) {
-                    if (responseText.toLowerCase().includes(object)) {
-                        const type = object.charAt(0).toUpperCase() + object.slice(1);
+                // Extract a sentence containing the alert-related keyword
+                const warningMatch = responseText.match(/[^.!?]*?(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)[^.!?]*[.!?]/gi);
+                if (warningMatch && warningMatch.length > 0) {
+                    alertMessage = warningMatch[0].trim();
+                } else {
+                    alertMessage = "Potential concern detected. Please check the image carefully.";
+                }
+            }
+            
+            // Look for more serious issues
+            if (responseText.match(/(emergency|immediate|urgent|critical|serious|severe)/gi)) {
+                alertType = "danger";
+                
+                const dangerMatch = responseText.match(/[^.!?]*?(emergency|immediate|urgent|critical|serious|severe)[^.!?]*[.!?]/gi);
+                if (dangerMatch && dangerMatch.length > 0) {
+                    alertMessage = dangerMatch[0].trim();
+                } else {
+                    alertMessage = "Critical issue detected! Immediate attention recommended.";
+                }
+            }
+            
+            result.alert = { type: alertType, message: alertMessage };
+            result.hasPetsOrBabies = foundPetOrBaby;
+            
+            return result;
+        } catch (error) {
+            console.error("Error during AI response parsing:", error);
+            return defaultResult;
+        }
+    }Case() + object.slice(1);
                         objects.push({
                             type: type,
                             state: "Present",
@@ -427,15 +628,40 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear and populate detection list
         detectionList.innerHTML = '';
         
-        // Check if we have objects to display
-        if (results.objects.length === 0) {
+        // Check if we have pets or babies to display
+        const hasPetsOrBabies = results.hasPetsOrBabies || results.objects.some(obj => {
+            const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'];
+            return petBabyTypes.some(type => obj.type.toLowerCase().includes(type));
+        });
+        
+        if (!hasPetsOrBabies) {
+            // Display a message for no pets or babies
+            const emptyItem = document.createElement('li');
+            emptyItem.className = 'bg-gray-50 p-4 rounded-md text-gray-600 text-center';
+            emptyItem.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <i class="fas fa-search text-gray-400 text-2xl mb-2"></i>
+                    <p>No pets or babies detected in this scene.</p>
+                </div>
+            `;
+            detectionList.appendChild(emptyItem);
+        } else if (results.objects.length === 0) {
+            // Just in case we have an empty objects array
             const emptyItem = document.createElement('li');
             emptyItem.className = 'bg-gray-50 p-3 rounded-md text-gray-500 text-center';
             emptyItem.textContent = 'No specific objects detected';
             detectionList.appendChild(emptyItem);
         } else {
-            // Add each detected object to the list
+            // Add each detected object to the list (only pets and babies)
             results.objects.forEach(obj => {
+                // Skip objects that aren't pets or babies if we have pet/baby objects
+                const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'];
+                const isPetOrBaby = petBabyTypes.some(type => obj.type.toLowerCase().includes(type));
+                
+                if (hasPetsOrBabies && !isPetOrBaby) {
+                    return; // Skip this object
+                }
+                
                 const listItem = document.createElement('li');
                 listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
                 
@@ -487,6 +713,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show the results container
         analysisResults.classList.remove('hidden');
+        
+        // Add to history
+        addToHistory(results);
     }
 
     // Show loading state while processing image
@@ -539,5 +768,264 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('new-snapshot-button').addEventListener('click', () => {
             takeSnapshot();
         });
+    }
+    
+    // Toggle the monitoring state (start/stop)
+    function toggleMonitoring() {
+        if (isMonitoring) {
+            stopMonitoring();
+        } else {
+            startMonitoring();
+        }
+    }
+    
+    // Start the monitoring process
+    function startMonitoring() {
+        if (!video.srcObject) {
+            alert('Camera is not initialized. Please refresh and allow camera access.');
+            return;
+        }
+        
+        isMonitoring = true;
+        updateMonitoringUI();
+        
+        // Take an initial snapshot immediately
+        takeSnapshot();
+        
+        // Set up the interval for automatic snapshots
+        const intervalMs = parseInt(refreshRateSelect.value);
+        monitoringInterval = setInterval(takeSnapshot, intervalMs);
+        
+        // Add visual indicator to camera container
+        document.getElementById('camera-container').classList.add('camera-active');
+    }
+    
+    // Stop the monitoring process
+    function stopMonitoring() {
+        isMonitoring = false;
+        updateMonitoringUI();
+        
+        // Clear the monitoring interval
+        if (monitoringInterval) {
+            clearInterval(monitoringInterval);
+            monitoringInterval = null;
+        }
+        
+        // Remove visual indicator from camera container
+        document.getElementById('camera-container').classList.remove('camera-active');
+    }
+    
+    // Update the monitoring UI based on current state
+    function updateMonitoringUI() {
+        if (isMonitoring) {
+            monitoringStatusText.textContent = 'Stop Monitoring';
+            toggleMonitoringBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Monitoring';
+            toggleMonitoringBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            toggleMonitoringBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            takeSnapshotBtn.disabled = true;
+            takeSnapshotBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            monitoringStatusText.textContent = 'Start Monitoring';
+            toggleMonitoringBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Monitoring';
+            toggleMonitoringBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            toggleMonitoringBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            takeSnapshotBtn.disabled = false;
+            takeSnapshotBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Update the monitoring interval when the refresh rate changes
+    function updateMonitoringInterval() {
+        if (isMonitoring) {
+            // Clear the existing interval
+            clearInterval(monitoringInterval);
+            
+            // Set up a new interval with the updated refresh rate
+            const intervalMs = parseInt(refreshRateSelect.value);
+            monitoringInterval = setInterval(takeSnapshot, intervalMs);
+        }
+    }
+    
+    // Switch between Current and History tabs
+    function switchTab(tabName) {
+        if (tabName === 'current') {
+            tabCurrent.classList.remove('bg-gray-100', 'text-gray-600');
+            tabCurrent.classList.add('bg-indigo-100', 'text-indigo-700');
+            tabHistory.classList.remove('bg-indigo-100', 'text-indigo-700');
+            tabHistory.classList.add('bg-gray-100', 'text-gray-600');
+            
+            currentTab.classList.remove('hidden');
+            historyTab.classList.add('hidden');
+        } else if (tabName === 'history') {
+            tabHistory.classList.remove('bg-gray-100', 'text-gray-600');
+            tabHistory.classList.add('bg-indigo-100', 'text-indigo-700');
+            tabCurrent.classList.remove('bg-indigo-100', 'text-indigo-700');
+            tabCurrent.classList.add('bg-gray-100', 'text-gray-600');
+            
+            historyTab.classList.remove('hidden');
+            currentTab.classList.add('hidden');
+            
+            // Refresh the history display
+            updateHistoryDisplay();
+        }
+    }
+    
+    // Add a new event to the history
+    function addToHistory(result) {
+        // Create a new history entry
+        const entry = {
+            timestamp: new Date().toISOString(),
+            scene: result.scene,
+            objects: result.objects,
+            alert: result.alert,
+            hasPetsOrBabies: hasPetsOrBabies(result.objects)
+        };
+        
+        // Add to the beginning of the history array
+        historyData.unshift(entry);
+        
+        // Limit the history size
+        if (historyData.length > MAX_HISTORY_ITEMS) {
+            historyData = historyData.slice(0, MAX_HISTORY_ITEMS);
+        }
+        
+        // Save to local storage
+        saveHistoryToLocalStorage();
+        
+        // Update the history display if the history tab is active
+        if (!historyTab.classList.contains('hidden')) {
+            updateHistoryDisplay();
+        }
+    }
+    
+    // Check if the result contains pets or babies
+    function hasPetsOrBabies(objects) {
+        const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'];
+        return objects.some(obj => {
+            return petBabyTypes.some(type => 
+                obj.type.toLowerCase().includes(type)
+            );
+        });
+    }
+    
+    // Update the history display
+    function updateHistoryDisplay() {
+        if (historyData.length === 0) {
+            // Show empty message
+            historyEmptyMsg.classList.remove('hidden');
+            timelineContainer.classList.add('hidden');
+            return;
+        }
+        
+        // Hide empty message and show timeline
+        historyEmptyMsg.classList.add('hidden');
+        timelineContainer.classList.remove('hidden');
+        
+        // Clear the timeline list
+        timelineList.innerHTML = '';
+        
+        // Add each history item to the timeline
+        historyData.forEach((entry, index) => {
+            // Create timeline item
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item p-3 bg-white rounded-md shadow-sm mb-3';
+            
+            // Format the timestamp
+            const timestamp = new Date(entry.timestamp);
+            const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Determine alert class
+            let alertClass = 'text-blue-600';
+            let alertIcon = 'fa-info-circle';
+            
+            if (entry.alert.type === 'warning') {
+                alertClass = 'text-yellow-600';
+                alertIcon = 'fa-triangle-exclamation';
+            } else if (entry.alert.type === 'danger') {
+                alertClass = 'text-red-600';
+                alertIcon = 'fa-circle-exclamation';
+            }
+            
+            // Create the content based on whether pets/babies are present
+            let objectsContent = '';
+            
+            if (entry.hasPetsOrBabies) {
+                // Filter to only show relevant objects (pets and babies)
+                const petBabyObjects = entry.objects.filter(obj => {
+                    const type = obj.type.toLowerCase();
+                    return ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'].some(t => type.includes(t));
+                });
+                
+                objectsContent = `
+                    <div class="mt-2">
+                        <h5 class="text-sm font-medium text-gray-700">Detected:</h5>
+                        <ul class="mt-1 text-sm text-gray-600">
+                            ${petBabyObjects.map(obj => `
+                                <li class="flex justify-between">
+                                    <span>${obj.type} - ${obj.state}</span>
+                                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100">${Math.round((obj.confidence || 0.5) * 100)}%</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else {
+                objectsContent = `
+                    <div class="mt-2 text-sm text-gray-600">
+                        <p>No pets or babies detected in this scene.</p>
+                    </div>
+                `;
+            }
+            
+            // Build the timeline item content
+            timelineItem.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
+                    <span class="${alertClass} text-xs">
+                        <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">${entry.scene}</p>
+                ${objectsContent}
+            `;
+            
+            // Add to timeline
+            timelineList.appendChild(timelineItem);
+        });
+    }
+    
+    // Save history data to local storage
+    function saveHistoryToLocalStorage() {
+        try {
+            localStorage.setItem('spotkin_history', JSON.stringify(historyData));
+        } catch (error) {
+            console.error('Error saving history to local storage:', error);
+        }
+    }
+    
+    // Load history data from local storage
+    function loadHistoryFromLocalStorage() {
+        try {
+            const savedHistory = localStorage.getItem('spotkin_history');
+            if (savedHistory) {
+                historyData = JSON.parse(savedHistory);
+                // Update the history display if data was loaded
+                if (historyData.length > 0) {
+                    updateHistoryDisplay();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading history from local storage:', error);
+            historyData = [];
+        }
+    }
+    
+    // Clear all history data
+    function clearHistory() {
+        if (confirm('Are you sure you want to clear all monitoring history?')) {
+            historyData = [];
+            saveHistoryToLocalStorage();
+            updateHistoryDisplay();
+        }
     }
 });
