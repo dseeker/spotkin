@@ -1,0 +1,105 @@
+/* Custom styles beyond Tailwind CSS */
+
+/* Smooth scrolling for navigation */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Animation for the camera container */
+@keyframes pulse-border {
+    0% {
+        border-color: rgba(79, 70, 229, 0.2);
+    }
+    50% {
+        border-color: rgba(79, 70, 229, 0.8);
+    }
+    100% {
+        border-color: rgba(79, 70, 229, 0.2);
+    }
+}
+
+.camera-active {
+    border: 2px dashed transparent;
+    animation: pulse-border 2s infinite;
+}
+
+/* Custom scrollbar for results */
+#results-container {
+    max-height: 550px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #6366F1 #E0E7FF;
+}
+
+#results-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#results-container::-webkit-scrollbar-track {
+    background: #E0E7FF;
+    border-radius: 4px;
+}
+
+#results-container::-webkit-scrollbar-thumb {
+    background-color: #6366F1;
+    border-radius: 4px;
+}
+
+/* Make modal fade in */
+.modal-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Custom button focus states */
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    #camera-container, 
+    #results-container {
+        height: 300px;
+    }
+}
+
+/* For the history timeline (if added later) */
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6366F1;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 20px;
+    width: 2px;
+    height: calc(100% + 10px);
+    background-color: #E0E7FF;
+}
