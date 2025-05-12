@@ -184,11 +184,18 @@ document.addEventListener('DOMContentLoaded', function() {
             - Any potential concerns if applicable
         `;
 
+        // Optional parameters for the AI
+        const options = {
+            model: 'gpt-4o-mini', // Default model, using the most affordable option
+            stream: false // We want the complete response at once
+        };
+
         // Call Puter AI vision API
         console.log("Sending image to Puter AI...");
+        takeSnapshotBtn.disabled = true; // Disable the button while processing
         
         // Use Puter's AI chat API with the image
-        puter.ai.chat(prompt, imageData)
+        puter.ai.chat(prompt, imageData, false, options)
             .then(response => {
                 console.log("AI Response:", response);
                 console.log("AI Response type:", typeof response);
@@ -204,10 +211,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (typeof response === 'string') {
                         responseText = response;
                     } else if (typeof response === 'object' && response !== null) {
-                        responseText = response.content || 
-                                      (response.message && response.message.content) || 
-                                      response.text || 
-                                      JSON.stringify(response);
+                        // Handle various response formats from the Puter API
+                        if (response.message && response.message.content) {
+                            responseText = response.message.content;
+                        } else if (response.content) {
+                            responseText = response.content;
+                        } else if (response.text) {
+                            responseText = response.text;
+                        } else if (response.result && response.result.message && response.result.message.content) {
+                            responseText = response.result.message.content;
+                        } else {
+                            responseText = JSON.stringify(response);
+                        }
                     }
                     
                     // Check for common refusal patterns
@@ -231,6 +246,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error("AI API Error:", error);
                 showErrorState("Error connecting to AI service. Please try again later.");
+            })
+            .finally(() => {
+                // Re-enable the snapshot button regardless of success or failure
+                takeSnapshotBtn.disabled = false;
             });
     }
     
