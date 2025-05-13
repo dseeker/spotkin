@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cameraFeedback = document.getElementById('camera-feedback');
     const takeSnapshotBtn = document.getElementById('take-snapshot');
     const toggleCameraBtn = document.getElementById('toggle-camera');
-    const uploadImageBtn = document.getElementById('upload-image');
+    // Upload image button removed
     const resultsContainer = document.getElementById('results-container');
     const resultsPlaceholder = document.getElementById('results-placeholder');
     const analysisResults = document.getElementById('analysis-results');
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Setting up event listeners...'); // Added log
     takeSnapshotBtn.addEventListener('click', takeSnapshot);
     toggleCameraBtn.addEventListener('click', toggleCamera);
-    uploadImageBtn.addEventListener('click', handleImageUpload);
+    // Event listeners updated to remove upload image functionality
 
     // Monitoring event listeners
     console.log('Setting up monitoring event listeners...'); // Added log
@@ -228,31 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Handle image upload from device
-    function handleImageUpload() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-
-        input.onchange = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                showLoadingState();
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imageData = e.target.result;
-                    processImageWithAI(imageData);
-                };
-                reader.onerror = () => {
-                    showErrorState('Failed to read the uploaded image. Please try again.');
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-
-        input.click();
-    }
+    // Image upload functionality removed
 
     // Process the image with AI using Puter's AI vision API
     function processImageWithAI(imageData) {
