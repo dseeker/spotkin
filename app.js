@@ -1,3 +1,18 @@
+// Add global error handler to catch syntax and runtime errors
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('Global error caught:', {
+        message: message,
+        source: source,
+        lineno: lineno,
+        colno: colno,
+        error: error
+    });
+    alert('Error at line ' + lineno + ': ' + message);
+    return true; // Prevents default error handling
+};
+
+// Wrap in try-catch to catch initialization errors
+try {
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const video = document.getElementById('camera');
@@ -999,3 +1014,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+} catch (error) {
+    console.error('Fatal error during script execution:', error);
+    alert('An error occurred while loading the application: ' + error.message);
+}
