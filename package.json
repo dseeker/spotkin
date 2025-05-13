@@ -1,0 +1,25 @@
+{
+  "name": "spotkin",
+  "version": "1.0.0",
+  "description": "AI-powered babysitting and pet monitoring application",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx http-server -p 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "monitoring",
+    "pet",
+    "baby",
+    "computer-vision"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "http-server": "^14.1.1"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.8.2"
+  }
+}

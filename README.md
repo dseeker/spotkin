@@ -28,7 +28,7 @@ The application uses Puter.js for AI image analysis, which requires the applicat
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/spotkin.git
+   git clone https://github.com/dseeker/spotkin.git
    cd spotkin
    ```
 
@@ -55,27 +55,6 @@ While opening the index.html file directly in a browser is possible, the Puter.j
 2. Open `index.html` in your browser
 3. The application will detect that Puter.js is unavailable and activate the mock AI module
 
-## Testing with Puppeteer
-
-To automate testing of the SpotKin application using Puppeteer, follow these steps:
-
-1. Install Puppeteer and required dependencies:
-   ```bash
-   npm install puppeteer-core
-   ```
-
-2. Install the required Chrome version for Puppeteer:
-   ```bash
-   npx puppeteer browsers install chrome@131.0.6778.204
-   ```
-
-3. Run the test script:
-   ```bash
-   node test-spotkin.js
-   ```
-
-This will launch Chrome, navigate to the SpotKin application, and check for any JavaScript errors.
-
 ## Troubleshooting
 
 ### Common Issues
@@ -84,14 +63,6 @@ This will launch Chrome, navigate to the SpotKin application, and check for any 
    - **Symptom**: Error message stating "Puter.js Error: Unsupported Protocol"
    - **Cause**: Opening the application directly via the file:/// protocol
    - **Solution**: Serve the application through a web server using http-server as described above
-
-2. **JavaScript Syntax Error**
-   - **Symptom**: Error about "missing ) after argument list" in app.js
-   - **Solution**: The application has been fixed to resolve this issue. If you encounter it, try clearing your browser cache or using a different browser.
-
-3. **Camera Access Issues**
-   - **Symptom**: Camera not initializing or "Camera error" message
-   - **Solution**: Ensure your browser has permission to access the camera and that no other applications are using it
 
 4. **Puppeteer Chrome Installation Issues**
    - **Symptom**: Error about "Could not find Chrome" when using Puppeteer
@@ -138,12 +109,4 @@ This project is deployed on GitHub Pages and can be accessed at [https://dseeker
 - `index.html`: Main application entry point
 - `app.js`: Core application logic
 - `styles.css`: Custom styles beyond Tailwind CSS
-- `test-spotkin.js`: Puppeteer test script for automated testing
 
-### Running Tests
-
-The included Puppeteer test script can be run to check for JavaScript errors and ensure the application loads correctly. This is particularly useful for regression testing after making changes.
-
-## License
-
-MIT
