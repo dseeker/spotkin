@@ -1,19 +1,53 @@
-// Add global error handler to catch syntax and runtime errors
+// Global Error Handling
+console.log('🚀 SpotKin Application Initializing');
+
+// Single Global Error Handler
 window.onerror = function(message, source, lineno, colno, error) {
-    console.error('Global error caught:', {
-        message: message,
-        source: source,
-        lineno: lineno,
-        colno: colno,
-        error: error
+    console.error('🚨 Global Error Caught:', {
+        message,
+        source,
+        lineno,
+        colno,
+        error: error ? error.toString() : null
     });
-    alert('Error at line ' + lineno + ': ' + message);
-    return true; // Prevents default error handling
+    return false; // Allow default error handling
 };
 
-// Wrap in try-catch to catch initialization errors
-try {
+// Capture Unhandled Promise Rejections
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('🚨 Unhandled Promise Rejection:', event.reason);
+});
+
+// Main Application Initialization
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🌟 DOM Content Loaded');
+
+    try {
+        // Validate Critical DOM Elements
+        const criticalElements = [
+            'camera', 'camera-feedback', 'take-snapshot', 'toggle-camera', 
+            'results-container', 'results-placeholder', 'analysis-results',
+            'ai-status'
+        ];
+        
+        const missingElements = criticalElements.filter(id => !document.getElementById(id));
+        
+        if (missingElements.length > 0) {
+            throw new Error(`Missing critical DOM elements: ${missingElements.join(', ')}`);
+        }
+
+        console.log('✅ All critical DOM elements verified');
+    } catch (elementError) {
+        console.error('Error during DOM element validation:', elementError);
+        // Gracefully handle missing elements, maybe show a user-friendly error
+        document.body.innerHTML = `
+            <div class="error-container">
+                <h1>Application Initialization Error</h1>
+                <p>Some critical components are missing. Please refresh the page or contact support.</p>
+            </div>
+        `;
+        return; // Stop further script execution
+    }
     // DOM Elements
     const video = document.getElementById('camera');
     const cameraFeedback = document.getElementById('camera-feedback');
@@ -83,7 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to check if Puter AI is available
     function checkPuterAIAvailability() {
-        console.log('Checking Puter AI availability...'); // Added log
+    console.log('Checking Puter AI availability...'); 
+    
+    // Log Puter object details for debugging
+    console.log('Puter object:', puter);
+    console.log('Puter AI available:', typeof puter !== 'undefined' && puter.ai && puter.ai.chat);
+    
+    try {
         if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
             console.log('Puter AI is available');
             aiStatus.textContent = 'AI Ready';
@@ -96,11 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 3000);
         } else {
             console.error('Puter AI is not available');
+            
+            // Detailed logging for unavailability
+            console.log('Puter undefined:', typeof puter === 'undefined');
+            console.log('Puter AI undefined:', !puter.ai);
+            console.log('Puter AI chat undefined:', !puter.ai.chat);
+
             aiStatus.textContent = 'AI Unavailable';
             aiStatus.classList.remove('hidden');
             aiStatus.classList.add('bg-red-700');
 
-            // Create a mock for testing when Puter API is not available
+            // Modified local testing logic
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 console.log('Creating mock Puter AI for local testing');
                 window.puter = window.puter || {};
@@ -140,7 +186,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 aiStatus.classList.add('bg-yellow-700');
             }
         }
+    } catch (error) {
+        console.error('Error in Puter AI availability check:', error);
+        aiStatus.textContent = 'AI Error';
+        aiStatus.classList.remove('hidden');
+        aiStatus.classList.add('bg-red-700');
     }
+}
 
     // Camera initialization function
     async function initCamera() {
@@ -366,165 +418,122 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseAIResponse(responseText) {
         console.log("Parsing AI response text:", responseText);
 
-        // Default result structure (fallback in case parsing fails)
+        // Define strict detection patterns
+        const petBabyPatterns = [
+            'baby', 'infant', 'child', 'toddler', 
+            'dog', 'puppy', 'cat', 'kitten', 
+            'pet', 'person', 'kid'
+        ];
+
+        const statePatterns = [
+            'sleeping', 'playing', 'sitting', 'standing', 
+            'crying', 'eating', 'resting', 'active', 
+            'awake', 'moving', 'lying', 'present'
+        ];
+
+        // Default result structure
         const defaultResult = {
-            scene: "Scene analysis completed",
-            objects: [
-                { type: "Object", state: "Detected", confidence: 0.7 }
-            ],
-            alert: { type: "info", message: "Analysis complete." }
+            scene: responseText.length > 30 ? responseText.slice(0, 200) : "Scene description not available",
+            objects: [],
+            alert: { type: "info", message: "No specific objects detected." },
+            hasPetsOrBabies: false
         };
 
         try {
-            // Simple parsing strategy - identify key sections in the AI response
             const result = {
                 scene: "",
                 objects: [],
-                alert: { type: "info", message: "No issues detected." }
+                alert: { type: "info", message: "No issues detected." },
+                hasPetsOrBabies: false
             };
 
-            // Extract the scene description (usually first paragraph)
+            // Extract scene description
             const lines = responseText.split('\n').filter(line => line.trim() !== '');
-            if (lines.length > 0) {
-                result.scene = lines[0].trim();
-            }
+            result.scene = lines.length > 0 ? lines[0].trim() : defaultResult.scene;
 
-            // Check if the response mentions no pets or babies
-            const noPetsOrBabies = responseText.toLowerCase().includes('no pets') ||
-                                   responseText.toLowerCase().includes('no babies') ||
-                                   responseText.toLowerCase().includes('no children') ||
-                                   (responseText.toLowerCase().includes('not a pet') && responseText.toLowerCase().includes('monitoring situation'));
-
-            // Look for subject/object descriptions - common patterns
-            const subjectTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'];
-            const statePatterns = [
-                'sleeping', 'playing', 'sitting', 'standing', 'crying',
-                'eating', 'resting', 'active', 'awake', 'moving', 'lying'
-            ];
-
-            let objects = [];
+            // Strict object detection
+            const detectedObjects = [];
             let foundPetOrBaby = false;
 
-            // First pass: Look for specific mentions of subjects with states
+            // Advanced pattern matching for objects
             for (const line of lines) {
-                // Check for mentions of subject types
-                for (const subjectType of subjectTypes) {
-                    if (line.toLowerCase().includes(subjectType)) {
-                        // Found a subject, now look for a state
-                        let state = "Present";
-                        for (const statePattern of statePatterns) {
-                            if (line.toLowerCase().includes(statePattern)) {
-                                state = statePattern.charAt(0).toUpperCase() + statePattern.slice(1);
-                                break;
-                            }
-                        }
+                const lineLC = line.toLowerCase();
+                
+                // Check for explicit pet/baby mentions with states
+                for (const subjectType of petBabyPatterns) {
+                    if (lineLC.includes(subjectType)) {
+                        // Look for an associated state
+                        const associatedState = statePatterns.find(state => 
+                            lineLC.includes(state)
+                        ) || 'present';
 
-                        // Calculate a confidence based on certainty language
-                        let confidence = 0.85; // Default reasonable confidence
-                        if (line.includes("clearly") || line.includes("definitely")) confidence = 0.95;
-                        if (line.includes("appears to") || line.includes("seems to")) confidence = 0.75;
-                        if (line.includes("possibly") || line.includes("might be")) confidence = 0.6;
+                        // Confidence calculation
+                        let confidence = 0.85;
+                        if (lineLC.includes('clearly') || lineLC.includes('definitely')) confidence = 0.95;
+                        if (lineLC.includes('appears to') || lineLC.includes('seems to')) confidence = 0.75;
+                        if (lineLC.includes('possibly') || lineLC.includes('might be')) confidence = 0.6;
 
-                        const type = subjectType.charAt(0).toUpperCase() + subjectType.slice(1);
-                        objects.push({
-                            type: type,
-                            state: state,
-                            confidence: confidence
-                        });
-
-                        foundPetOrBaby = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'].includes(subjectType);
-
-                        break; // Found subject in this line, move to next line
-                    }
-                }
-            }
-
-            // If we didn't find any subjects but have an image description,
-            // extract general objects from the scene
-            if (objects.length === 0 && responseText.length > 30) {
-                // Add a "No pets or babies" object if explicitly mentioned
-                if (noPetsOrBabies) {
-                    objects.push({
-                        type: "Scene",
-                        state: "No pets or babies present",
-                        confidence: 0.95
-                    });
-                } else {
-                    // Look for common objects in the scene
-                    const commonObjects = [
-                        'furniture', 'table', 'chair', 'bed', 'crib', 'toy', 'room',
-                        'window', 'door', 'wall', 'floor', 'light', 'plant', 'food'
-                    ];
-
-                    for (const object of commonObjects) {
-                        if (responseText.toLowerCase().includes(object)) {
-                            const type = object.charAt(0).toUpperCase() + object.slice(1);
-                            objects.push({
-                                type: type,
-                                state: "Present",
-                                confidence: 0.7
+                        // Only add if confidence is above a threshold
+                        if (confidence >= 0.75) {
+                            detectedObjects.push({
+                                type: subjectType.charAt(0).toUpperCase() + subjectType.slice(1),
+                                state: associatedState.charAt(0).toUpperCase() + associatedState.slice(1),
+                                confidence: confidence
                             });
+
+                            // Mark pet or baby found
+                            foundPetOrBaby = true;
                         }
                     }
                 }
             }
 
-            // Ensure we have at least one object
-            if (objects.length === 0) {
-                // Check if this is an "empty scene" or "cannot determine" situation
-                if (responseText.includes("can't see") ||
-                    responseText.includes("empty") ||
-                    responseText.includes("unable to identify")) {
+            // Check for explicit "no pets/babies" statements
+            const noObjectStatements = [
+                'no pets', 'no babies', 'no children', 
+                'not a pet monitoring situation', 
+                'empty room', 'no subjects detected'
+            ];
 
-                    objects.push({
-                        type: "Scene",
-                        state: "Empty or unclear",
-                        confidence: 0.8
-                    });
-                } else {
-                    // Add a generic object as fallback
-                    objects.push({
-                        type: "Image",
-                        state: "Processed",
-                        confidence: 0.7
-                    });
-                }
-            }
+            const isEmptyScene = noObjectStatements.some(statement => 
+                responseText.toLowerCase().includes(statement)
+            );
 
-            // Assign objects to result
-            result.objects = objects;
+            // Final object assignment
+            result.objects = detectedObjects;
+            result.hasPetsOrBabies = foundPetOrBaby && !isEmptyScene;
 
-            // Determine alert type based on keywords in response
+            // Alert type determination
             let alertType = "info";
-            let alertMessage = "Analysis complete. No issues detected.";
+            let alertMessage = "No specific concerns detected.";
 
-            // Check for safety concerns or warnings
-            if (responseText.match(/(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)/gi)) {
-                alertType = "warning";
-
-                // Extract a sentence containing the alert-related keyword
-                const warningMatch = responseText.match(/[^.!?]*?(hazard|danger|unsafe|risk|warning|caution|concern|attention|problem)[^.!?]*[.!?]/gi);
-                if (warningMatch && warningMatch.length > 0) {
-                    alertMessage = warningMatch[0].trim();
-                } else {
-                    alertMessage = "Potential concern detected. Please check the image carefully.";
-                }
+            if (result.hasPetsOrBabies) {
+                alertType = "info";
+                alertMessage = `Detected ${result.objects.map(obj => obj.type).join(', ')}`;
             }
 
-            // Look for more serious issues
-            if (responseText.match(/(emergency|immediate|urgent|critical|serious|severe)/gi)) {
-                alertType = "danger";
+            // Check for safety concerns
+            const warningKeywords = [
+                'hazard', 'danger', 'unsafe', 'risk', 
+                'warning', 'caution', 'concern'
+            ];
 
-                const dangerMatch = responseText.match(/[^.!?]*?(emergency|immediate|urgent|critical|serious|severe)[^.!?]*[.!?]/gi);
-                if (dangerMatch && dangerMatch.length > 0) {
-                    alertMessage = dangerMatch[0].trim();
-                } else {
-                    alertMessage = "Critical issue detected! Immediate attention recommended.";
-                }
+            const dangerKeywords = [
+                'emergency', 'immediate', 'urgent', 
+                'critical', 'serious', 'severe'
+            ];
+
+            if (warningKeywords.some(keyword => responseText.toLowerCase().includes(keyword))) {
+                alertType = "warning";
+                alertMessage = "Potential concern detected in the scene.";
+            }
+
+            if (dangerKeywords.some(keyword => responseText.toLowerCase().includes(keyword))) {
+                alertType = "danger";
+                alertMessage = "Critical issue detected! Immediate attention required.";
             }
 
             result.alert = { type: alertType, message: alertMessage };
-            result.hasPetsOrBabies = foundPetOrBaby;
 
             return result;
         } catch (error) {
@@ -990,7 +999,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-} catch (error) {
-    console.error('Fatal error during script execution:', error);
-    alert('An error occurred while loading the application: ' + error.message);
-}

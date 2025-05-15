@@ -72,17 +72,79 @@ puppeteer_evaluate({
 - Real-time screenshot capabilities
 - Direct browser manipulation
 - No local setup required
+- Advanced console log capture and evaluation
+
+## Console Log Testing
+
+### Console Log Capture Techniques
+Console logs in Puppeteer MCP have specific characteristics:
+- Logs are ephemeral and do not persist between page loads
+- Each evaluation creates a new execution context
+- Logs are most reliably captured during the current page load
+
+#### Recommended Logging Strategies
+1. Instrument the application to support log persistence
+2. Use console logging techniques that output immediately
+3. Capture logs during specific interactions
+
+```javascript
+// Basic log capture approach
+puppeteer_evaluate({
+    script: () => {
+        // Immediately log and capture important events
+        console.log('Critical Test Point: Application Initialized');
+        
+        // Optional: Add more diagnostic logging
+        console.log('Browser Environment:', {
+            userAgent: navigator.userAgent,
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height
+        });
+    }
+})
+```
+
+### Log Persistence Techniques
+- Modify `app.js` to store logs in `localStorage`
+- Create a global logging mechanism
+- Use browser's `console` interception methods
+
+### Testing Scenarios
+1. Capture initialization logs
+2. Log key application state changes
+3. Record error and warning messages
+4. Trace specific user interaction paths
+
+### Common Challenges
+- Logs are context-specific
+- No built-in log history retrieval
+- Requires manual instrumentation for persistent logging
+
+### Debugging Best Practices
+- Add strategic, meaningful log points
+- Log both success and failure scenarios
+- Include contextual information in logs
+- Use log levels (info, warn, error)
+
+### Recommended Logging Enhancements
+1. Implement a custom logging system in `app.js`
+2. Use browser's `localStorage` for log storage
+3. Create log rotation and management strategies
+4. Add timestamps and log levels
 
 ## Troubleshooting
 
 ### Common Challenges
-1. Limited console output visibility
+1. Console log capture complexity
 2. Potential restrictions in browser interaction
-3. Intermittent connection issues
+3. Intermittent logging issues
+4. Transient log visibility
 
 ### Recommended Approach
-- Use multiple test runs
-- Capture screenshots at each step
+- Use multiple log capture techniques
+- Implement persistent logging strategies
+- Capture logs at different application stages
+- Take screenshots alongside log capture
 - Log detailed interaction information
 
 ## Best Practices
