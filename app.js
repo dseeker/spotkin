@@ -59,7 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisResults = document.getElementById('analysis-results');
     const sceneText = document.getElementById('scene-text');
     const detectionList = document.getElementById('detection-list');
-    const alertStatus = document.getElementById('alert-status');
+    const safetyAssessmentDisplay = document.getElementById('safety-assessment-display');
+    const safetyLevelText = document.getElementById('safety-level');
+    const safetyReasonText = document.getElementById('safety-reason');
     const aiStatus = document.getElementById('ai-status');
 
     // Tab Elements
@@ -139,8 +141,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Detailed logging for unavailability
             console.log('Puter undefined:', typeof puter === 'undefined');
-            console.log('Puter AI undefined:', !puter.ai);
-            console.log('Puter AI chat undefined:', !puter.ai.chat);
+            if (typeof puter !== 'undefined') {
+                console.log('Puter AI undefined:', !puter.ai);
+                if (puter.ai) {
+                    console.log('Puter AI chat undefined:', !puter.ai.chat);
+                }
+            }
 
             aiStatus.textContent = 'AI Unavailable';
             aiStatus.classList.remove('hidden');
@@ -155,27 +161,64 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Mock AI called with prompt:', prompt);
                     console.log('Mock AI image data length:', imageData ? imageData.length : 0);
 
-                    // Return a promise that resolves with a mock response
+                    // Return a promise that resolves with a mock JSON response
                     return new Promise((resolve) => {
                         setTimeout(() => {
                             // Generate random test scenarios
                             const scenarios = [
                                 // No pets or babies
-                                "The image shows an empty room with furniture, including a couch and a table. There are no pets or babies/children present in this scene. This is not a pet/baby monitoring situation.",
-
+                                {
+                                    "scene_description": "An empty room with a couch and a coffee table.",
+                                    "subjects": [],
+                                    "safety_assessment": {
+                                        "level": "Safe",
+                                        "reason": "No subjects detected in the scene."
+                                    }
+                                },
                                 // Baby scenario
-                                "In this image, I can see a baby sleeping peacefully in a crib. The baby appears to be about 6-8 months old and is lying on their back with a light blanket covering them. The crib has standard rails and the room appears to be a nursery with soft lighting.",
-
+                                {
+                                    "scene_description": "A baby is sleeping peacefully in a crib.",
+                                    "subjects": [{
+                                        "type": "Baby",
+                                        "state": "Sleeping",
+                                        "confidence": 0.95
+                                    }],
+                                    "safety_assessment": {
+                                        "level": "Safe",
+                                        "reason": "The baby is sleeping safely in the crib."
+                                    }
+                                },
                                 // Pet scenario
-                                "The image shows a small brown dog resting on what appears to be a bed or couch. The dog looks to be a terrier mix and is lying down in a relaxed state. There are no people or other animals visible in the frame.",
-
+                                {
+                                    "scene_description": "A small dog is resting on a couch.",
+                                    "subjects": [{
+                                        "type": "Dog",
+                                        "state": "Resting",
+                                        "confidence": 0.89
+                                    }],
+                                    "safety_assessment": {
+                                        "level": "Safe",
+                                        "reason": "The dog appears calm and is not in any immediate danger."
+                                    }
+                                },
                                 // Warning scenario
-                                "In this image, I can see a baby sitting unsupervised near what appears to be electrical cords or cables on the floor. The baby seems to be reaching toward these cords, which could pose a safety hazard as babies often put things in their mouths."
+                                {
+                                    "scene_description": "A baby is sitting on the floor near some electrical cords.",
+                                    "subjects": [{
+                                        "type": "Baby",
+                                        "state": "Sitting",
+                                        "confidence": 0.92
+                                    }],
+                                    "safety_assessment": {
+                                        "level": "Warning",
+                                        "reason": "The baby is close to electrical cords, which could be a potential hazard."
+                                    }
+                                }
                             ];
 
                             // Pick a random scenario
                             const randomResponse = scenarios[Math.floor(Math.random() * scenarios.length)];
-                            resolve(randomResponse);
+                            resolve(JSON.stringify(randomResponse));
                         }, 1000); // Simulate network delay
                     });
                 };
@@ -286,23 +329,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function processImageWithAI(imageData) {
         // Create AI prompt for detecting pets and babies
         const prompt = `
-            Describe what you see in this image, focusing on monitoring pets (dogs, cats) and babies/children.
+            **System Role**: You are an advanced AI assistant for the SpotKin application, designed to monitor for the safety and well-being of babies and pets. Your primary function is to analyze images and provide clear, concise, and accurate descriptions of the scene, with a strong emphasis on identifying potential hazards.
 
-            First, tell me if you can see any pets or babies/children in the image, including their positions
-            and what they are doing. If they are present, provide details about:
+            **Analysis Request**:
+            Analyze the provided image and return a structured response. The response should be a JSON object with the following keys: 'scene_description', 'subjects', and 'safety_assessment'.
 
-            1. Subject type (e.g., "Baby", "Dog", "Cat")
-            2. Current state (e.g., "Sleeping", "Playing", "Crying", "Eating")
-            3. Relevant objects in scene (e.g., "Crib", "Toy", "Furniture")
-            4. Any safety concerns or potential hazards
+            1.  **'scene_description'**: A brief, one-sentence overview of the entire scene.
+            2.  **'subjects'**: An array of JSON objects, where each object represents a detected baby or pet. Each object should include:
+                *   'type': (e.g., "Baby", "Dog", "Cat").
+                *   'state': (e.g., "Sleeping", "Playing", "Crying", "Eating", "Near window").
+                *   'confidence': A numerical value from 0.0 to 1.0 indicating your confidence in the detection.
+            3.  **'safety_assessment'**: A JSON object containing:
+                *   'level': A safety level, which must be one of "Safe", "Warning", or "Danger".
+                *   'reason': A clear and concise explanation for the assigned safety level. If the level is "Warning" or "Danger", this reason is mandatory and must describe the specific hazard (e.g., "Baby is near an uncovered electrical outlet," "Dog is chewing on a small object that could be a choking hazard").
 
-            Be very specific in your description. If there are no pets or babies in the image, describe
-            whatever you can see in the image instead, noting that it's not a pet/baby monitoring situation.
-
-            Your response should include:
-            - Overall scene description (1-2 sentences)
-            - List of key elements in the image
-            - Any potential concerns if applicable
+            **Instructions**:
+            *   If no babies or pets are detected, the 'subjects' array should be empty.
+            *   If the image is unclear or ambiguous, express this in the 'scene_description' and use a lower confidence score for any detected subjects.
+            *   Prioritize accuracy and safety above all else. Your analysis is critical for user peace of mind.
         `;
 
         // Optional parameters for the AI
@@ -418,126 +462,51 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseAIResponse(responseText) {
         console.log("Parsing AI response text:", responseText);
 
-        // Define strict detection patterns
-        const petBabyPatterns = [
-            'baby', 'infant', 'child', 'toddler', 
-            'dog', 'puppy', 'cat', 'kitten', 
-            'pet', 'person', 'kid'
-        ];
-
-        const statePatterns = [
-            'sleeping', 'playing', 'sitting', 'standing', 
-            'crying', 'eating', 'resting', 'active', 
-            'awake', 'moving', 'lying', 'present'
-        ];
-
-        // Default result structure
+        // Default result structure in case of parsing errors
         const defaultResult = {
-            scene: responseText.length > 30 ? responseText.slice(0, 200) : "Scene description not available",
+            scene: "Could not parse AI response.",
             objects: [],
-            alert: { type: "info", message: "No specific objects detected." },
+            alert: { type: "danger", message: "Error parsing AI response. Check console for details." },
             hasPetsOrBabies: false
         };
 
         try {
+            // Clean the response text to ensure it's valid JSON
+            // The AI might return a string wrapped in ```json ... ```
+            const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            const aiData = JSON.parse(jsonString);
+
+            // Validate the structure of the parsed JSON
+            if (!aiData.scene_description || !aiData.subjects || !aiData.safety_assessment) {
+                console.error("Invalid AI response structure:", aiData);
+                throw new Error("Missing required fields in AI response.");
+            }
+
             const result = {
-                scene: "",
-                objects: [],
-                alert: { type: "info", message: "No issues detected." },
-                hasPetsOrBabies: false
+                scene: aiData.scene_description,
+                // Map the 'subjects' array to the 'objects' array format
+                objects: aiData.subjects.map(subject => ({
+                    type: subject.type || 'Unknown',
+                    state: subject.state || 'Unspecified',
+                    confidence: subject.confidence || 0.5
+                })),
+                // Map the 'safety_assessment' to the 'alert' object format
+                alert: {
+                    type: aiData.safety_assessment.level ? aiData.safety_assessment.level.toLowerCase() : 'info',
+                    message: aiData.safety_assessment.reason || 'No specific details provided.'
+                },
+                // Determine if pets or babies are present
+                hasPetsOrBabies: aiData.subjects.length > 0
             };
 
-            // Extract scene description
-            const lines = responseText.split('\n').filter(line => line.trim() !== '');
-            result.scene = lines.length > 0 ? lines[0].trim() : defaultResult.scene;
-
-            // Strict object detection
-            const detectedObjects = [];
-            let foundPetOrBaby = false;
-
-            // Advanced pattern matching for objects
-            for (const line of lines) {
-                const lineLC = line.toLowerCase();
-                
-                // Check for explicit pet/baby mentions with states
-                for (const subjectType of petBabyPatterns) {
-                    if (lineLC.includes(subjectType)) {
-                        // Look for an associated state
-                        const associatedState = statePatterns.find(state => 
-                            lineLC.includes(state)
-                        ) || 'present';
-
-                        // Confidence calculation
-                        let confidence = 0.85;
-                        if (lineLC.includes('clearly') || lineLC.includes('definitely')) confidence = 0.95;
-                        if (lineLC.includes('appears to') || lineLC.includes('seems to')) confidence = 0.75;
-                        if (lineLC.includes('possibly') || lineLC.includes('might be')) confidence = 0.6;
-
-                        // Only add if confidence is above a threshold
-                        if (confidence >= 0.75) {
-                            detectedObjects.push({
-                                type: subjectType.charAt(0).toUpperCase() + subjectType.slice(1),
-                                state: associatedState.charAt(0).toUpperCase() + associatedState.slice(1),
-                                confidence: confidence
-                            });
-
-                            // Mark pet or baby found
-                            foundPetOrBaby = true;
-                        }
-                    }
-                }
-            }
-
-            // Check for explicit "no pets/babies" statements
-            const noObjectStatements = [
-                'no pets', 'no babies', 'no children', 
-                'not a pet monitoring situation', 
-                'empty room', 'no subjects detected'
-            ];
-
-            const isEmptyScene = noObjectStatements.some(statement => 
-                responseText.toLowerCase().includes(statement)
-            );
-
-            // Final object assignment
-            result.objects = detectedObjects;
-            result.hasPetsOrBabies = foundPetOrBaby && !isEmptyScene;
-
-            // Alert type determination
-            let alertType = "info";
-            let alertMessage = "No specific concerns detected.";
-
-            if (result.hasPetsOrBabies) {
-                alertType = "info";
-                alertMessage = `Detected ${result.objects.map(obj => obj.type).join(', ')}`;
-            }
-
-            // Check for safety concerns
-            const warningKeywords = [
-                'hazard', 'danger', 'unsafe', 'risk', 
-                'warning', 'caution', 'concern'
-            ];
-
-            const dangerKeywords = [
-                'emergency', 'immediate', 'urgent', 
-                'critical', 'serious', 'severe'
-            ];
-
-            if (warningKeywords.some(keyword => responseText.toLowerCase().includes(keyword))) {
-                alertType = "warning";
-                alertMessage = "Potential concern detected in the scene.";
-            }
-
-            if (dangerKeywords.some(keyword => responseText.toLowerCase().includes(keyword))) {
-                alertType = "danger";
-                alertMessage = "Critical issue detected! Immediate attention required.";
-            }
-
-            result.alert = { type: alertType, message: alertMessage };
-
+            console.log("Parsed AI result:", result);
             return result;
+
         } catch (error) {
             console.error("Error during AI response parsing:", error);
+            // Try to extract some information even if parsing fails
+            defaultResult.scene = responseText;
             return defaultResult;
         }
     }
@@ -560,13 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear and populate detection list
         detectionList.innerHTML = '';
 
-        // Check if we have pets or babies to display
-        const hasPetsOrBabies = results.hasPetsOrBabies || results.objects.some(obj => {
-            const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'];
-            return petBabyTypes.some(type => obj.type.toLowerCase().includes(type));
-        });
-
-        if (!hasPetsOrBabies) {
+        if (!results.hasPetsOrBabies) {
             // Display a message for no pets or babies
             const emptyItem = document.createElement('li');
             emptyItem.className = 'bg-gray-50 p-4 rounded-md text-gray-600 text-center';
@@ -577,23 +540,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             detectionList.appendChild(emptyItem);
-        } else if (results.objects.length === 0) {
-            // Just in case we have an empty objects array
-            const emptyItem = document.createElement('li');
-            emptyItem.className = 'bg-gray-50 p-3 rounded-md text-gray-500 text-center';
-            emptyItem.textContent = 'No specific objects detected';
-            detectionList.appendChild(emptyItem);
         } else {
             // Add each detected object to the list (only pets and babies)
             results.objects.forEach(obj => {
-                // Skip objects that aren't pets or babies if we have pet/baby objects
-                const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'];
-                const isPetOrBaby = petBabyTypes.some(type => obj.type.toLowerCase().includes(type));
-
-                if (hasPetsOrBabies && !isPetOrBaby) {
-                    return; // Skip this object
-                }
-
                 const listItem = document.createElement('li');
                 listItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
 
@@ -630,18 +579,33 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (type === 'danger') {
             alertClass = 'bg-red-100 border-red-400 text-red-800';
             alertIcon = 'fa-circle-exclamation';
-        } else { // info
+        } else { // info or safe
             alertClass = 'bg-blue-100 border-blue-400 text-blue-800';
             alertIcon = 'fa-circle-info';
         }
 
-        alertStatus.className = `p-4 rounded-md border-l-4 ${alertClass}`;
-        alertStatus.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas ${alertIcon} mr-3"></i>
-                <p>${message}</p>
-            </div>
-        `;
+        // Update safety assessment display
+        safetyLevelText.textContent = results.alert.type.charAt(0).toUpperCase() + results.alert.type.slice(1);
+        safetyReasonText.textContent = results.alert.message;
+
+        let safetyClass = '';
+        let safetyIcon = '';
+
+        if (type === 'safe') {
+            safetyClass = 'bg-green-100 border-green-400 text-green-800';
+            safetyIcon = 'fa-check-circle';
+        } else if (type === 'warning') {
+            safetyClass = 'bg-yellow-100 border-yellow-400 text-yellow-800';
+            safetyIcon = 'fa-triangle-exclamation';
+        } else if (type === 'danger') {
+            safetyClass = 'bg-red-100 border-red-400 text-red-800';
+            safetyIcon = 'fa-circle-exclamation';
+        } else { // Default to info if type is unexpected
+            safetyClass = 'bg-blue-100 border-blue-400 text-blue-800';
+            safetyIcon = 'fa-circle-info';
+        }
+
+        
 
         // Show the results container
         analysisResults.classList.remove('hidden');
@@ -824,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scene: result.scene,
             objects: result.objects,
             alert: result.alert,
-            hasPetsOrBabies: hasPetsOrBabies(result.objects)
+            hasPetsOrBabies: result.hasPetsOrBabies // Directly use the value from parsed AI result
         };
 
         console.log('New history entry:', entry); // Added log
@@ -848,18 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Check if the result contains pets or babies
-    function hasPetsOrBabies(objects) {
-        console.log('hasPetsOrBabies() called with objects:', objects); // Added log
-        const petBabyTypes = ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet'];
-        const result = objects.some(obj => {
-            return petBabyTypes.some(type =>
-                obj.type.toLowerCase().includes(type)
-            );
-        });
-        console.log('hasPetsOrBabies() returning:', result); // Added log
-        return result;
-    }
+    
 
     // Update the history display
     function updateHistoryDisplay() {
@@ -892,36 +845,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const timestamp = new Date(entry.timestamp);
             const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            // Determine alert class
-            let alertClass = 'text-blue-600';
-            let alertIcon = 'fa-info-circle';
+            // Determine alert class based on safety level
+            let alertClass = '';
+            let alertIcon = '';
 
-            if (entry.alert.type === 'warning') {
+            if (entry.alert.type === 'safe') {
+                alertClass = 'text-green-600';
+                alertIcon = 'fa-check-circle';
+            } else if (entry.alert.type === 'warning') {
                 alertClass = 'text-yellow-600';
                 alertIcon = 'fa-triangle-exclamation';
             } else if (entry.alert.type === 'danger') {
                 alertClass = 'text-red-600';
                 alertIcon = 'fa-circle-exclamation';
+            } else { // Default to info if type is unexpected
+                alertClass = 'text-blue-600';
+                alertIcon = 'fa-info-circle';
             }
 
             // Create the content based on whether pets/babies are present
             let objectsContent = '';
 
-            if (entry.hasPetsOrBabies) {
-                // Filter to only show relevant objects (pets and babies)
-                const petBabyObjects = entry.objects.filter(obj => {
-                    const type = obj.type.toLowerCase();
-                    return ['baby', 'infant', 'child', 'toddler', 'dog', 'puppy', 'cat', 'kitten', 'pet', 'person'].some(t => type.includes(t));
-                });
-
+            if (entry.hasPetsOrBabies && entry.objects.length > 0) {
                 objectsContent = `
                     <div class="mt-2">
                         <h5 class="text-sm font-medium text-gray-700">Detected:</h5>
                         <ul class="mt-1 text-sm text-gray-600">
-                            ${petBabyObjects.map(obj => `
+                            ${entry.objects.map(obj => `
                                 <li class="flex justify-between">
                                     <span>${obj.type} - ${obj.state}</span>
-                                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100">${Math.round((obj.confidence || 0.5) * 100)}%</span>
+                                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100">${Math.round((obj.confidence || 0.0) * 100)}%</span>
                                 </li>
                             `).join('')}
                         </ul>

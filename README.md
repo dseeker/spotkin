@@ -1,18 +1,23 @@
 # SpotKin
 
-SpotKin is a smart visual AI tool for pet and baby monitoring based on the PetSpot requirements. It utilizes computer vision and AI to monitor and provide meaningful alerts for pets and babies.
+SpotKin is an intelligent monitoring application that transforms your ordinary devices into AI-powered guardians for babies, pets, and home environments. Unlike traditional monitors that simply relay raw video or sound, SpotKin understands what it sees, providing meaningful insights and alerts only when something truly matters.
 
-## Features
+## Vision & Mission
 
-- Semantic Scene Analysis: Understands what's happening, not just motion or sound
-- Smart Alerts: Only notify when something meaningful happens
-- Privacy-First Design: On-device processing with minimal data sharing
-- No Hardware Required: Use your existing smartphone or tablet
-- Continuous Monitoring: Set up automatic monitoring with configurable refresh rates
-- History Timeline: View a timeline of past events and monitoring results
-- Local Storage: Data persists across browser sessions
-- Focused Object Detection: Clean display that focuses on pets and babies when present
-- Audio Alerts: Get sound notifications for important warnings
+Our vision is to give every parent and caregiver true peace of mind through smart, caring eyes. We believe an ordinary smartphone can become an intelligent guardian, silently watching over babies, pets, and homes with the sensitivity and understanding of a trusted sitter.
+
+Our mission is to transform off-the-shelf devices into AI-powered "nannies" that see and understand the scene, delivering only meaningful alerts and replacing frantic checking with calm confidence.
+
+## Key Features
+
+- **Semantic Scene Analysis**: Understands what's happening, not just motion or sound
+- **Contextual Alerts**: Only notify when something meaningful happens
+- **Privacy-First Design**: On-device processing with minimal data sharing
+- **No New Hardware Required**: Use your existing smartphone or tablet
+- **Continuous Monitoring**: Set up automatic monitoring with configurable refresh rates
+- **History Timeline**: View a timeline of past events and monitoring results
+- **Multi-Frame Intelligence**: Analyze patterns across time for better understanding
+- **Safety Detection**: Identify potential hazards in the monitoring environment
 
 ## Installation & Setup
 
@@ -55,6 +60,16 @@ While opening the index.html file directly in a browser is possible, the Puter.j
 2. Open `index.html` in your browser
 3. The application will detect that Puter.js is unavailable and activate the mock AI module
 
+## Development Documentation
+
+Detailed documentation for developers can be found in the `docs` directory:
+
+- [Development Roadmap](docs/ROADMAP.md) - Strategic objectives and planned features
+- [Implementation Tasks](docs/TASKS.md) - Specific coding tasks and priorities
+- [Market Analysis](docs/MARKET-ANALYSIS.md) - Competitive landscape and positioning
+- [UX Guidelines](docs/UX-GUIDELINES.md) - User experience principles and design standards
+- [Technical Architecture](docs/TECHNICAL-ARCHITECTURE.md) - System design and code organization
+
 ## Troubleshooting
 
 ### Common Issues
@@ -63,6 +78,16 @@ While opening the index.html file directly in a browser is possible, the Puter.j
    - **Symptom**: Error message stating "Puter.js Error: Unsupported Protocol"
    - **Cause**: Opening the application directly via the file:/// protocol
    - **Solution**: Serve the application through a web server using http-server as described above
+
+2. **Camera Permission Issues**
+   - **Symptom**: Camera fails to initialize or shows a black screen
+   - **Cause**: Browser permissions not granted or blocked
+   - **Solution**: Check browser settings and ensure camera permissions are allowed for the site
+
+3. **AI Analysis Errors**
+   - **Symptom**: AI analysis fails with error messages
+   - **Cause**: Connection issues with Puter AI service or malformed requests
+   - **Solution**: Ensure you're connected to the internet and try refreshing the page
 
 4. **Puppeteer Chrome Installation Issues**
    - **Symptom**: Error about "Could not find Chrome" when using Puppeteer
@@ -75,9 +100,9 @@ While opening the index.html file directly in a browser is possible, the Puter.j
 
 When running locally without access to the Puter AI API, the application automatically activates a mock AI module that provides random test responses to demonstrate the functionality. This allows you to test the UI and features without requiring an active internet connection or API access.
 
-## GitHub Pages
+## Contributing
 
-This project is deployed on GitHub Pages and can be accessed at [https://dseeker.github.io/spotkin/](https://dseeker.github.io/spotkin/)
+We welcome contributions to SpotKin! Please see our [Contributing Guidelines](docs/CONTRIBUTING.md) for more information on how to get involved.
 
 ## Technologies Used
 
@@ -89,24 +114,15 @@ This project is deployed on GitHub Pages and can be accessed at [https://dseeker
 - Web Audio API for sound alerts
 - Puppeteer for automated testing
 
-## Recent Updates
+## Roadmap
 
-- Added continuous monitoring with configurable refresh rates (5s, 10s, 15s, 30s, 60s)
-- Implemented a timeline display for viewing past events
-- Added focused display for pet and baby detection
-- Improved the interface to handle cases when no pets or babies are detected
-- Added local storage to persist monitoring history across sessions
-- Implemented a mock AI for local testing without the Puter API
-- Fixed JavaScript syntax issues in app.js
-- Added automated testing with Puppeteer
-- Added support for running with a local web server
-- Enhanced documentation with setup and troubleshooting guides
+See our [Development Roadmap](docs/ROADMAP.md) for information about planned features and enhancements.
 
-## Development Notes
+## License
 
-### Code Structure
+MIT
 
-- `index.html`: Main application entry point
-- `app.js`: Core application logic
-- `styles.css`: Custom styles beyond Tailwind CSS
+## Acknowledgments
 
+- Inspired by the PetSpot vision document
+- Special thanks to the Puter.js team for their AI vision capabilities
