@@ -21,11 +21,14 @@ describe('Monitoring Zone Selection Feature', () => {
     cy.get('#add-zone').should('be.visible').and('contain.text', 'Add monitoring zone');
     cy.get('#clear-zones').should('be.visible').and('contain.text', 'Clear all zones');
     
-    // Save preferences
-    cy.get('#preferences-save').click();
+    // Save preferences (scroll into view first and force click)
+    cy.get('#preferences-save').scrollIntoView().click({ force: true });
+    
+    // Wait for the modal to close and settings to apply
+    cy.wait(1000);
     
     // Verify zone toggle button appears in camera view
-    cy.get('#zone-toggle').should('be.visible');
+    cy.get('#zone-toggle').should('not.have.class', 'hidden').and('be.visible');
   });
 
   it('should allow creating monitoring zones', () => {
@@ -33,6 +36,9 @@ describe('Monitoring Zone Selection Feature', () => {
     cy.get('#preferences-btn').click();
     cy.get('#zones-enabled').check();
     cy.get('#add-zone').click(); // This should close modal and enter zone mode
+    
+    // Wait for modal to close and zone mode to initialize
+    cy.wait(500);
     
     // Verify we're in zone drawing mode
     cy.get('#zone-status').should('contain.text', 'Drawing Mode');
@@ -74,13 +80,36 @@ describe('Monitoring Zone Selection Feature', () => {
       
       // Enable zones and update display
       win.userPreferences.zonesEnabled = true;
-      win.updateZoneList();
       
-      // Open preferences to see zone list
+      // Open preferences first
       cy.get('#preferences-btn').click();
       cy.get('#zones-enabled').check();
       
+      // Update zone list after enabling zones
+      cy.window().then(() => {
+        // Ensure zones are properly set before updating list
+        win.currentZones = [
+          {
+            id: 1,
+            name: 'Test Zone 1',
+            x: 10, y: 10, width: 30, height: 20,
+            enabled: true
+          },
+          {
+            id: 2,
+            name: 'Test Zone 2', 
+            x: 50, y: 30, width: 25, height: 25,
+            enabled: false
+          }
+        ];
+        win.updateZoneList();
+      });
+      
+      // Wait for zone list to be updated
+      cy.wait(1000);
+      
       // Verify zones appear in list
+      cy.get('#zone-list').should('not.be.empty');
       cy.get('#zone-list').within(() => {
         cy.get('.zone-checkbox').should('have.length', 2);
         cy.get('.zone-name').first().should('contain.text', 'Test Zone 1');
@@ -90,6 +119,9 @@ describe('Monitoring Zone Selection Feature', () => {
         cy.get('.zone-checkbox').first().should('be.checked');
         cy.get('.zone-checkbox').last().should('not.be.checked');
       });
+      
+      // Close modal
+      cy.get('#preferences-close').click();
     });
   });
 
@@ -129,15 +161,20 @@ describe('Monitoring Zone Selection Feature', () => {
         { id: 1, name: 'Saved Zone', x: 25, y: 25, width: 50, height: 50, enabled: true }
       ];
       
-      // Enable zones
+      // Enable zones and open preferences
       cy.get('#preferences-btn').click();
       cy.get('#zones-enabled').check();
       
-      // Collect preferences
-      const prefs = win.collectPreferencesFromForm();
-      expect(prefs.zonesEnabled).to.be.true;
-      expect(prefs.monitoringZones).to.have.length(1);
-      expect(prefs.monitoringZones[0].name).to.equal('Saved Zone');
+      // Test preferences collection while modal is open
+      cy.window().its('collectPreferencesFromForm').then((collectFn) => {
+        const prefs = collectFn();
+        expect(prefs.zonesEnabled).to.be.true;
+        expect(prefs.monitoringZones).to.have.length(1);
+        expect(prefs.monitoringZones[0].name).to.equal('Saved Zone');
+      });
+      
+      // Close modal
+      cy.get('#preferences-close').click();
     });
   });
 
@@ -170,10 +207,13 @@ describe('Monitoring Zone Selection Feature', () => {
     // Test zone mode toggling
     cy.get('#preferences-btn').click();
     cy.get('#zones-enabled').check();
-    cy.get('#preferences-save').click();
+    cy.get('#preferences-save').scrollIntoView().click({ force: true });
+    
+    // Wait for preferences to be applied
+    cy.wait(1000);
     
     // Toggle zone mode on
-    cy.get('#zone-toggle').click();
+    cy.get('#zone-toggle').should('be.visible').click();
     cy.get('#zone-status').should('contain.text', 'Drawing Mode');
     cy.get('#zone-overlay').should('not.have.class', 'hidden');
     

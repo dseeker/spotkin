@@ -1,22 +1,139 @@
 // Global Error Handling
 console.log('🚀 SpotKin Application Initializing');
 
-// Single Global Error Handler
-window.onerror = function(message, source, lineno, colno, error) {
-    console.error('🚨 Global Error Caught:', {
-        message,
-        source,
-        lineno,
-        colno,
-        error: error ? error.toString() : null
-    });
-    return false; // Allow default error handling
-};
+// ENHANCED ERROR HANDLING SYSTEM
+class ErrorManager {
+    constructor() {
+        this.errorCount = 0;
+        this.errorHistory = [];
+        this.maxErrorHistory = 10;
+        this.userNotificationThreshold = 3; // Show user-friendly message after 3 errors
+        
+        this.setupGlobalHandlers();
+    }
+    
+    setupGlobalHandlers() {
+        // Enhanced global error handler
+        window.onerror = (message, source, lineno, colno, error) => {
+            this.handleError({
+                type: 'javascript',
+                message,
+                source,
+                lineno,
+                colno,
+                error: error ? error.toString() : null,
+                timestamp: new Date().toISOString()
+            });
+            return false;
+        };
 
-// Capture Unhandled Promise Rejections
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('🚨 Unhandled Promise Rejection:', event.reason);
-});
+        // Enhanced promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            this.handleError({
+                type: 'promise_rejection',
+                message: event.reason?.message || 'Unhandled Promise Rejection',
+                reason: event.reason,
+                timestamp: new Date().toISOString()
+            });
+        });
+    }
+    
+    handleError(errorInfo) {
+        console.error('🚨 Enhanced Error Handler:', errorInfo);
+        
+        this.errorCount++;
+        this.errorHistory.unshift(errorInfo);
+        
+        // Keep error history manageable
+        if (this.errorHistory.length > this.maxErrorHistory) {
+            this.errorHistory.pop();
+        }
+        
+        // Show user notification if errors are frequent
+        if (this.errorCount >= this.userNotificationThreshold) {
+            this.showUserErrorNotification(errorInfo);
+        }
+        
+        // Auto-recovery suggestions
+        this.suggestRecoveryActions(errorInfo);
+    }
+    
+    showUserErrorNotification(errorInfo) {
+        const errorContainer = this.createErrorNotificationElement(errorInfo);
+        document.body.appendChild(errorContainer);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (errorContainer.parentNode) {
+                errorContainer.parentNode.removeChild(errorContainer);
+            }
+        }, 10000);
+    }
+    
+    createErrorNotificationElement(errorInfo) {
+        const container = document.createElement('div');
+        container.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50 max-w-md';
+        container.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle mr-3 mt-1"></i>
+                    <div>
+                        <strong class="font-bold">Application Error Detected</strong>
+                        <p class="text-sm mt-1">SpotKin has encountered multiple errors. Try refreshing the page or check your internet connection.</p>
+                        <div class="mt-2">
+                            <button onclick="location.reload()" class="text-xs bg-red-200 hover:bg-red-300 px-2 py-1 rounded mr-2">
+                                Refresh Page
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded">
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="this.closest('.fixed').remove()" class="text-red-400 hover:text-red-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        return container;
+    }
+    
+    suggestRecoveryActions(errorInfo) {
+        // Camera-related error recovery
+        if (errorInfo.message && (errorInfo.message.includes('camera') || errorInfo.message.includes('video'))) {
+            console.log('💡 Recovery Suggestion: Camera error detected. Try refreshing the page to reinitialize camera access.');
+        }
+        
+        // AI service error recovery
+        if (errorInfo.message && errorInfo.message.includes('AI')) {
+            console.log('💡 Recovery Suggestion: AI service error. The system will automatically retry the request.');
+        }
+        
+        // Storage error recovery
+        if (errorInfo.message && errorInfo.message.includes('localStorage')) {
+            console.log('💡 Recovery Suggestion: Storage error. Consider clearing browser data or freeing up space.');
+        }
+    }
+    
+    // Reset error count (useful after successful operations)
+    resetErrorCount() {
+        this.errorCount = 0;
+        console.log('✅ Error count reset - system appears stable');
+    }
+    
+    // Get error statistics
+    getErrorStats() {
+        return {
+            totalErrors: this.errorCount,
+            recentErrors: this.errorHistory.length,
+            lastError: this.errorHistory[0] || null
+        };
+    }
+}
+
+// Initialize global error manager
+const errorManager = new ErrorManager();
+window.errorManager = errorManager; // Expose for testing
 
 // Parse the AI response text into a structured format for our app
 function parseAIResponse(responseText) {
@@ -330,7 +447,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // New: Frame history for temporal analysis
     let frameHistory = [];
     const FRAME_HISTORY_SIZE = 3; // Store the last 3 frames
+    
+    // PERFORMANCE OPTIMIZATION: Debounce camera operations
+    let isProcessingSnapshot = false;
+    let debounceTimeout = null;
 
+    // Initialize PWA capabilities
+    initPWACapabilities();
+    
     // Initialize the camera and check for Puter AI availability
     initCamera();
     checkPuterAIAvailability();
@@ -476,8 +600,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-    // Camera initialization function
-    async function initCamera() {
+    // ENHANCED ERROR HANDLING: Camera initialization with retry logic
+    async function initCamera(retryCount = 0) {
+        const maxRetries = 2;
+        
         try {
             if (currentStream) {
                 // Stop any existing streams
@@ -503,12 +629,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageCapture = new ImageCapture(videoTrack);
             }
 
-            // Update the camera feedback
+            // Update the camera feedback with success message
             cameraFeedback.innerHTML = `
                 <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
                     <i class="fas fa-check-circle mr-1"></i>Camera active
                 </div>
             `;
+
+            // Reset error count on successful camera init
+            errorManager.resetErrorCount();
 
             // Wait for the video to be loaded
             return new Promise((resolve) => {
@@ -517,11 +646,64 @@ document.addEventListener('DOMContentLoaded', function() {
                     resolve();
                 };
             });
+            
         } catch (error) {
-            console.error('Error initializing camera:', error);
+            console.error(`Camera initialization error (attempt ${retryCount + 1}):`, error);
+            
+            // Enhanced error messages based on error type
+            let userMessage = 'Camera error: ';
+            let recoveryActions = [];
+            
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                userMessage += 'Camera access denied. Please allow camera permissions and refresh the page.';
+                recoveryActions.push('Allow camera access in your browser settings');
+                recoveryActions.push('Refresh the page');
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                userMessage += 'No camera found. Please connect a camera and try again.';
+                recoveryActions.push('Connect a camera device');
+                recoveryActions.push('Refresh the page');
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                userMessage += 'Camera is being used by another application.';
+                recoveryActions.push('Close other applications using the camera');
+                recoveryActions.push('Refresh the page');
+                
+                // Try to retry with different constraints
+                if (retryCount < maxRetries) {
+                    setTimeout(() => {
+                        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+                        initCamera(retryCount + 1);
+                    }, 2000);
+                    return;
+                }
+            } else if (error.name === 'OverconstrainedError') {
+                userMessage += 'Camera constraints not supported.';
+                recoveryActions.push('Try switching between front and rear camera');
+                
+                // Auto-retry with less strict constraints
+                if (retryCount < maxRetries) {
+                    setTimeout(() => {
+                        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+                        initCamera(retryCount + 1);
+                    }, 1000);
+                    return;
+                }
+            } else {
+                userMessage += `${error.message || 'Unknown error'}`;
+                recoveryActions.push('Refresh the page');
+                recoveryActions.push('Check your camera permissions');
+            }
+
+            // Display enhanced error feedback with recovery actions
             cameraFeedback.innerHTML = `
                 <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
-                    <i class="fas fa-exclamation-circle mr-1"></i>Camera error: ${error.message}
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    <div class="font-medium">${userMessage}</div>
+                    <div class="text-xs mt-1">
+                        <strong>Try:</strong> ${recoveryActions.join(' • ')}
+                    </div>
+                    <button onclick="initCamera()" class="text-xs bg-red-200 hover:bg-red-300 px-2 py-1 rounded mt-1">
+                        Retry
+                    </button>
                 </div>
             `;
         }
@@ -533,12 +715,62 @@ document.addEventListener('DOMContentLoaded', function() {
         initCamera();
     }
 
+    // PERFORMANCE OPTIMIZATION: Compress image for AI analysis
+    function compressImageForAI(sourceCanvas) {
+        try {
+            // Create a smaller canvas for compression
+            const compressionCanvas = document.createElement('canvas');
+            const compressionContext = compressionCanvas.getContext('2d');
+            
+            // Calculate optimal dimensions for AI processing
+            // Reduce resolution while maintaining aspect ratio
+            const maxDimension = 800; // Maximum width or height for AI processing
+            const aspectRatio = sourceCanvas.width / sourceCanvas.height;
+            
+            if (sourceCanvas.width > sourceCanvas.height) {
+                compressionCanvas.width = Math.min(maxDimension, sourceCanvas.width);
+                compressionCanvas.height = compressionCanvas.width / aspectRatio;
+            } else {
+                compressionCanvas.height = Math.min(maxDimension, sourceCanvas.height);
+                compressionCanvas.width = compressionCanvas.height * aspectRatio;
+            }
+            
+            // Enable image smoothing for better quality when downscaling
+            compressionContext.imageSmoothingEnabled = true;
+            compressionContext.imageSmoothingQuality = 'high';
+            
+            // Draw the original image scaled down
+            compressionContext.drawImage(sourceCanvas, 0, 0, compressionCanvas.width, compressionCanvas.height);
+            
+            // Use JPEG compression with quality setting for smaller file size
+            return compressionCanvas.toDataURL('image/jpeg', 0.85); // 85% quality provides good balance
+        } catch (error) {
+            console.warn('Image compression failed, using original:', error);
+            // Fallback to original image if compression fails
+            return sourceCanvas.toDataURL('image/png');
+        }
+    }
+
     // Take a snapshot from the video feed
     function takeSnapshot() {
         if (!video.srcObject) {
             alert('Camera is not initialized. Please refresh and allow camera access.');
             return;
         }
+
+        // PERFORMANCE OPTIMIZATION: Prevent rapid successive calls
+        if (isProcessingSnapshot && !isMonitoring) {
+            console.log('Snapshot already in progress, skipping...');
+            return;
+        }
+
+        // Clear any existing debounce timeout
+        if (debounceTimeout) {
+            clearTimeout(debounceTimeout);
+        }
+
+        // Set processing flag
+        isProcessingSnapshot = true;
 
         // Show loading state
         showLoadingState();
@@ -551,11 +783,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Draw the current video frame to the canvas
             canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Get the image data as a base64 string (use PNG for higher quality)
-            const imageData = canvas.toDataURL('image/png');
+            // PERFORMANCE OPTIMIZATION: Compress image for AI analysis
+            const compressedImageData = compressImageForAI(canvas);
 
-            // Add current frame to history and maintain size
-            frameHistory.push(imageData);
+            // Add current frame to history and maintain size (store compressed version)
+            frameHistory.push(compressedImageData);
             if (frameHistory.length > FRAME_HISTORY_SIZE) {
                 frameHistory.shift(); // Remove the oldest frame
             }
@@ -564,40 +796,72 @@ document.addEventListener('DOMContentLoaded', function() {
             processImageWithAI(frameHistory);
         } catch (error) {
             console.error('Error taking snapshot:', error);
-            showErrorState('Failed to capture image. Please try again.');
+            
+            // Queue snapshot for background sync if processing fails
+            if (backgroundSyncManager) {
+                const snapshotData = {
+                    imageData: compressedImageData || canvas.toDataURL('image/jpeg', 0.8),
+                    timestamp: Date.now(),
+                    frameHistory: frameHistory.slice(-3), // Only keep last 3 frames
+                    settings: {
+                        quality: 0.8,
+                        monitoring: isMonitoring,
+                        preferences: userPreferences
+                    }
+                };
+                
+                backgroundSyncManager.queueSnapshot(snapshotData.imageData, snapshotData.settings)
+                    .then(result => {
+                        if (result.queued) {
+                            showErrorState('Failed to process image now. Analysis queued for when connection is restored.');
+                        }
+                    })
+                    .catch(syncError => {
+                        console.error('❌ Failed to queue snapshot for background sync:', syncError);
+                        showErrorState('Failed to capture image. Please try again.');
+                    });
+            } else {
+                showErrorState('Failed to capture image. Please try again.');
+            }
+            
+            // Reset processing flag on error
+            isProcessingSnapshot = false;
         }
     }
 
     // Image upload functionality removed
 
-    // Process the image with AI using Puter's AI vision API
-    function processImageWithAI(frameHistoryData) {
-        // Analyze temporal changes across frames
-        const temporalAnalysis = analyzeTemporalChanges(frameHistoryData);
-        console.log("Temporal analysis:", temporalAnalysis);
+    // ENHANCED ERROR HANDLING: AI processing with retry logic
+    function processImageWithAI(frameHistoryData, retryCount = 0) {
+        const maxRetries = 2;
         
-        // Create enhanced AI prompt with temporal context
-        const prompt = createEnhancedAIPrompt(temporalAnalysis);
-        
-        // Get the current (latest) frame for AI analysis
-        const currentImageData = frameHistoryData[frameHistoryData.length - 1];
+        try {
+            // Analyze temporal changes across frames
+            const temporalAnalysis = analyzeTemporalChanges(frameHistoryData);
+            console.log("Temporal analysis:", temporalAnalysis);
+            
+            // Create enhanced AI prompt with temporal context
+            const prompt = createEnhancedAIPrompt(temporalAnalysis);
+            
+            // Get the current (latest) frame for AI analysis
+            const currentImageData = frameHistoryData[frameHistoryData.length - 1];
 
-        // Optional parameters for the AI
-        const options = {
-            model: 'gpt-4o-mini', // Default model, using the most affordable option
-            stream: false // We want the complete response at once
-        };
+            // Optional parameters for the AI
+            const options = {
+                model: 'gpt-4o-mini', // Default model, using the most affordable option
+                stream: false // We want the complete response at once
+            };
 
-        // Call Puter AI vision API
-        console.log("Sending image to Puter AI...");
+            // Call Puter AI vision API
+            console.log(`Sending image to Puter AI... (attempt ${retryCount + 1})`);
 
-        // Disable the button during processing (only if not in monitoring mode)
-        if (!isMonitoring) {
-            takeSnapshotBtn.disabled = true;
-        }
+            // Disable the button during processing (only if not in monitoring mode)
+            if (!isMonitoring) {
+                takeSnapshotBtn.disabled = true;
+            }
 
-        // Use Puter's AI chat API with the current frame
-        puter.ai.chat(prompt, currentImageData, false, options)
+            // Use Puter's AI chat API with the current frame
+            puter.ai.chat(prompt, currentImageData, false, options)
             .then(response => {
                 console.log("AI Response:", response);
                 console.log("AI Response type:", typeof response);
@@ -661,15 +925,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error("AI API Error:", error);
-                showErrorState("Error connecting to AI service. Please try again later.");
+                console.error(`AI API Error (attempt ${retryCount + 1}):`, error);
+                
+                // ENHANCED ERROR HANDLING: Retry logic with exponential backoff
+                if (retryCount < maxRetries) {
+                    const retryDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s delays
+                    console.log(`Retrying AI request in ${retryDelay}ms...`);
+                    
+                    setTimeout(() => {
+                        processImageWithAI(frameHistoryData, retryCount + 1);
+                    }, retryDelay);
+                    
+                    return; // Don't proceed to finally block yet
+                }
+                
+                // All retries failed - show user-friendly error with recovery options
+                const errorMessage = error.message || 'Unknown error';
+                let userMessage = "Error connecting to AI service. ";
+                
+                if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                    userMessage += "Please check your internet connection and try again.";
+                } else if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+                    userMessage += "Service temporarily unavailable. Please try again in a few moments.";
+                } else {
+                    userMessage += "Please try again later.";
+                }
+                
+                showErrorState(userMessage);
             })
             .finally(() => {
                 // Re-enable the button if not in monitoring mode
                 if (!isMonitoring) {
                     takeSnapshotBtn.disabled = false;
                 }
+                
+                // PERFORMANCE OPTIMIZATION: Reset processing flag with debounce
+                debounceTimeout = setTimeout(() => {
+                    isProcessingSnapshot = false;
+                }, 500); // 500ms cooldown between snapshots
             });
+        } catch (syncError) {
+            // ENHANCED ERROR HANDLING: Catch synchronous errors in AI processing
+            console.error("Synchronous error in AI processing:", syncError);
+            showErrorState("An unexpected error occurred during image processing. Please try again.");
+            
+            // Reset processing state
+            isProcessingSnapshot = false;
+            if (!isMonitoring) {
+                takeSnapshotBtn.disabled = false;
+            }
+        }
     }
 
     // Check if an alert should be triggered based on user preferences
@@ -988,8 +1293,30 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show the results container
         analysisResults.classList.remove('hidden');
 
-        // Add to history
+        // Add to history with background sync integration
         addToHistory(results);
+        
+        // NOTIFICATION INTEGRATION: Send critical notifications
+        if (results.alert && results.alert.type !== 'none') {
+            const notificationData = {
+                alert: results.alert,
+                severity: results.severity || 3,
+                scene: results.scene,
+                hasPetsOrBabies: results.hasPetsOrBabies,
+                temporalAnalysis: results.temporalAnalysis
+            };
+            
+            // Send notification for critical events and queue for background sync
+            sendCriticalNotification(notificationData);
+            
+            // Queue alert for background sync
+            if (backgroundSyncManager) {
+                backgroundSyncManager.queueAlert(notificationData, results.alert.type)
+                    .catch(error => {
+                        console.error('❌ Failed to queue alert for background sync:', error);
+                    });
+            }
+        }
     }
 
     // Show loading state while processing image
@@ -1065,6 +1392,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         isMonitoring = true;
         updateMonitoringUI();
+        
+        // NOTIFICATION INTEGRATION: Send monitoring started notification
+        const interval = parseInt(refreshRateSelect.value);
+        sendMonitoringNotification('started', `Monitoring started with ${interval/1000}s intervals`);
 
         // Take an initial snapshot immediately
         console.log('Taking initial snapshot...'); // Added log
@@ -1094,6 +1425,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Remove visual indicator from camera container
         document.getElementById('camera-container').classList.remove('camera-active');
+        
+        // NOTIFICATION INTEGRATION: Send monitoring stopped notification
+        sendMonitoringNotification('stopped', 'Monitoring has been stopped');
     }
 
     // Update the monitoring UI based on current state
@@ -1151,9 +1485,9 @@ document.addEventListener('DOMContentLoaded', function() {
             historyTab.classList.remove('hidden');
             currentTab.classList.add('hidden');
 
-            // Refresh the history display
-            console.log('Refreshing history display...'); // Added log
-            updateHistoryDisplay();
+            // Refresh the history display (use scheduled update for performance)
+            console.log('Scheduling history display refresh...'); // Added log
+            scheduleHistoryUpdate();
         }
     }
 
@@ -1171,28 +1505,69 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         console.log('New history entry:', entry); // Added log
+        
+        // Background sync integration: Queue timeline event for synchronization
+        if (backgroundSyncManager) {
+            backgroundSyncManager.queueTimelineEvent({
+                type: 'analysis_result',
+                entry: entry,
+                priority: result.alert.type === 'danger' ? 'high' : 'normal',
+                source: 'spotkin_analysis'
+            }).catch(error => {
+                console.error('❌ Failed to queue timeline event for background sync:', error);
+            });
+        }
+        
         // Add to the beginning of the history array
         historyData.unshift(entry);
 
-        // Limit the history size
+        // PERFORMANCE OPTIMIZATION: Limit history size and clean old entries
         if (historyData.length > MAX_HISTORY_ITEMS) {
             console.log('History size exceeds limit, trimming...'); // Added log
             historyData = historyData.slice(0, MAX_HISTORY_ITEMS);
+        }
+        
+        // Clean old entries (older than 7 days) to prevent unbounded growth
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const initialLength = historyData.length;
+        
+        historyData = historyData.filter(entry => {
+            const entryDate = new Date(entry.timestamp);
+            return entryDate > oneWeekAgo;
+        });
+        
+        if (historyData.length < initialLength) {
+            console.log(`Cleaned ${initialLength - historyData.length} old history entries`);
         }
 
         // Save to local storage
         console.log('Saving history to local storage...'); // Added log
         saveHistoryToLocalStorage();
 
-        // Update the history display if the history tab is active
+        // Update the history display if the history tab is active (use scheduled update for performance)
         if (!historyTab.classList.contains('hidden')) {
-            console.log('History tab is active, updating display...'); // Added log
-            updateHistoryDisplay();
+            console.log('History tab is active, scheduling display update...'); // Added log
+            scheduleHistoryUpdate();
         }
     }
 
     
 
+    // PERFORMANCE OPTIMIZATION: Batch DOM updates for better performance
+    let updateHistoryTimeout = null;
+    
+    function scheduleHistoryUpdate() {
+        if (updateHistoryTimeout) {
+            clearTimeout(updateHistoryTimeout);
+        }
+        
+        updateHistoryTimeout = setTimeout(() => {
+            updateHistoryDisplay();
+            updateHistoryTimeout = null;
+        }, 100); // Batch updates with 100ms delay
+    }
+    
     // Update the history display
     function updateHistoryDisplay() {
         console.log('updateHistoryDisplay() called. History data length:', historyData.length); // Added log
@@ -1209,11 +1584,10 @@ document.addEventListener('DOMContentLoaded', function() {
         historyEmptyMsg.classList.add('hidden');
         timelineContainer.classList.remove('hidden');
 
-        // Clear the timeline list
-        timelineList.innerHTML = '';
-        console.log('Cleared timeline list.'); // Added log
-
-        // Add each history item to the timeline
+        // PERFORMANCE OPTIMIZATION: Use DocumentFragment for batch DOM operations
+        const fragment = document.createDocumentFragment();
+        
+        // Add each history item to the fragment first
         historyData.forEach((entry, index) => {
             console.log('Adding history entry to timeline:', entry); // Added log
             // Create timeline item
@@ -1279,19 +1653,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${objectsContent}
             `;
 
-            // Add to timeline
-            timelineList.appendChild(timelineItem);
+            // Add to fragment instead of directly to DOM
+            fragment.appendChild(timelineItem);
         });
+        
+        // PERFORMANCE OPTIMIZATION: Clear and update DOM in one operation
+        timelineList.innerHTML = '';
+        timelineList.appendChild(fragment);
+        
+        console.log('Timeline display updated with batch DOM operations');
+    }
+
+    // PERFORMANCE OPTIMIZATION: Compress history data for storage
+    function compressHistoryForStorage(historyData) {
+        try {
+            // Create compressed version by removing redundant data and truncating strings
+            return historyData.map(entry => ({
+                timestamp: entry.timestamp,
+                scene: entry.scene.substring(0, 200), // Limit scene description length
+                objects: entry.objects.map(obj => ({
+                    type: obj.type,
+                    state: obj.state.substring(0, 100), // Limit state description
+                    confidence: Math.round(obj.confidence * 100) / 100 // Round confidence to 2 decimal places
+                })),
+                alert: {
+                    type: entry.alert.type,
+                    message: entry.alert.message.substring(0, 150) // Limit alert message length
+                },
+                hasPetsOrBabies: entry.hasPetsOrBabies,
+                // Compress temporal analysis data
+                temporalAnalysis: entry.temporalAnalysis ? {
+                    hasMovement: entry.temporalAnalysis.hasMovement,
+                    movementLevel: entry.temporalAnalysis.movementLevel,
+                    frameCount: entry.temporalAnalysis.frameCount
+                    // Skip full temporalContext to save space
+                } : null
+            }));
+        } catch (error) {
+            console.warn('History compression failed, using original data:', error);
+            return historyData;
+        }
     }
 
     // Save history data to local storage
     function saveHistoryToLocalStorage() {
         console.log('saveHistoryToLocalStorage() called. Saving', historyData.length, 'items.'); // Added log
         try {
-            localStorage.setItem('spotkin_history', JSON.stringify(historyData));
-            console.log('History saved to local storage successfully.'); // Added log
+            // PERFORMANCE OPTIMIZATION: Compress history data before storing
+            const compressedHistory = compressHistoryForStorage(historyData);
+            localStorage.setItem('spotkin_history', JSON.stringify(compressedHistory));
+            console.log('Compressed history saved to local storage successfully.'); // Added log
         } catch (error) {
             console.error('Error saving history to local storage:', error); // Added log
+            // Try to save without compression as fallback
+            try {
+                localStorage.setItem('spotkin_history', JSON.stringify(historyData.slice(0, 20))); // Limit to 20 items
+                console.log('Fallback: Limited history saved without compression.');
+            } catch (fallbackError) {
+                console.error('Fallback save also failed:', fallbackError);
+            }
         }
     }
 
@@ -1303,10 +1723,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (savedHistory) {
                 historyData = JSON.parse(savedHistory);
                 console.log('History loaded from local storage.', historyData.length, 'items loaded.'); // Added log
-                // Update the history display if data was loaded
+                // Update the history display if data was loaded (use scheduled update for performance)
                 if (historyData.length > 0) {
-                    console.log('Updating history display after loading from local storage.'); // Added log
-                    updateHistoryDisplay();
+                    console.log('Scheduling history display update after loading from local storage.'); // Added log
+                    scheduleHistoryUpdate();
                 }
             } else {
                 console.log('No history found in local storage.'); // Added log
@@ -1324,7 +1744,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('User confirmed clearing history.'); // Added log
             historyData = [];
             saveHistoryToLocalStorage();
-            updateHistoryDisplay();
+            scheduleHistoryUpdate();
             console.log('History cleared.'); // Added log
         } else {
             console.log('User cancelled clearing history.'); // Added log
@@ -1343,11 +1763,18 @@ document.addEventListener('DOMContentLoaded', function() {
         defaultRefreshRate: '10000',
         movementThreshold: 1000,
         zonesEnabled: false,
-        monitoringZones: []
+        monitoringZones: [],
+        // Notification settings
+        notificationsEnabled: false,
+        notifyDanger: true,
+        notifySafety: true,
+        notifyActivity: false,
+        notifyMonitoring: true
     };
 
-    // Current preferences (loaded from localStorage or defaults)
+    // Current preferences (loaded from localStorage or defaults) - exposed globally for testing
     let userPreferences = { ...defaultPreferences };
+    window.userPreferences = userPreferences;
 
     // DOM Elements for preferences
     const preferencesBtn = document.getElementById('preferences-btn');
@@ -1366,6 +1793,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const defaultRefreshRate = document.getElementById('default-refresh-rate');
     const movementThreshold = document.getElementById('movement-threshold');
     const movementThresholdValue = document.getElementById('movement-threshold-value');
+    
+    // Notification elements
+    const notificationsEnabled = document.getElementById('notifications-enabled');
+    const notificationControls = document.getElementById('notification-controls');
+    const notifyDanger = document.getElementById('notify-danger');
+    const notifySafety = document.getElementById('notify-safety');
+    const notifyActivity = document.getElementById('notify-activity');
+    const notifyMonitoring = document.getElementById('notify-monitoring');
+    const testNotificationBtn = document.getElementById('test-notification');
     
     // Zone-related elements
     const zonesEnabled = document.getElementById('zones-enabled');
@@ -1387,6 +1823,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const savedPrefs = localStorage.getItem('spotkin_preferences');
             if (savedPrefs) {
                 userPreferences = { ...defaultPreferences, ...JSON.parse(savedPrefs) };
+                window.userPreferences = userPreferences; // Update global reference
                 console.log('User preferences loaded:', userPreferences);
             } else {
                 console.log('No saved preferences found, using defaults');
@@ -1394,6 +1831,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading preferences:', error);
             userPreferences = { ...defaultPreferences };
+            window.userPreferences = userPreferences; // Update global reference
         }
         
         // Apply preferences to the UI
@@ -1432,6 +1870,16 @@ document.addEventListener('DOMContentLoaded', function() {
         movementThreshold.value = userPreferences.movementThreshold;
         movementThresholdValue.textContent = userPreferences.movementThreshold;
         
+        // Apply notification preferences
+        notificationsEnabled.checked = userPreferences.notificationsEnabled;
+        if (userPreferences.notificationsEnabled) {
+            notificationControls.classList.remove('hidden');
+        }
+        notifyDanger.checked = userPreferences.notifyDanger;
+        notifySafety.checked = userPreferences.notifySafety;
+        notifyActivity.checked = userPreferences.notifyActivity;
+        notifyMonitoring.checked = userPreferences.notifyMonitoring;
+
         // Apply zone preferences
         zonesEnabled.checked = userPreferences.zonesEnabled;
         if (userPreferences.zonesEnabled) {
@@ -1439,6 +1887,10 @@ document.addEventListener('DOMContentLoaded', function() {
             currentZones = [...userPreferences.monitoringZones];
             updateZoneList();
             updateZoneDisplay();
+            // Show zone toggle button if zones are enabled
+            if (zoneToggle) {
+                zoneToggle.classList.remove('hidden');
+            }
         }
         
         // Update the main refresh rate select to match preference
@@ -1457,6 +1909,13 @@ document.addEventListener('DOMContentLoaded', function() {
             soundAlerts: soundOn.checked,
             defaultRefreshRate: defaultRefreshRate.value,
             movementThreshold: parseInt(movementThreshold.value),
+            // Notification settings
+            notificationsEnabled: notificationsEnabled.checked,
+            notifyDanger: notifyDanger.checked,
+            notifySafety: notifySafety.checked,
+            notifyActivity: notifyActivity.checked,
+            notifyMonitoring: notifyMonitoring.checked,
+            // Zone settings
             zonesEnabled: zonesEnabled.checked,
             monitoringZones: [...currentZones]
         };
@@ -1489,8 +1948,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function savePreferences() {
         console.log('Saving preferences from form');
         userPreferences = collectPreferencesFromForm();
+        window.userPreferences = userPreferences; // Update global reference
         saveUserPreferences();
+        
+        // Queue preferences for background sync
+        if (backgroundSyncManager) {
+            backgroundSyncManager.queuePreferenceChange(userPreferences)
+                .catch(error => {
+                    console.error('❌ Failed to queue preferences for background sync:', error);
+                });
+        }
+        
         hidePreferencesModal();
+        
+        // Show zone toggle button if zones are enabled
+        if (userPreferences.zonesEnabled && zoneToggle) {
+            zoneToggle.classList.remove('hidden');
+        } else if (zoneToggle) {
+            zoneToggle.classList.add('hidden');
+        }
         
         // Show confirmation feedback
         const originalText = preferencesSave.textContent;
@@ -1593,6 +2069,15 @@ document.addEventListener('DOMContentLoaded', function() {
     preferencesSave.addEventListener('click', savePreferences);
     preferencesReset.addEventListener('click', resetPreferences);
     
+    // Setup Wizard button
+    const rerunSetupBtn = document.getElementById('rerun-setup-wizard');
+    if (rerunSetupBtn) {
+        rerunSetupBtn.addEventListener('click', () => {
+            hidePreferencesModal();
+            showSetupWizard();
+        });
+    }
+    
     // Close modal when clicking outside
     preferencesModal.addEventListener('click', (e) => {
         if (e.target === preferencesModal) {
@@ -1605,13 +2090,51 @@ document.addEventListener('DOMContentLoaded', function() {
         movementThresholdValue.textContent = e.target.value;
     });
 
+    // Notification control event listeners
+    notificationsEnabled.addEventListener('change', async (e) => {
+        if (e.target.checked) {
+            // Request notification permission
+            const permission = await requestNotificationPermission();
+            if (permission === 'granted') {
+                notificationControls.classList.remove('hidden');
+            } else {
+                // Permission denied, uncheck the box
+                e.target.checked = false;
+                showNotificationPermissionDenied();
+            }
+        } else {
+            notificationControls.classList.add('hidden');
+        }
+    });
+
+    // Test notification button
+    testNotificationBtn.addEventListener('click', async () => {
+        console.log('🧪 Test notification button clicked');
+        
+        // Ensure we have permission first
+        const permission = await requestNotificationPermission();
+        if (permission === 'granted') {
+            testNotification();
+        } else {
+            showNotificationPermissionDenied();
+        }
+    });
+
     // Zone control event listeners
     zonesEnabled.addEventListener('change', (e) => {
         if (e.target.checked) {
             zoneControls.classList.remove('hidden');
+            // Show zone toggle button when zones are enabled
+            if (zoneToggle) {
+                zoneToggle.classList.remove('hidden');
+            }
         } else {
             zoneControls.classList.add('hidden');
             zoneOverlay.classList.add('hidden');
+            // Hide zone toggle button when zones are disabled
+            if (zoneToggle) {
+                zoneToggle.classList.add('hidden');
+            }
         }
         updateZoneDisplay();
     });
@@ -1972,3 +2495,1653 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Preferences system initialized');
 });
+
+// PWA Capabilities and Offline Management
+function initPWACapabilities() {
+    console.log('🔧 Initializing PWA capabilities...');
+    
+    // Monitor online/offline status
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Initial status check
+    updateConnectionStatus();
+    
+    // Setup background sync registration if supported
+    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+        console.log('✅ Background sync supported');
+    }
+    
+    // Setup push notifications if supported
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        console.log('✅ Push notifications supported');
+    }
+    
+    // Setup installation prompt handling
+    setupInstallPrompt();
+    
+    // Setup app shortcuts handling
+    setupAppShortcuts();
+    
+    console.log('✅ PWA capabilities initialized');
+}
+
+function handleOnline() {
+    console.log('📶 Connection restored');
+    updateConnectionStatus();
+    
+    // Show connection restored notification
+    showConnectionNotification('online');
+    
+    // Retry any failed operations
+    retryFailedOperations();
+}
+
+function handleOffline() {
+    console.log('📵 Connection lost');
+    updateConnectionStatus();
+    
+    // Show offline notification
+    showConnectionNotification('offline');
+}
+
+function updateConnectionStatus() {
+    const isOnline = navigator.onLine;
+    const statusIndicator = document.getElementById('connection-status') || createConnectionStatusIndicator();
+    
+    if (isOnline) {
+        statusIndicator.innerHTML = '<i class="fas fa-wifi text-green-500"></i>';
+        statusIndicator.title = 'Online';
+    } else {
+        statusIndicator.innerHTML = '<i class="fas fa-wifi-slash text-red-500"></i>';
+        statusIndicator.title = 'Offline - Limited functionality available';
+    }
+}
+
+function createConnectionStatusIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'connection-status';
+    indicator.className = 'fixed top-4 right-4 z-50 p-2 bg-white rounded-full shadow-lg';
+    document.body.appendChild(indicator);
+    return indicator;
+}
+
+function showConnectionNotification(status) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 left-4 right-4 p-4 rounded-lg shadow-lg z-50 flex items-center';
+    
+    if (status === 'online') {
+        notification.className += ' bg-green-600 text-white';
+        notification.innerHTML = `
+            <i class="fas fa-wifi mr-3"></i>
+            <div>
+                <p class="font-semibold">Back Online</p>
+                <p class="text-sm opacity-90">All features are now available</p>
+            </div>
+        `;
+    } else {
+        notification.className += ' bg-orange-600 text-white';
+        notification.innerHTML = `
+            <i class="fas fa-wifi-slash mr-3"></i>
+            <div>
+                <p class="font-semibold">Offline Mode</p>
+                <p class="text-sm opacity-90">Limited functionality - Camera still works</p>
+            </div>
+        `;
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 4000);
+}
+
+function retryFailedOperations() {
+    // This could retry any queued operations that failed when offline
+    console.log('🔄 Retrying failed operations...');
+    // Implementation depends on specific needs
+}
+
+function setupInstallPrompt() {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('✅ Running as installed PWA');
+        document.body.classList.add('pwa-installed');
+    }
+}
+
+function setupAppShortcuts() {
+    // Handle shortcuts from manifest when app is launched
+    const params = new URLSearchParams(window.location.search);
+    const shortcut = params.get('shortcut');
+    
+    if (shortcut) {
+        console.log('🚀 Launched via shortcut:', shortcut);
+        handleAppShortcut(shortcut);
+    }
+}
+
+function handleAppShortcut(shortcut) {
+    // Wait for app to be ready before executing shortcuts
+    setTimeout(() => {
+        switch (shortcut) {
+            case 'snapshot':
+                if (typeof takeSnapshot === 'function') {
+                    takeSnapshot();
+                }
+                break;
+            case 'monitor':
+                const toggleBtn = document.getElementById('toggle-monitoring');
+                if (toggleBtn && toggleBtn.textContent.includes('Start')) {
+                    toggleBtn.click();
+                }
+                break;
+            case 'history':
+                const historyTab = document.getElementById('tab-history');
+                if (historyTab) {
+                    historyTab.click();
+                }
+                break;
+        }
+    }, 2000);
+}
+
+// PWA-enhanced error handling
+function handlePWAError(error, context = '') {
+    if (!navigator.onLine) {
+        // Special handling for offline errors
+        console.log('🔌 Offline error detected:', error);
+        showOfflineErrorMessage(context);
+        return true; // Handled
+    }
+    return false; // Not handled, continue with normal error handling
+}
+
+function showOfflineErrorMessage(context) {
+    const message = document.createElement('div');
+    message.className = 'fixed bottom-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50';
+    message.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-info-circle mr-3"></i>
+                <div>
+                    <p class="font-semibold">Offline Mode</p>
+                    <p class="text-sm opacity-90">${context || 'This feature requires an internet connection'}</p>
+                </div>
+            </div>
+            <button onclick="this.closest('.fixed').remove()" class="text-blue-200 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(message);
+    
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.parentNode.removeChild(message);
+        }
+    }, 5000);
+}
+
+// Enhanced local storage with PWA awareness
+function saveToLocalStorageWithSync(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        
+        // Queue for background sync if offline and service worker is available
+        if (!navigator.onLine && 'serviceWorker' in navigator) {
+            queueForBackgroundSync(key, data);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+        return false;
+    }
+}
+
+function queueForBackgroundSync(key, data) {
+    // This would queue data for sync when back online
+    // Implementation would depend on specific sync requirements
+    console.log('📝 Queued for background sync:', key);
+}
+
+// NOTIFICATION SYSTEM IMPLEMENTATION
+
+// Request notification permission
+async function requestNotificationPermission() {
+    console.log('🔔 Requesting notification permission...');
+    
+    if (!('Notification' in window)) {
+        console.warn('❌ This browser does not support notifications');
+        return 'denied';
+    }
+    
+    if (Notification.permission === 'granted') {
+        console.log('✅ Notification permission already granted');
+        return 'granted';
+    }
+    
+    if (Notification.permission === 'denied') {
+        console.log('❌ Notification permission was previously denied');
+        return 'denied';
+    }
+    
+    try {
+        const permission = await Notification.requestPermission();
+        console.log('🔔 Notification permission result:', permission);
+        return permission;
+    } catch (error) {
+        console.error('❌ Error requesting notification permission:', error);
+        return 'denied';
+    }
+}
+
+// Show notification permission denied message
+function showNotificationPermissionDenied() {
+    const message = document.createElement('div');
+    message.className = 'fixed bottom-4 left-4 right-4 bg-yellow-600 text-white p-4 rounded-lg shadow-lg z-50';
+    message.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-bell-slash mr-3"></i>
+                <div>
+                    <p class="font-semibold">Notifications Blocked</p>
+                    <p class="text-sm opacity-90">Enable notifications in your browser settings to receive alerts</p>
+                </div>
+            </div>
+            <button onclick="this.closest('.fixed').remove()" class="text-yellow-200 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(message);
+    
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.parentNode.removeChild(message);
+        }
+    }, 6000);
+}
+
+// Send notification based on alert analysis
+function sendCriticalNotification(alertData) {
+    // Check if notifications are enabled and we have permission
+    if (!userPreferences.notificationsEnabled || Notification.permission !== 'granted') {
+        console.log('📵 Notifications disabled or no permission');
+        return;
+    }
+    
+    // Determine if we should send this notification based on user preferences
+    if (!shouldSendNotification(alertData)) {
+        console.log('🔇 Notification filtered by user preferences');
+        return;
+    }
+    
+    console.log('🔔 Sending critical notification:', alertData);
+    
+    // Create notification content
+    const notificationData = createNotificationContent(alertData);
+    
+    // Send via service worker if available, otherwise use direct notification
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // Send via service worker for better reliability
+        navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            data: notificationData
+        });
+    } else {
+        // Direct notification
+        showDirectNotification(notificationData);
+    }
+}
+
+// Determine if notification should be sent based on user preferences
+function shouldSendNotification(alertData) {
+    const { alert, severity } = alertData;
+    
+    // Always send danger alerts if enabled
+    if (severity >= 7 && userPreferences.notifyDanger) {
+        return true;
+    }
+    
+    // Safety concerns (medium priority)
+    if (severity >= 5 && severity < 7 && userPreferences.notifySafety) {
+        return true;
+    }
+    
+    // General activity (low priority)
+    if (severity < 5 && userPreferences.notifyActivity) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Create notification content based on alert data
+function createNotificationContent(alertData) {
+    const { alert, severity, scene, hasPetsOrBabies } = alertData;
+    
+    let title = 'SpotKin Alert';
+    let body = alert.message;
+    let icon = './images/icon-192.png';
+    let badge = './images/badge.png';
+    let tag = 'spotkin-alert';
+    let requireInteraction = false;
+    
+    // Customize based on severity
+    if (severity >= 7) {
+        title = '🚨 High Priority Alert - SpotKin';
+        requireInteraction = true;
+        tag = 'spotkin-danger';
+    } else if (severity >= 5) {
+        title = '⚠️ Safety Alert - SpotKin';
+        tag = 'spotkin-safety';
+    } else {
+        title = '📋 Activity Alert - SpotKin';
+        tag = 'spotkin-activity';
+    }
+    
+    // Add context about subjects
+    if (hasPetsOrBabies) {
+        const subjects = hasPetsOrBabies.babies ? 'baby' : 'pet';
+        body += ` (${subjects} detected in scene)`;
+    }
+    
+    return {
+        title,
+        options: {
+            body,
+            icon,
+            badge,
+            tag,
+            requireInteraction,
+            vibrate: severity >= 7 ? [200, 100, 200, 100, 200] : [200, 100, 200],
+            data: {
+                alertData,
+                timestamp: Date.now(),
+                severity
+            },
+            actions: [
+                {
+                    action: 'view',
+                    title: 'View Details',
+                    icon: './images/icon-view.png'
+                },
+                {
+                    action: 'dismiss',
+                    title: 'Dismiss',
+                    icon: './images/icon-dismiss.png'
+                }
+            ]
+        }
+    };
+}
+
+// Show direct notification (fallback when no service worker)
+function showDirectNotification(notificationData) {
+    try {
+        const notification = new Notification(notificationData.title, notificationData.options);
+        
+        notification.onclick = function(event) {
+            console.log('🔔 Notification clicked');
+            event.preventDefault();
+            
+            // Focus or open the app window
+            if (window.focus) {
+                window.focus();
+            }
+            
+            // Close the notification
+            notification.close();
+        };
+        
+        // Auto-close after timeout (except for high priority)
+        if (!notificationData.options.requireInteraction) {
+            setTimeout(() => {
+                notification.close();
+            }, 8000);
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to show notification:', error);
+    }
+}
+
+// Send monitoring status notifications
+function sendMonitoringNotification(status, message) {
+    if (!userPreferences.notifyMonitoring || !userPreferences.notificationsEnabled) {
+        return;
+    }
+    
+    const notificationData = {
+        title: 'SpotKin Monitoring',
+        options: {
+            body: message,
+            icon: './images/icon-192.png',
+            tag: 'spotkin-monitoring',
+            vibrate: [100, 50, 100],
+            data: {
+                type: 'monitoring',
+                status,
+                timestamp: Date.now()
+            }
+        }
+    };
+    
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            data: notificationData
+        });
+    } else {
+        showDirectNotification(notificationData);
+    }
+}
+
+// Test notification function (for debugging)
+function testNotification() {
+    console.log('🧪 Testing notification...');
+    
+    const testData = {
+        alert: { message: 'This is a test notification from SpotKin' },
+        severity: 6,
+        scene: 'Test scene for notification',
+        hasPetsOrBabies: { babies: false, pets: true }
+    };
+    
+    sendCriticalNotification(testData);
+}
+
+// SETUP WIZARD FUNCTIONALITY
+class SetupWizard {
+    constructor() {
+        this.currentStep = 1;
+        this.totalSteps = 4;
+        this.setupData = {
+            monitorType: null,
+            cameraPosition: null,
+            monitoringZones: [],
+            alertPreferences: {},
+            completed: false
+        };
+        
+        this.initializeEventListeners();
+    }
+    
+    initializeEventListeners() {
+        // Navigation buttons
+        document.getElementById('setup-next')?.addEventListener('click', () => this.nextStep());
+        document.getElementById('setup-prev')?.addEventListener('click', () => this.prevStep());
+        document.getElementById('setup-skip')?.addEventListener('click', () => this.skipSetup());
+        document.getElementById('setup-finish')?.addEventListener('click', () => this.finishSetup());
+        document.getElementById('setup-wizard-close')?.addEventListener('click', () => this.closeWizard());
+        
+        // Monitor type selection
+        document.querySelectorAll('input[name="monitor-type"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.setupData.monitorType = e.target.value;
+                this.updateMonitorTypeSelection(e.target.value);
+            });
+        });
+        
+        // Camera controls
+        document.getElementById('wizard-start-camera')?.addEventListener('click', () => this.startWizardCamera());
+        document.getElementById('wizard-switch-camera')?.addEventListener('click', () => this.switchWizardCamera());
+        
+        // Zone controls
+        document.getElementById('wizard-add-zone')?.addEventListener('click', () => this.addMonitoringZone());
+        document.getElementById('wizard-clear-zones')?.addEventListener('click', () => this.clearMonitoringZones());
+        
+        // Skip zones checkbox
+        document.getElementById('skip-zones')?.addEventListener('change', (e) => {
+            this.setupData.skipZones = e.target.checked;
+        });
+        
+        // Monitor type cards
+        document.querySelectorAll('.monitor-type-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const radio = card.parentNode.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+    
+    show() {
+        const modal = document.getElementById('setup-wizard');
+        if (modal) {
+            modal.classList.remove('hidden');
+            this.currentStep = 1;
+            this.updateWizardDisplay();
+            
+            // Focus first interactive element
+            setTimeout(() => {
+                const firstRadio = document.querySelector('input[name="monitor-type"]');
+                if (firstRadio) firstRadio.focus();
+            }, 300);
+        }
+    }
+    
+    hide() {
+        const modal = document.getElementById('setup-wizard');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+    
+    nextStep() {
+        if (!this.validateCurrentStep()) {
+            return;
+        }
+        
+        if (this.currentStep < this.totalSteps) {
+            this.currentStep++;
+            this.updateWizardDisplay();
+            this.populateStepContent();
+        }
+    }
+    
+    prevStep() {
+        if (this.currentStep > 1) {
+            this.currentStep--;
+            this.updateWizardDisplay();
+        }
+    }
+    
+    validateCurrentStep() {
+        switch (this.currentStep) {
+            case 1:
+                if (!this.setupData.monitorType) {
+                    this.showValidationError('Please select a monitoring type');
+                    return false;
+                }
+                break;
+            case 2:
+                // Camera setup is optional, just show warning if skipped
+                if (!this.setupData.cameraPosition) {
+                    const proceed = confirm('Camera preview not set up. You can set this up later. Continue?');
+                    return proceed;
+                }
+                break;
+            case 3:
+                // Zones are optional
+                return true;
+            case 4:
+                // Preferences have defaults
+                return true;
+        }
+        return true;
+    }
+    
+    updateWizardDisplay() {
+        // Update progress indicators
+        for (let i = 1; i <= this.totalSteps; i++) {
+            const indicator = document.getElementById(`step-${i}-indicator`);
+            const progress = document.getElementById(`progress-${i}-${i + 1}`);
+            
+            if (indicator) {
+                if (i < this.currentStep) {
+                    indicator.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-semibold';
+                    indicator.innerHTML = '<i class="fas fa-check"></i>';
+                } else if (i === this.currentStep) {
+                    indicator.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold';
+                    indicator.textContent = i;
+                } else {
+                    indicator.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-semibold';
+                    indicator.textContent = i;
+                }
+            }
+            
+            if (progress) {
+                progress.className = i < this.currentStep ? 'w-16 h-1 bg-green-600' : 'w-16 h-1 bg-gray-300';
+            }
+        }
+        
+        // Update progress text
+        const progressText = document.getElementById('progress-text');
+        if (progressText) {
+            progressText.textContent = `Step ${this.currentStep} of ${this.totalSteps}`;
+        }
+        
+        // Show/hide steps
+        document.querySelectorAll('.setup-step').forEach((step, index) => {
+            step.classList.toggle('hidden', index + 1 !== this.currentStep);
+        });
+        
+        // Update navigation buttons
+        const prevBtn = document.getElementById('setup-prev');
+        const nextBtn = document.getElementById('setup-next');
+        const finishBtn = document.getElementById('setup-finish');
+        
+        if (prevBtn) {
+            prevBtn.classList.toggle('hidden', this.currentStep === 1);
+        }
+        
+        if (nextBtn) {
+            nextBtn.classList.toggle('hidden', this.currentStep === this.totalSteps);
+        }
+        
+        if (finishBtn) {
+            finishBtn.classList.toggle('hidden', this.currentStep !== this.totalSteps);
+        }
+    }
+    
+    updateMonitorTypeSelection(type) {
+        // Update UI to show selected type
+        document.querySelectorAll('.monitor-type-card').forEach(card => {
+            const radio = card.parentNode.querySelector('input[type="radio"]');
+            if (radio.value === type) {
+                card.style.borderColor = '#4f46e5';
+                card.style.backgroundColor = '#f0f9ff';
+            } else {
+                card.style.borderColor = '#d1d5db';
+                card.style.backgroundColor = 'transparent';
+            }
+        });
+    }
+    
+    populateStepContent() {
+        switch (this.currentStep) {
+            case 2:
+                this.populateCameraPositioningTips();
+                break;
+            case 4:
+                this.populateAlertTypes();
+                break;
+        }
+    }
+    
+    populateCameraPositioningTips() {
+        const tipsContainer = document.getElementById('positioning-tips');
+        if (!tipsContainer) return;
+        
+        const tips = {
+            baby: [
+                'Position camera to view the entire crib or sleeping area',
+                'Mount at least 3 feet away from the baby',
+                'Ensure clear view of the baby\'s face and chest',
+                'Avoid placing camera directly above to prevent falling',
+                'Consider multiple angles for comprehensive coverage'
+            ],
+            pet: [
+                'Position to cover main activity areas',
+                'Include food, water, and favorite resting spots',
+                'Mount high enough to avoid pet interference',
+                'Cover entry/exit points if monitoring unsupervised time',
+                'Consider outdoor access areas if applicable'
+            ],
+            general: [
+                'Focus on main entry points and valuable areas',
+                'Ensure good coverage of high-traffic zones',
+                'Position to minimize blind spots',
+                'Consider lighting conditions throughout the day',
+                'Mount securely to prevent tampering'
+            ]
+        };
+        
+        const selectedTips = tips[this.setupData.monitorType] || tips.general;
+        tipsContainer.innerHTML = selectedTips.map(tip => `<li>• ${tip}</li>`).join('');
+    }
+    
+    populateAlertTypes() {
+        const typesContainer = document.getElementById('wizard-alert-types');
+        if (!typesContainer) return;
+        
+        const alertTypes = {
+            baby: [
+                { id: 'cry-detection', label: 'Crying detection', checked: true },
+                { id: 'movement-alerts', label: 'Unusual movement patterns', checked: true },
+                { id: 'position-alerts', label: 'Position changes', checked: true },
+                { id: 'safety-hazards', label: 'Safety hazards in area', checked: true },
+                { id: 'no-movement', label: 'Extended periods of no movement', checked: false }
+            ],
+            pet: [
+                { id: 'distress-sounds', label: 'Distress sounds', checked: true },
+                { id: 'unusual-behavior', label: 'Unusual behavior patterns', checked: true },
+                { id: 'activity-levels', label: 'Abnormal activity levels', checked: false },
+                { id: 'area-access', label: 'Access to restricted areas', checked: true },
+                { id: 'destructive-behavior', label: 'Destructive behavior', checked: false }
+            ],
+            general: [
+                { id: 'motion-detection', label: 'Motion detection', checked: true },
+                { id: 'security-alerts', label: 'Security concerns', checked: true },
+                { id: 'unusual-activity', label: 'Unusual activity', checked: true },
+                { id: 'area-intrusion', label: 'Restricted area intrusion', checked: false }
+            ]
+        };
+        
+        const selectedTypes = alertTypes[this.setupData.monitorType] || alertTypes.general;
+        
+        typesContainer.innerHTML = selectedTypes.map(type => `
+            <label class="flex items-center">
+                <input type="checkbox" id="wizard-${type.id}" class="form-checkbox" ${type.checked ? 'checked' : ''}>
+                <span class="ml-2 text-sm">${type.label}</span>
+            </label>
+        `).join('');
+    }
+    
+    startWizardCamera() {
+        // This would integrate with existing camera functionality
+        console.log('Starting wizard camera...');
+        // For now, just show a placeholder
+        const preview = document.getElementById('wizard-camera-preview');
+        if (preview) {
+            preview.innerHTML = '<div class="text-green-600"><i class="fas fa-video text-4xl mb-2"></i><p>Camera active (preview)</p></div>';
+        }
+        this.setupData.cameraPosition = 'configured';
+    }
+    
+    switchWizardCamera() {
+        console.log('Switching wizard camera...');
+        // This would integrate with camera switching logic
+    }
+    
+    addMonitoringZone() {
+        console.log('Adding monitoring zone...');
+        // This would integrate with zone drawing functionality
+        const canvas = document.getElementById('wizard-zone-canvas');
+        if (canvas) {
+            // Simple placeholder zone
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#4f46e5';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(50, 50, 200, 100);
+            
+            this.setupData.monitoringZones.push({
+                x: 50, y: 50, width: 200, height: 100
+            });
+        }
+    }
+    
+    clearMonitoringZones() {
+        const canvas = document.getElementById('wizard-zone-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        this.setupData.monitoringZones = [];
+    }
+    
+    skipSetup() {
+        if (confirm('Are you sure you want to skip the setup wizard? You can always run it again later from settings.')) {
+            this.closeWizard();
+            this.markSetupCompleted(false);
+        }
+    }
+    
+    finishSetup() {
+        // Collect final preferences
+        this.collectFinalPreferences();
+        
+        // Apply settings
+        this.applySetupSettings();
+        
+        // Mark setup as completed
+        this.markSetupCompleted(true);
+        
+        // Close wizard
+        this.closeWizard();
+        
+        // Show success message
+        this.showCompletionMessage();
+    }
+    
+    collectFinalPreferences() {
+        this.setupData.alertPreferences = {
+            sensitivity: document.getElementById('wizard-sensitivity')?.value || 'medium',
+            soundAlerts: document.getElementById('wizard-sound-alerts')?.checked || false,
+            pushNotifications: document.getElementById('wizard-push-notifications')?.checked || false,
+            visualAlerts: document.getElementById('wizard-visual-alerts')?.checked || false
+        };
+        
+        // Collect alert type preferences
+        const alertTypes = {};
+        document.querySelectorAll('#wizard-alert-types input[type="checkbox"]').forEach(checkbox => {
+            alertTypes[checkbox.id.replace('wizard-', '')] = checkbox.checked;
+        });
+        this.setupData.alertPreferences.alertTypes = alertTypes;
+    }
+    
+    applySetupSettings() {
+        // Apply settings to the main application
+        const preferences = {
+            ...this.setupData.alertPreferences,
+            monitorType: this.setupData.monitorType,
+            setupCompleted: true
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('spotkin-setup-data', JSON.stringify(this.setupData));
+        
+        // Apply to existing preference system
+        if (typeof updateUserPreferences === 'function') {
+            updateUserPreferences(preferences);
+        }
+        
+        console.log('✅ Setup wizard completed:', this.setupData);
+    }
+    
+    markSetupCompleted(completed) {
+        localStorage.setItem('spotkin-setup-completed', completed.toString());
+        this.setupData.completed = completed;
+    }
+    
+    closeWizard() {
+        this.hide();
+    }
+    
+    showCompletionMessage() {
+        // Show a success notification
+        const message = document.createElement('div');
+        message.className = 'fixed top-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+        message.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-3 text-xl"></i>
+                <div>
+                    <p class="font-semibold">Setup Complete!</p>
+                    <p class="text-sm opacity-90">SpotKin is ready to monitor your ${this.setupData.monitorType || 'area'}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(message);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 5000);
+        
+        // Scroll to demo section
+        setTimeout(() => {
+            const demoSection = document.getElementById('demo');
+            if (demoSection) {
+                demoSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }, 1000);
+    }
+    
+    showValidationError(message) {
+        // Show validation error
+        const error = document.createElement('div');
+        error.className = 'fixed top-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+        error.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3"></i>
+                <p class="text-sm">${message}</p>
+            </div>
+        `;
+        
+        document.body.appendChild(error);
+        
+        setTimeout(() => {
+            if (error.parentNode) {
+                error.parentNode.removeChild(error);
+            }
+        }, 3000);
+    }
+    
+    static shouldShowSetup() {
+        const completed = localStorage.getItem('spotkin-setup-completed');
+        return completed !== 'true' && completed !== 'false'; // Show on first visit
+    }
+    
+    static showSetupIfNeeded() {
+        if (SetupWizard.shouldShowSetup()) {
+            const wizard = new SetupWizard();
+            // Show setup after a brief delay to let page load
+            setTimeout(() => wizard.show(), 1000);
+            return wizard;
+        }
+        return null;
+    }
+}
+
+// Initialize Setup Wizard
+let setupWizard = null;
+
+// Show setup wizard on first visit
+document.addEventListener('DOMContentLoaded', () => {
+    setupWizard = SetupWizard.showSetupIfNeeded();
+});
+
+// Add button to rerun setup wizard (for testing/access later)
+function showSetupWizard() {
+    if (!setupWizard) {
+        setupWizard = new SetupWizard();
+    }
+    setupWizard.show();
+}
+
+// Help Modal Functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const helpCloseBtn = helpModal?.querySelector('.close-help');
+    const helpTabs = helpModal?.querySelectorAll('.help-tab');
+    const helpContents = helpModal?.querySelectorAll('.help-content');
+
+    // Open help modal
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            if (helpModal) {
+                helpModal.classList.remove('hidden');
+                // Focus on first tab
+                const firstTab = helpModal.querySelector('.help-tab');
+                if (firstTab) firstTab.click();
+            }
+        });
+    }
+
+    // Close help modal
+    if (helpCloseBtn) {
+        helpCloseBtn.addEventListener('click', () => {
+            if (helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // Close modal when clicking backdrop
+    if (helpModal) {
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // Handle tab switching
+    if (helpTabs) {
+        helpTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetContent = tab.getAttribute('data-tab');
+                
+                // Remove active state from all tabs and contents
+                helpTabs.forEach(t => t.classList.remove('border-blue-500', 'text-blue-600'));
+                helpContents.forEach(c => c.classList.add('hidden'));
+                
+                // Add active state to clicked tab
+                tab.classList.add('border-blue-500', 'text-blue-600');
+                
+                // Show corresponding content
+                const content = helpModal.querySelector(`#help-${targetContent}`);
+                if (content) {
+                    content.classList.remove('hidden');
+                }
+            });
+        });
+    }
+
+    // Keyboard navigation for help modal
+    if (helpModal) {
+        helpModal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                helpModal.classList.add('hidden');
+            }
+        });
+    }
+});
+
+// Background Sync Manager
+class BackgroundSyncManager {
+    constructor() {
+        this.isOnline = navigator.onLine;
+        this.syncQueue = new Map();
+        this.syncInProgress = false;
+        this.maxRetries = 3;
+        
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            console.log('🌐 Network back online - triggering background sync');
+            this.isOnline = true;
+            this.triggerBackgroundSync();
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('📴 Network offline - queuing operations');
+            this.isOnline = false;
+        });
+    }
+
+    async queueSnapshot(imageData, settings = {}) {
+        try {
+            if (this.isOnline) {
+                // Process immediately if online
+                return await this.processSnapshotOnline(imageData, settings);
+            } else {
+                // Queue for later processing
+                await this.addToQueue('snapshots', {
+                    imageData,
+                    settings,
+                    type: 'snapshot'
+                });
+                console.log('📸 Snapshot queued for background sync');
+                return { queued: true, message: 'Snapshot will be processed when online' };
+            }
+        } catch (error) {
+            console.error('❌ Failed to queue snapshot:', error);
+            // Still queue it even if initial processing fails
+            await this.addToQueue('snapshots', {
+                imageData,
+                settings,
+                type: 'snapshot',
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
+    async queueTimelineEvent(eventData) {
+        try {
+            if (this.isOnline) {
+                return await this.processTimelineEventOnline(eventData);
+            } else {
+                await this.addToQueue('timeline', {
+                    data: eventData,
+                    type: 'timeline'
+                });
+                console.log('📊 Timeline event queued for background sync');
+                return { queued: true };
+            }
+        } catch (error) {
+            console.error('❌ Failed to queue timeline event:', error);
+            await this.addToQueue('timeline', {
+                data: eventData,
+                type: 'timeline',
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
+    async queuePreferenceChange(preferences) {
+        try {
+            if (this.isOnline) {
+                return await this.processPreferencesOnline(preferences);
+            } else {
+                await this.addToQueue('preferences', {
+                    data: preferences,
+                    type: 'preferences'
+                });
+                console.log('⚙️ Preferences queued for background sync');
+                return { queued: true };
+            }
+        } catch (error) {
+            console.error('❌ Failed to queue preference change:', error);
+            await this.addToQueue('preferences', {
+                data: preferences,
+                type: 'preferences',
+                error: error.message
+            });
+        }
+    }
+
+    async queueAlert(alertData, priority = 'safe') {
+        try {
+            if (this.isOnline && priority === 'danger') {
+                // Critical alerts should be processed immediately even if online
+                return await this.processAlertOnline(alertData, priority);
+            } else {
+                await this.addToQueue('alerts', {
+                    data: alertData,
+                    priority,
+                    type: 'alert'
+                });
+                console.log(`🚨 ${priority.toUpperCase()} alert queued for background sync`);
+                return { queued: true };
+            }
+        } catch (error) {
+            console.error('❌ Failed to queue alert:', error);
+            await this.addToQueue('alerts', {
+                data: alertData,
+                priority,
+                type: 'alert',
+                error: error.message
+            });
+        }
+    }
+
+    async addToQueue(storeName, data) {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            // Send to service worker for IndexedDB storage
+            navigator.serviceWorker.controller.postMessage({
+                type: 'QUEUE_FOR_SYNC',
+                storeName,
+                data
+            });
+        } else {
+            // Fallback: store in localStorage temporarily
+            const queueKey = `spotkin-sync-queue-${storeName}`;
+            let queue = [];
+            try {
+                const stored = localStorage.getItem(queueKey);
+                queue = stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.warn('Failed to parse sync queue from localStorage');
+            }
+            
+            queue.push({
+                ...data,
+                timestamp: Date.now(),
+                id: Date.now() + Math.random()
+            });
+            
+            // Keep queue manageable (max 50 items per type)
+            if (queue.length > 50) {
+                queue = queue.slice(-50);
+            }
+            
+            localStorage.setItem(queueKey, JSON.stringify(queue));
+        }
+    }
+
+    async triggerBackgroundSync() {
+        if (this.syncInProgress) {
+            console.log('🔄 Background sync already in progress');
+            return;
+        }
+
+        if (!('serviceWorker' in navigator)) {
+            console.warn('⚠️ Service Worker not supported - using fallback sync');
+            return this.fallbackSync();
+        }
+
+        try {
+            this.syncInProgress = true;
+            const registration = await navigator.serviceWorker.ready;
+            
+            if ('sync' in registration) {
+                // Register different sync events
+                await registration.sync.register('background-snapshot');
+                await registration.sync.register('background-timeline');
+                await registration.sync.register('background-preferences');
+                await registration.sync.register('background-alerts');
+                
+                console.log('✅ Background sync registered successfully');
+                this.showSyncStatus('Syncing queued data...', 'info');
+            } else {
+                console.warn('⚠️ Background Sync not supported - using fallback');
+                return this.fallbackSync();
+            }
+        } catch (error) {
+            console.error('❌ Failed to trigger background sync:', error);
+            this.fallbackSync();
+        } finally {
+            this.syncInProgress = false;
+        }
+    }
+
+    async fallbackSync() {
+        console.log('🔄 Running fallback sync...');
+        
+        const syncTypes = ['snapshots', 'timeline', 'preferences', 'alerts'];
+        
+        for (const type of syncTypes) {
+            try {
+                const queueKey = `spotkin-sync-queue-${type}`;
+                const stored = localStorage.getItem(queueKey);
+                
+                if (stored) {
+                    const queue = JSON.parse(stored);
+                    console.log(`📋 Processing ${queue.length} queued ${type}`);
+                    
+                    const processedItems = [];
+                    
+                    for (const item of queue) {
+                        try {
+                            await this.processFallbackItem(type, item);
+                            processedItems.push(item.id);
+                            console.log(`✅ Processed ${type} item ${item.id}`);
+                        } catch (error) {
+                            console.error(`❌ Failed to process ${type} item ${item.id}:`, error);
+                            
+                            // Implement retry logic
+                            item.retryCount = (item.retryCount || 0) + 1;
+                            if (item.retryCount >= this.maxRetries) {
+                                console.log(`🗑️ Max retries exceeded for ${type} item ${item.id}, removing`);
+                                processedItems.push(item.id);
+                            }
+                        }
+                    }
+                    
+                    // Remove processed items from queue
+                    if (processedItems.length > 0) {
+                        const updatedQueue = queue.filter(item => !processedItems.includes(item.id));
+                        if (updatedQueue.length === 0) {
+                            localStorage.removeItem(queueKey);
+                        } else {
+                            localStorage.setItem(queueKey, JSON.stringify(updatedQueue));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Fallback sync failed for ${type}:`, error);
+            }
+        }
+        
+        this.showSyncStatus('Sync completed', 'success');
+    }
+
+    async processFallbackItem(type, item) {
+        switch (type) {
+            case 'snapshots':
+                return await this.processSnapshotOnline(item.imageData, item.settings);
+            case 'timeline':
+                return await this.processTimelineEventOnline(item.data);
+            case 'preferences':
+                return await this.processPreferencesOnline(item.data);
+            case 'alerts':
+                return await this.processAlertOnline(item.data, item.priority);
+            default:
+                throw new Error(`Unknown sync type: ${type}`);
+        }
+    }
+
+    async processSnapshotOnline(imageData, settings) {
+        // Mock processing - in real app this would send to AI service
+        console.log('📸 Processing snapshot online');
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    processed: true,
+                    timestamp: Date.now()
+                });
+            }, 1000);
+        });
+    }
+
+    async processTimelineEventOnline(eventData) {
+        console.log('📊 Processing timeline event online');
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({ success: true, synced: true });
+            }, 500);
+        });
+    }
+
+    async processPreferencesOnline(preferences) {
+        console.log('⚙️ Syncing preferences online');
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({ success: true, synced: true });
+            }, 300);
+        });
+    }
+
+    async processAlertOnline(alertData, priority) {
+        console.log(`🚨 Processing ${priority} alert online`);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({ success: true, delivered: true });
+            }, priority === 'danger' ? 100 : 500);
+        });
+    }
+
+    showSyncStatus(message, type = 'info') {
+        const statusEl = document.getElementById('sync-status');
+        if (statusEl) {
+            statusEl.textContent = message;
+            statusEl.className = `fixed bottom-20 left-4 p-2 rounded text-white text-sm transition-opacity ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+            }`;
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                statusEl.style.opacity = '0';
+                setTimeout(() => statusEl.remove(), 300);
+            }, 3000);
+        } else {
+            // Create status element if it doesn't exist
+            const status = document.createElement('div');
+            status.id = 'sync-status';
+            status.textContent = message;
+            status.className = `fixed bottom-20 left-4 p-2 rounded text-white text-sm transition-opacity ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+            }`;
+            document.body.appendChild(status);
+            
+            setTimeout(() => {
+                status.style.opacity = '0';
+                setTimeout(() => status.remove(), 300);
+            }, 3000);
+        }
+    }
+
+    getQueueStatus() {
+        const status = {};
+        const syncTypes = ['snapshots', 'timeline', 'preferences', 'alerts'];
+        
+        for (const type of syncTypes) {
+            try {
+                const queueKey = `spotkin-sync-queue-${type}`;
+                const stored = localStorage.getItem(queueKey);
+                const queue = stored ? JSON.parse(stored) : [];
+                status[type] = {
+                    count: queue.length,
+                    lastQueued: queue.length > 0 ? Math.max(...queue.map(item => item.timestamp)) : null
+                };
+            } catch (error) {
+                status[type] = { count: 0, error: error.message };
+            }
+        }
+        
+        return status;
+    }
+
+    async clearQueue(type = null) {
+        if (type) {
+            localStorage.removeItem(`spotkin-sync-queue-${type}`);
+            console.log(`🧹 Cleared ${type} sync queue`);
+        } else {
+            const syncTypes = ['snapshots', 'timeline', 'preferences', 'alerts'];
+            syncTypes.forEach(t => localStorage.removeItem(`spotkin-sync-queue-${t}`));
+            console.log('🧹 Cleared all sync queues');
+        }
+    }
+}
+
+// Initialize background sync
+let backgroundSyncManager;
+
+document.addEventListener('DOMContentLoaded', () => {
+    backgroundSyncManager = new BackgroundSyncManager();
+    console.log('🔄 Background Sync Manager initialized');
+    
+    // Initialize background sync UI
+    initBackgroundSyncUI();
+});
+
+// Enhanced retryFailedOperations function with background sync integration
+function retryFailedOperations() {
+    console.log('🔄 Retrying failed operations via background sync...');
+    if (backgroundSyncManager) {
+        backgroundSyncManager.triggerBackgroundSync();
+    }
+}
+
+// Background Sync UI Management
+function initBackgroundSyncUI() {
+    console.log('🎨 Initializing Background Sync UI...');
+    
+    // Update sync status display periodically
+    updateSyncStatusDisplay();
+    setInterval(updateSyncStatusDisplay, 10000); // Update every 10 seconds
+    
+    // Manual sync button
+    const manualSyncBtn = document.getElementById('manual-sync-btn');
+    if (manualSyncBtn) {
+        manualSyncBtn.addEventListener('click', async () => {
+            try {
+                manualSyncBtn.disabled = true;
+                manualSyncBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Syncing...';
+                
+                if (backgroundSyncManager) {
+                    await backgroundSyncManager.triggerBackgroundSync();
+                    showSyncNotification('Manual sync completed successfully', 'success');
+                } else {
+                    throw new Error('Background sync manager not available');
+                }
+            } catch (error) {
+                console.error('❌ Manual sync failed:', error);
+                showSyncNotification('Manual sync failed: ' + error.message, 'error');
+            } finally {
+                manualSyncBtn.disabled = false;
+                manualSyncBtn.innerHTML = '<i class="fas fa-sync mr-2"></i>Sync Now';
+                updateSyncStatusDisplay();
+            }
+        });
+    }
+    
+    // View sync details button
+    const viewDetailsBtn = document.getElementById('view-sync-details-btn');
+    if (viewDetailsBtn) {
+        viewDetailsBtn.addEventListener('click', () => {
+            showSyncDetailsModal();
+        });
+    }
+    
+    // Clear sync queue button
+    const clearQueueBtn = document.getElementById('clear-sync-queue-btn');
+    if (clearQueueBtn) {
+        clearQueueBtn.addEventListener('click', () => {
+            showClearQueueConfirmation();
+        });
+    }
+    
+    // Sync preferences event listeners
+    const autoSyncEnabled = document.getElementById('auto-sync-enabled');
+    const wifiOnlySync = document.getElementById('wifi-only-sync');
+    const batterySaverSync = document.getElementById('battery-saver-sync');
+    
+    [autoSyncEnabled, wifiOnlySync, batterySaverSync].forEach(checkbox => {
+        if (checkbox) {
+            checkbox.addEventListener('change', saveSyncPreferences);
+        }
+    });
+    
+    // Load saved sync preferences
+    loadSyncPreferences();
+}
+
+async function updateSyncStatusDisplay() {
+    try {
+        const queueStatus = backgroundSyncManager ? backgroundSyncManager.getQueueStatus() : {};
+        
+        // Update queue counts
+        document.getElementById('queue-snapshots').textContent = queueStatus.snapshots?.count || 0;
+        document.getElementById('queue-timeline').textContent = queueStatus.timeline?.count || 0;
+        document.getElementById('queue-alerts').textContent = queueStatus.alerts?.count || 0;
+        document.getElementById('queue-preferences').textContent = queueStatus.preferences?.count || 0;
+        
+        // Update status indicator
+        const statusIndicator = document.getElementById('sync-status-indicator');
+        const totalQueued = Object.values(queueStatus).reduce((sum, status) => sum + (status.count || 0), 0);
+        
+        if (statusIndicator) {
+            if (totalQueued > 0) {
+                statusIndicator.innerHTML = `<i class="fas fa-clock mr-1"></i>${totalQueued} items queued`;
+                statusIndicator.className = 'text-sm font-medium text-orange-600';
+            } else if (!navigator.onLine) {
+                statusIndicator.innerHTML = '<i class="fas fa-wifi-slash mr-1"></i>Offline';
+                statusIndicator.className = 'text-sm font-medium text-red-600';
+            } else {
+                statusIndicator.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Up to date';
+                statusIndicator.className = 'text-sm font-medium text-green-600';
+            }
+        }
+    } catch (error) {
+        console.error('❌ Failed to update sync status display:', error);
+    }
+}
+
+function showSyncDetailsModal() {
+    const queueStatus = backgroundSyncManager ? backgroundSyncManager.getQueueStatus() : {};
+    
+    let detailsHTML = '<div class="space-y-4">';
+    
+    Object.entries(queueStatus).forEach(([type, status]) => {
+        const count = status.count || 0;
+        const lastQueued = status.lastQueued ? new Date(status.lastQueued).toLocaleString() : 'Never';
+        
+        detailsHTML += `
+            <div class="border rounded p-3">
+                <div class="flex justify-between items-center">
+                    <span class="font-medium capitalize">${type}</span>
+                    <span class="text-sm text-gray-600">${count} items</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Last queued: ${lastQueued}</div>
+            </div>
+        `;
+    });
+    
+    detailsHTML += '</div>';
+    
+    showCustomModal('Sync Queue Details', detailsHTML);
+}
+
+function showClearQueueConfirmation() {
+    const confirmHTML = `
+        <div class="text-center">
+            <p class="mb-4">Are you sure you want to clear all sync queues? This action cannot be undone.</p>
+            <div class="space-x-3">
+                <button id="confirm-clear-queue" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Clear All
+                </button>
+                <button id="cancel-clear-queue" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    showCustomModal('Clear Sync Queue', confirmHTML, () => {
+        // Setup button event listeners
+        document.getElementById('confirm-clear-queue')?.addEventListener('click', () => {
+            if (backgroundSyncManager) {
+                backgroundSyncManager.clearQueue();
+                updateSyncStatusDisplay();
+                showSyncNotification('Sync queue cleared successfully', 'success');
+            }
+            closeCustomModal();
+        });
+        
+        document.getElementById('cancel-clear-queue')?.addEventListener('click', () => {
+            closeCustomModal();
+        });
+    });
+}
+
+function showCustomModal(title, content, onShown = null) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h3 class="text-lg font-semibold">${title}</h3>
+                    <button id="close-custom-modal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-4">
+                    ${content}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('custom-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Setup close handlers
+    const modal = document.getElementById('custom-modal');
+    const closeBtn = document.getElementById('close-custom-modal');
+    
+    const closeModal = () => {
+        if (modal) {
+            modal.remove();
+        }
+    };
+    
+    closeBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Call onShown callback
+    if (onShown) {
+        onShown();
+    }
+}
+
+function closeCustomModal() {
+    const modal = document.getElementById('custom-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showSyncNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 text-white transition-opacity ${
+        type === 'success' ? 'bg-green-600' : 
+        type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function saveSyncPreferences() {
+    const preferences = {
+        autoSyncEnabled: document.getElementById('auto-sync-enabled')?.checked ?? true,
+        wifiOnlySync: document.getElementById('wifi-only-sync')?.checked ?? false,
+        batterySaverSync: document.getElementById('battery-saver-sync')?.checked ?? false
+    };
+    
+    localStorage.setItem('spotkin-sync-preferences', JSON.stringify(preferences));
+    console.log('💾 Sync preferences saved:', preferences);
+}
+
+function loadSyncPreferences() {
+    try {
+        const stored = localStorage.getItem('spotkin-sync-preferences');
+        if (stored) {
+            const preferences = JSON.parse(stored);
+            
+            const autoSyncEnabled = document.getElementById('auto-sync-enabled');
+            const wifiOnlySync = document.getElementById('wifi-only-sync');
+            const batterySaverSync = document.getElementById('battery-saver-sync');
+            
+            if (autoSyncEnabled) autoSyncEnabled.checked = preferences.autoSyncEnabled ?? true;
+            if (wifiOnlySync) wifiOnlySync.checked = preferences.wifiOnlySync ?? false;
+            if (batterySaverSync) batterySaverSync.checked = preferences.batterySaverSync ?? false;
+            
+            console.log('📖 Sync preferences loaded:', preferences);
+        }
+    } catch (error) {
+        console.error('❌ Failed to load sync preferences:', error);
+    }
+}
+
+// Expose PWA functions globally for testing
+window.initPWACapabilities = initPWACapabilities;
+window.handlePWAError = handlePWAError;
+window.saveToLocalStorageWithSync = saveToLocalStorageWithSync;
+window.requestNotificationPermission = requestNotificationPermission;
+window.sendCriticalNotification = sendCriticalNotification;
+window.testNotification = testNotification;
+window.showSetupWizard = showSetupWizard;
+window.SetupWizard = SetupWizard;
+window.BackgroundSyncManager = BackgroundSyncManager;

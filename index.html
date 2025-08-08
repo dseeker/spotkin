@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpotKin - AI Monitoring for Pets and Babies</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="SpotKin">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SpotKin">
+    <meta name="description" content="AI-powered monitoring application for pets and babies with advanced scene analysis and safety alerts">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#4f46e5">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
@@ -12,9 +28,14 @@
     <script src="https://js.puter.com/v2/"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
-    <!-- Favicons -->
+    
+    <!-- Favicons and App Icons -->
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="images/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="images/icon-180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="images/icon-167.png">
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <!-- Header -->
@@ -179,6 +200,9 @@
                             <button id="preferences-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-md text-sm">
                                 <i class="fas fa-cog mr-1"></i>Settings
                             </button>
+                            <button id="help-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm ml-2">
+                                <i class="fas fa-question-circle mr-1"></i>Help
+                            </button>
                         </div>
                     </div>
                     
@@ -277,8 +301,8 @@
     </footer>
 
     <!-- Preferences Modal -->
-    <div id="preferences-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div id="preferences-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-full overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b">
                 <h3 class="text-xl font-semibold text-gray-800">SpotKin Settings</h3>
                 <button id="preferences-close" class="text-gray-400 hover:text-gray-600">
@@ -364,6 +388,41 @@
                     <p class="text-xs text-gray-500 mt-1">Lower values detect smaller movements</p>
                 </div>
 
+                <!-- Push Notifications -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-bell mr-2 text-indigo-600"></i>Push Notifications
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="notifications-enabled" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Enable push notifications</span>
+                        </label>
+                        <div id="notification-controls" class="ml-6 space-y-2 hidden">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="notify-danger" class="rounded border-gray-300 text-red-600 focus:ring-red-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Danger alerts (High priority)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="notify-safety" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Safety concerns (Medium priority)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="notify-activity" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">General activity (Low priority)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="notify-monitoring" class="rounded border-gray-300 text-green-600 focus:ring-green-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Monitoring status changes</span>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-2">Notifications require browser permission and work best when the app is installed.</p>
+                            <button type="button" id="test-notification" class="mt-2 text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                Test Notification
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Monitoring Zones -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -388,6 +447,70 @@
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Focus AI analysis on specific areas of the camera view</p>
                 </div>
+
+                <!-- Setup Wizard Access -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-magic mr-2 text-indigo-600"></i>Setup Wizard
+                    </label>
+                    <p class="text-xs text-gray-500 mb-3">Rerun the initial setup wizard to reconfigure your monitoring preferences</p>
+                    <button type="button" id="rerun-setup-wizard" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-sm">
+                        <i class="fas fa-magic mr-2"></i>Run Setup Wizard
+                    </button>
+                </div>
+
+                <!-- Background Sync -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-sync mr-2 text-indigo-600"></i>Background Sync
+                    </label>
+                    <p class="text-xs text-gray-500 mb-3">Manage offline data synchronization and queued operations</p>
+                    
+                    <!-- Sync Status Display -->
+                    <div id="sync-status-display" class="mb-3 p-3 bg-gray-50 rounded-md">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Sync Status:</span>
+                            <span id="sync-status-indicator" class="text-sm font-medium text-green-600">
+                                <i class="fas fa-check-circle mr-1"></i>Up to date
+                            </span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            <div>Queued snapshots: <span id="queue-snapshots">0</span></div>
+                            <div>Queued timeline events: <span id="queue-timeline">0</span></div>
+                            <div>Queued alerts: <span id="queue-alerts">0</span></div>
+                            <div>Queued preferences: <span id="queue-preferences">0</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Sync Controls -->
+                    <div class="space-y-2">
+                        <button type="button" id="manual-sync-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm">
+                            <i class="fas fa-sync mr-2"></i>Sync Now
+                        </button>
+                        <button type="button" id="view-sync-details-btn" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm">
+                            <i class="fas fa-list mr-2"></i>View Sync Details
+                        </button>
+                        <button type="button" id="clear-sync-queue-btn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm">
+                            <i class="fas fa-trash mr-2"></i>Clear Sync Queue
+                        </button>
+                    </div>
+                    
+                    <!-- Sync Options -->
+                    <div class="mt-4 space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="auto-sync-enabled" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                            <span class="ml-2 text-sm text-gray-700">Auto-sync when online</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="wifi-only-sync" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Sync only on WiFi</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="battery-saver-sync" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Enable battery saver mode</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             
             <div class="flex justify-end space-x-3 p-6 border-t bg-gray-50">
@@ -401,7 +524,785 @@
         </div>
     </div>
 
+    <!-- Setup Wizard Modal -->
+    <div id="setup-wizard" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-full overflow-y-auto">
+            <!-- Wizard Header -->
+            <div class="flex justify-between items-center p-6 border-b">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-magic mr-3 text-indigo-600"></i>
+                        Welcome to SpotKin
+                    </h2>
+                    <p class="text-gray-600 mt-1">Let's set up your intelligent monitoring system</p>
+                </div>
+                <button id="setup-wizard-close" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Wizard Progress -->
+            <div class="px-6 pt-4">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div id="step-1-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold">1</div>
+                        <div class="w-16 h-1 bg-gray-300" id="progress-1-2"></div>
+                        <div id="step-2-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-semibold">2</div>
+                        <div class="w-16 h-1 bg-gray-300" id="progress-2-3"></div>
+                        <div id="step-3-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-semibold">3</div>
+                        <div class="w-16 h-1 bg-gray-300" id="progress-3-4"></div>
+                        <div id="step-4-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-semibold">4</div>
+                    </div>
+                    <span id="progress-text" class="text-sm text-gray-500">Step 1 of 4</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Welcome & Purpose -->
+            <div id="setup-step-1" class="setup-step p-6">
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4">👶🐾</div>
+                    <h3 class="text-xl font-semibold mb-2">What would you like to monitor?</h3>
+                    <p class="text-gray-600">Choose your primary monitoring purpose to optimize AI analysis</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="monitor-type" value="baby" class="sr-only">
+                        <div class="monitor-type-card p-6 border-2 border-gray-200 rounded-lg hover:border-indigo-400 transition-colors">
+                            <div class="text-center">
+                                <i class="fas fa-baby text-4xl text-pink-500 mb-3"></i>
+                                <h4 class="font-semibold text-lg">Baby Monitor</h4>
+                                <p class="text-sm text-gray-600 mt-2">Monitor sleeping babies, detect crying, track movement patterns</p>
+                            </div>
+                        </div>
+                    </label>
+                    
+                    <label class="cursor-pointer">
+                        <input type="radio" name="monitor-type" value="pet" class="sr-only">
+                        <div class="monitor-type-card p-6 border-2 border-gray-200 rounded-lg hover:border-indigo-400 transition-colors">
+                            <div class="text-center">
+                                <i class="fas fa-paw text-4xl text-amber-500 mb-3"></i>
+                                <h4 class="font-semibold text-lg">Pet Monitor</h4>
+                                <p class="text-sm text-gray-600 mt-2">Watch pets, detect unusual behavior, monitor activity levels</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="mb-4">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="monitor-type" value="general" class="sr-only">
+                        <div class="monitor-type-card p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-400 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-home text-2xl text-blue-500 mr-4"></i>
+                                <div>
+                                    <h4 class="font-semibold">General Security</h4>
+                                    <p class="text-sm text-gray-600">Monitor general areas, detect motion and unusual activities</p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 2: Camera Setup -->
+            <div id="setup-step-2" class="setup-step p-6 hidden">
+                <div class="text-center mb-6">
+                    <i class="fas fa-camera text-5xl text-indigo-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Camera Setup</h3>
+                    <p class="text-gray-600">Position your camera for optimal monitoring</p>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-800 mb-2">📍 Camera Positioning Tips</h4>
+                    <ul class="text-sm text-blue-700 space-y-1" id="positioning-tips">
+                        <!-- Tips will be populated based on monitor type -->
+                    </ul>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold mb-2">Camera Preview</h4>
+                    <div class="bg-gray-300 aspect-video rounded-lg flex items-center justify-center">
+                        <div id="wizard-camera-preview" class="text-gray-500">
+                            <i class="fas fa-camera text-4xl mb-2"></i>
+                            <p>Camera preview will appear here</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-2">
+                        <button id="wizard-start-camera" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                            <i class="fas fa-video mr-2"></i>Start Camera
+                        </button>
+                        <button id="wizard-switch-camera" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                            <i class="fas fa-sync-alt mr-2"></i>Switch Camera
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-yellow-800 mb-2">💡 Pro Tips</h4>
+                    <ul class="text-sm text-yellow-700 space-y-1">
+                        <li>• Ensure good lighting for better AI analysis</li>
+                        <li>• Avoid backlighting (bright windows behind subject)</li>
+                        <li>• Keep the camera stable to reduce false motion alerts</li>
+                        <li>• Test different angles to find the best view</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 3: Monitoring Zones -->
+            <div id="setup-step-3" class="setup-step p-6 hidden">
+                <div class="text-center mb-6">
+                    <i class="fas fa-vector-square text-5xl text-indigo-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Set Monitoring Zones</h3>
+                    <p class="text-gray-600">Focus AI analysis on specific areas</p>
+                </div>
+
+                <div class="bg-green-50 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-green-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Draw rectangles on the camera view to define areas where you want focused monitoring
+                    </p>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                    <div class="bg-gray-300 aspect-video rounded-lg flex items-center justify-center relative" id="wizard-zone-container">
+                        <div class="text-gray-500 text-center">
+                            <i class="fas fa-draw-polygon text-4xl mb-2"></i>
+                            <p>Click and drag to draw monitoring zones</p>
+                        </div>
+                        <canvas id="wizard-zone-canvas" class="absolute inset-0 w-full h-full"></canvas>
+                    </div>
+                    <div class="flex justify-between mt-2">
+                        <button id="wizard-add-zone" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            <i class="fas fa-plus mr-2"></i>Add Zone
+                        </button>
+                        <button id="wizard-clear-zones" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                            <i class="fas fa-trash mr-2"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="skip-zones" class="form-checkbox">
+                        <span class="ml-2 text-sm text-gray-600">Skip zones - monitor entire view</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 4: Alert Preferences -->
+            <div id="setup-step-4" class="setup-step p-6 hidden">
+                <div class="text-center mb-6">
+                    <i class="fas fa-bell text-5xl text-indigo-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Alert Preferences</h3>
+                    <p class="text-gray-600">Configure when and how you want to be notified</p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Alert Sensitivity -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-brain mr-2 text-indigo-600"></i>AI Sensitivity
+                        </label>
+                        <select id="wizard-sensitivity" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="low">Low - Only major events</option>
+                            <option value="medium" selected>Medium - Balanced detection</option>
+                            <option value="high">High - Detect subtle changes</option>
+                        </select>
+                    </div>
+
+                    <!-- Alert Types -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-exclamation-triangle mr-2 text-indigo-600"></i>Alert Types
+                        </label>
+                        <div class="space-y-2" id="wizard-alert-types">
+                            <!-- Alert types will be populated based on monitor type -->
+                        </div>
+                    </div>
+
+                    <!-- Notification Preferences -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-bell mr-2 text-indigo-600"></i>Notification Methods
+                        </label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="wizard-sound-alerts" class="form-checkbox" checked>
+                                <span class="ml-2 text-sm">Sound alerts</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="wizard-push-notifications" class="form-checkbox">
+                                <span class="ml-2 text-sm">Push notifications (requires permission)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="wizard-visual-alerts" class="form-checkbox" checked>
+                                <span class="ml-2 text-sm">Visual indicators</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-lg mt-6">
+                    <h4 class="font-semibold text-indigo-800 mb-2">🎯 You're Almost Ready!</h4>
+                    <p class="text-sm text-indigo-700">
+                        After completing setup, you'll be able to start monitoring immediately. 
+                        You can always adjust these settings later in the preferences menu.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Wizard Footer -->
+            <div class="flex justify-between items-center p-6 border-t bg-gray-50">
+                <button id="setup-prev" class="px-4 py-2 text-gray-600 hover:text-gray-800 hidden">
+                    <i class="fas fa-arrow-left mr-2"></i>Previous
+                </button>
+                <div class="flex space-x-3">
+                    <button id="setup-skip" class="px-4 py-2 text-gray-500 hover:text-gray-700">
+                        Skip Setup
+                    </button>
+                    <button id="setup-next" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+                        Next <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button id="setup-finish" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 hidden">
+                        <i class="fas fa-check mr-2"></i>Start Monitoring
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help & Documentation Modal -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-full overflow-y-auto">
+            <!-- Help Header -->
+            <div class="flex justify-between items-center p-6 border-b">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-question-circle mr-3 text-blue-600"></i>
+                        SpotKin Help & Documentation
+                    </h2>
+                    <p class="text-gray-600 mt-1">Everything you need to know about using SpotKin</p>
+                </div>
+                <button id="help-modal-close" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Help Navigation -->
+            <div class="flex border-b">
+                <button id="help-tab-getting-started" class="help-tab px-6 py-3 border-b-2 border-blue-600 text-blue-600 font-medium">Getting Started</button>
+                <button id="help-tab-features" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Features</button>
+                <button id="help-tab-setup" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Setup Guide</button>
+                <button id="help-tab-troubleshooting" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Troubleshooting</button>
+                <button id="help-tab-faq" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">FAQ</button>
+            </div>
+
+            <!-- Help Content -->
+            <div class="p-6">
+                <!-- Getting Started Tab -->
+                <div id="help-content-getting-started" class="help-content">
+                    <div class="prose max-w-none">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-play-circle mr-2 text-green-600"></i>
+                            Getting Started with SpotKin
+                        </h3>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold text-blue-800 mb-2">🚀 Quick Start</h4>
+                            <ol class="text-sm text-blue-700 space-y-1">
+                                <li>1. Run the Setup Wizard (appears on first visit)</li>
+                                <li>2. Choose your monitoring type (Baby, Pet, or General Security)</li>
+                                <li>3. Position your camera and test the view</li>
+                                <li>4. Configure alert preferences</li>
+                                <li>5. Start monitoring!</li>
+                            </ol>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-pink-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-pink-800 mb-2">👶 Baby Monitoring</h4>
+                                <ul class="text-sm text-pink-700 space-y-1">
+                                    <li>• Detects crying and movement patterns</li>
+                                    <li>• Monitors sleep positions and safety</li>
+                                    <li>• Alerts for unusual stillness or activity</li>
+                                    <li>• Focuses on faces and chest movement</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-amber-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-amber-800 mb-2">🐾 Pet Monitoring</h4>
+                                <ul class="text-sm text-amber-700 space-y-1">
+                                    <li>• Tracks activity levels and behavior</li>
+                                    <li>• Detects distress sounds and calls</li>
+                                    <li>• Monitors restricted area access</li>
+                                    <li>• Identifies destructive or unusual behavior</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">📱 PWA Features</h4>
+                            <p class="text-sm text-gray-600 mb-2">SpotKin works as a Progressive Web App with these benefits:</p>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Install on your phone's home screen for quick access</li>
+                                <li>• Receive push notifications even when the app is closed</li>
+                                <li>• Works offline for basic functionality and settings</li>
+                                <li>• Automatic updates and caching for better performance</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Tab -->
+                <div id="help-content-features" class="help-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-star mr-2 text-yellow-600"></i>
+                        Core Features
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div class="border-l-4 border-indigo-500 pl-4">
+                            <h4 class="font-semibold mb-2">🧠 AI Scene Analysis</h4>
+                            <p class="text-gray-600 text-sm mb-2">Advanced computer vision that understands context, not just motion:</p>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Semantic understanding of activities and behaviors</li>
+                                <li>• Context-aware prompts that adapt to your monitoring type</li>
+                                <li>• 10-point severity classification system</li>
+                                <li>• Multi-frame temporal analysis for accurate detection</li>
+                            </ul>
+                        </div>
+
+                        <div class="border-l-4 border-green-500 pl-4">
+                            <h4 class="font-semibold mb-2">📍 Interactive Monitoring Zones</h4>
+                            <p class="text-gray-600 text-sm mb-2">Focus AI analysis on specific areas:</p>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Draw custom zones on your camera view</li>
+                                <li>• Multiple zone support for comprehensive coverage</li>
+                                <li>• Visual indicators show zone boundaries</li>
+                                <li>• Easy zone editing and management</li>
+                            </ul>
+                        </div>
+
+                        <div class="border-l-4 border-red-500 pl-4">
+                            <h4 class="font-semibold mb-2">🚨 Smart Alert System</h4>
+                            <p class="text-gray-600 text-sm mb-2">Intelligent notifications that reduce false alarms:</p>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Tiered alert levels (Info, Warning, Critical)</li>
+                                <li>• Customizable sound patterns for different severities</li>
+                                <li>• Push notification support with user preferences</li>
+                                <li>• Alert cooldown periods to prevent notification spam</li>
+                            </ul>
+                        </div>
+
+                        <div class="border-l-4 border-purple-500 pl-4">
+                            <h4 class="font-semibold mb-2">📊 Event History & Timeline</h4>
+                            <p class="text-gray-600 text-sm mb-2">Comprehensive monitoring history:</p>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Chronological timeline of all events</li>
+                                <li>• Detailed analysis results for each event</li>
+                                <li>• Filterable and searchable history</li>
+                                <li>• Export capabilities for data analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Guide Tab -->
+                <div id="help-content-setup" class="help-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-cogs mr-2 text-blue-600"></i>
+                        Detailed Setup Guide
+                    </h3>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-3">📹 Camera Setup</h4>
+                            <div class="text-sm text-blue-700 space-y-2">
+                                <p><strong>Positioning Guidelines:</strong></p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Position camera 3-8 feet from the subject</li>
+                                    <li>• Ensure good lighting (avoid backlighting)</li>
+                                    <li>• Mount securely to prevent vibration</li>
+                                    <li>• Test different angles for optimal coverage</li>
+                                </ul>
+                                
+                                <p class="mt-3"><strong>Camera Permissions:</strong></p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Allow camera access when prompted by browser</li>
+                                    <li>• Use "Switch Camera" to choose front/back camera</li>
+                                    <li>• Ensure stable internet connection for AI analysis</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-green-800 mb-3">🎯 Monitoring Zones</h4>
+                            <div class="text-sm text-green-700 space-y-2">
+                                <p><strong>Creating Zones:</strong></p>
+                                <ol class="space-y-1 ml-4">
+                                    <li>1. Click the "Zone Setup" button in camera controls</li>
+                                    <li>2. Draw rectangles around areas of interest</li>
+                                    <li>3. Multiple zones can be created for comprehensive coverage</li>
+                                    <li>4. Zones can be edited or deleted anytime</li>
+                                </ol>
+                                
+                                <p class="mt-3"><strong>Best Practices:</strong></p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Focus zones on key activity areas</li>
+                                    <li>• Avoid overlapping zones when possible</li>
+                                    <li>• Include enough context around subjects</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-yellow-800 mb-3">⚙️ Alert Configuration</h4>
+                            <div class="text-sm text-yellow-700 space-y-2">
+                                <p><strong>Sensitivity Settings:</strong></p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• <strong>Low:</strong> Only major events and obvious changes</li>
+                                    <li>• <strong>Medium:</strong> Balanced detection (recommended)</li>
+                                    <li>• <strong>High:</strong> Sensitive to subtle movements and changes</li>
+                                </ul>
+                                
+                                <p class="mt-3"><strong>Notification Options:</strong></p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Sound alerts with different patterns per severity</li>
+                                    <li>• Push notifications (requires browser permission)</li>
+                                    <li>• Visual indicators and on-screen alerts</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Troubleshooting Tab -->
+                <div id="help-content-troubleshooting" class="help-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-wrench mr-2 text-orange-600"></i>
+                        Troubleshooting Guide
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-red-700 mb-2">❌ Camera Not Working</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p><strong>Symptoms:</strong> Black screen, "Camera not available" message</p>
+                                <p><strong>Solutions:</strong></p>
+                                <ul class="ml-4 space-y-1">
+                                    <li>• Check browser permissions - allow camera access</li>
+                                    <li>• Close other applications using the camera</li>
+                                    <li>• Try refreshing the page</li>
+                                    <li>• Use "Switch Camera" to try different cameras</li>
+                                    <li>• Ensure you're using HTTPS or localhost</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-700 mb-2">⚠️ AI Analysis Failing</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p><strong>Symptoms:</strong> "Analysis failed" errors, no results</p>
+                                <p><strong>Solutions:</strong></p>
+                                <ul class="ml-4 space-y-1">
+                                    <li>• Check internet connection</li>
+                                    <li>• Ensure good lighting for better image quality</li>
+                                    <li>• Wait a moment and try again</li>
+                                    <li>• Refresh the page to reset connections</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-700 mb-2">🔕 Notifications Not Working</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p><strong>Symptoms:</strong> No push notifications received</p>
+                                <p><strong>Solutions:</strong></p>
+                                <ul class="ml-4 space-y-1">
+                                    <li>• Check browser notification permissions</li>
+                                    <li>• Enable notifications in Settings panel</li>
+                                    <li>• Ensure PWA is installed for best notification support</li>
+                                    <li>• Check device notification settings</li>
+                                    <li>• Use "Test Notification" button to verify setup</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">📱 PWA Installation Issues</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p><strong>Symptoms:</strong> No install prompt, PWA features not working</p>
+                                <p><strong>Solutions:</strong></p>
+                                <ul class="ml-4 space-y-1">
+                                    <li>• Use Chrome, Edge, or Safari for best PWA support</li>
+                                    <li>• Ensure you're using HTTPS (not file:// protocol)</li>
+                                    <li>• Look for install button in browser address bar</li>
+                                    <li>• On mobile: use "Add to Home Screen" from browser menu</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Tab -->
+                <div id="help-content-faq" class="help-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-question mr-2 text-purple-600"></i>
+                        Frequently Asked Questions
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">🔒 Is my data private and secure?</h4>
+                            <p class="text-sm text-gray-600">
+                                Yes! SpotKin processes images locally when possible and uses secure connections for AI analysis. 
+                                No video is stored permanently, and all user preferences are kept in your browser's local storage.
+                            </p>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">💡 How accurate is the AI analysis?</h4>
+                            <p class="text-sm text-gray-600">
+                                SpotKin uses advanced AI models with context-aware prompts that achieve high accuracy for scene understanding. 
+                                The multi-frame temporal analysis and severity classification system help reduce false positives while ensuring important events are detected.
+                            </p>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">🔋 Does SpotKin work offline?</h4>
+                            <p class="text-sm text-gray-600">
+                                The PWA features allow basic functionality offline, including settings access and cached content. 
+                                However, AI analysis requires an internet connection. Notifications and monitoring history are preserved locally.
+                            </p>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">📱 Can I use SpotKin on mobile devices?</h4>
+                            <p class="text-sm text-gray-600">
+                                Absolutely! SpotKin is designed as a mobile-first Progressive Web App. Install it on your phone's home screen 
+                                for the best experience, including push notifications and offline capabilities.
+                            </p>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">⚡ How do I optimize performance?</h4>
+                            <p class="text-sm text-gray-600">
+                                For best performance: ensure good lighting, use a stable internet connection, position the camera to minimize 
+                                unnecessary movement in the background, and adjust sensitivity settings based on your needs.
+                            </p>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-700 mb-2">🔄 How often should I update SpotKin?</h4>
+                            <p class="text-sm text-gray-600">
+                                SpotKin automatically updates in the background as a PWA. When updates are available, you'll see a notification 
+                                with an option to update immediately. We recommend accepting updates to get the latest features and improvements.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Footer -->
+            <div class="flex justify-between items-center p-6 border-t bg-gray-50">
+                <div class="text-sm text-gray-500">
+                    Need more help? Check our <a href="#" class="text-blue-600 hover:text-blue-800">online documentation</a>
+                </div>
+                <button id="help-modal-close-btn" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="app.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', {
+                    scope: './'
+                }).then((registration) => {
+                    console.log('🎉 PWA Service Worker registered successfully:', registration.scope);
+                    
+                    // Check for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('🔄 New service worker version found, installing...');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Show update notification
+                                showUpdateNotification(registration);
+                            }
+                        });
+                    });
+                }).catch((error) => {
+                    console.error('❌ Service Worker registration failed:', error);
+                });
+                
+                // Listen for messages from service worker
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    console.log('📨 Message from service worker:', event.data);
+                });
+            });
+        } else {
+            console.warn('⚠️ Service Workers not supported in this browser');
+        }
+        
+        // Show PWA install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💡 PWA install prompt available');
+            e.preventDefault(); // Prevent the mini-infobar from appearing
+            deferredPrompt = e;
+            
+            // Show custom install button (you can customize this)
+            showPWAInstallButton();
+        });
+        
+        // Handle successful PWA installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('🎉 PWA was successfully installed!');
+            hidePWAInstallButton();
+            
+            // Track installation (optional analytics)
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'pwa_install', {
+                    'event_category': 'engagement'
+                });
+            }
+        });
+        
+        // Show update notification when new version is available
+        function showUpdateNotification(registration) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 left-4 right-4 bg-indigo-600 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-download mr-3"></i>
+                    <div>
+                        <p class="font-semibold">Update Available</p>
+                        <p class="text-sm opacity-90">A new version of SpotKin is ready</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 ml-4">
+                    <button onclick="updateApp()" class="bg-white text-indigo-600 px-3 py-1 rounded text-sm font-medium">
+                        Update
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="text-indigo-200 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 30 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 30000);
+            
+            // Store registration for update function
+            window.pendingRegistration = registration;
+        }
+        
+        // Update app function
+        function updateApp() {
+            if (window.pendingRegistration && window.pendingRegistration.waiting) {
+                window.pendingRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+            }
+        }
+        
+        // Show PWA install button
+        function showPWAInstallButton() {
+            const installButton = document.createElement('div');
+            installButton.id = 'pwa-install-banner';
+            installButton.className = 'fixed top-4 left-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-lg shadow-lg z-50 animate-pulse';
+            installButton.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-mobile-alt mr-3 text-xl"></i>
+                        <div>
+                            <p class="font-semibold">Install SpotKin</p>
+                            <p class="text-sm opacity-90">Add to your home screen for quick access</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                        <button onclick="installPWA()" class="bg-white text-indigo-600 px-4 py-2 rounded font-medium">
+                            Install
+                        </button>
+                        <button onclick="hidePWAInstallButton()" class="text-indigo-200 hover:text-white p-2">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(installButton);
+        }
+        
+        // Install PWA function
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted PWA install prompt');
+                    } else {
+                        console.log('❌ User dismissed PWA install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+                
+                hidePWAInstallButton();
+            }
+        }
+        
+        // Hide PWA install button
+        function hidePWAInstallButton() {
+            const installBanner = document.getElementById('pwa-install-banner');
+            if (installBanner) {
+                installBanner.remove();
+            }
+        }
+        
+        // Handle URL parameters for PWA shortcuts
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        
+        if (action) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    switch (action) {
+                        case 'snapshot':
+                            if (typeof takeSnapshot === 'function') {
+                                takeSnapshot();
+                            }
+                            break;
+                        case 'monitor':
+                            const monitorBtn = document.getElementById('toggle-monitoring');
+                            if (monitorBtn && monitorBtn.textContent.includes('Start')) {
+                                monitorBtn.click();
+                            }
+                            break;
+                        case 'history':
+                            const historyTab = document.getElementById('tab-history');
+                            if (historyTab) {
+                                historyTab.click();
+                            }
+                            break;
+                    }
+                }, 1000); // Wait for app to initialize
+            });
+        }
+    </script>
 </body>
 </html>

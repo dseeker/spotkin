@@ -215,3 +215,122 @@ describe('Unit Tests for Temporal Analysis', () => {
     });
   });
 });
+
+describe('Setup Wizard Unit Tests', () => {
+  beforeEach(() => {
+    cy.visit('/');
+    // Clear setup state
+    cy.window().then((win) => {
+      win.localStorage.removeItem('spotkin-setup-completed');
+    });
+  });
+
+  it('should initialize SetupWizard with default properties', () => {
+    cy.window().then((win) => {
+      const wizard = new win.SetupWizard();
+      
+      expect(wizard.currentStep).to.equal(1);
+      expect(wizard.totalSteps).to.equal(4);
+      expect(wizard.setupData.monitorType).to.be.null;
+      expect(wizard.setupData.cameraPosition).to.be.null;
+      expect(wizard.setupData.monitoringZones).to.be.an('array').and.be.empty;
+      expect(wizard.setupData.alertPreferences).to.be.an('object').and.be.empty;
+      expect(wizard.setupData.completed).to.be.false;
+    });
+  });
+
+  it('should correctly detect if setup should be shown', () => {
+    cy.window().then((win) => {
+      // First visit - should show setup
+      win.localStorage.removeItem('spotkin-setup-completed');
+      expect(win.SetupWizard.shouldShowSetup()).to.be.true;
+      
+      // After marking as completed - should not show
+      win.localStorage.setItem('spotkin-setup-completed', 'true');
+      expect(win.SetupWizard.shouldShowSetup()).to.be.false;
+      
+      // Explicitly set to false - should not show
+      win.localStorage.setItem('spotkin-setup-completed', 'false');
+      expect(win.SetupWizard.shouldShowSetup()).to.be.false;
+    });
+  });
+
+  it('should validate monitor type selection correctly', () => {
+    cy.window().then((win) => {
+      const wizard = new win.SetupWizard();
+      
+      // Initially no monitor type selected
+      expect(wizard.validateCurrentStep()).to.be.false;
+      
+      // After selecting monitor type
+      wizard.setupData.monitorType = 'baby';
+      expect(wizard.validateCurrentStep()).to.be.true;
+      
+      wizard.setupData.monitorType = 'pet';
+      expect(wizard.validateCurrentStep()).to.be.true;
+      
+      wizard.setupData.monitorType = 'general';
+      expect(wizard.validateCurrentStep()).to.be.true;
+    });
+  });
+
+  it('should save setup data to localStorage correctly', () => {
+    cy.window().then((win) => {
+      const wizard = new win.SetupWizard();
+      
+      wizard.setupData = {
+        monitorType: 'baby',
+        cameraPosition: 'above-crib',
+        monitoringZones: ['crib-safety'],
+        alertPreferences: { crying: true, movement: true },
+        completed: true
+      };
+      
+      wizard.saveSetupData();
+      
+      // Verify data saved to localStorage
+      const savedPrefs = JSON.parse(win.localStorage.getItem('spotkin-preferences'));
+      expect(savedPrefs.monitorType).to.equal('baby');
+      expect(savedPrefs.cameraPosition).to.equal('above-crib');
+      
+      const setupCompleted = win.localStorage.getItem('spotkin-setup-completed');
+      expect(setupCompleted).to.equal('true');
+    });
+  });
+
+  it('should integrate with existing preferences without overwriting', () => {
+    cy.window().then((win) => {
+      // Set existing preferences
+      const existingPrefs = {
+        sensitivity: 8,
+        soundEnabled: true,
+        notificationsEnabled: true,
+        customSetting: 'preserved'
+      };
+      win.localStorage.setItem('spotkin-preferences', JSON.stringify(existingPrefs));
+      
+      const wizard = new win.SetupWizard();
+      wizard.setupData = {
+        monitorType: 'baby',
+        cameraPosition: 'above-crib',
+        monitoringZones: ['crib-safety'],
+        alertPreferences: { crying: true },
+        completed: true
+      };
+      
+      wizard.saveSetupData();
+      
+      const updatedPrefs = JSON.parse(win.localStorage.getItem('spotkin-preferences'));
+      
+      // New setup data should be added
+      expect(updatedPrefs.monitorType).to.equal('baby');
+      expect(updatedPrefs.cameraPosition).to.equal('above-crib');
+      
+      // Existing preferences should be preserved
+      expect(updatedPrefs.sensitivity).to.equal(8);
+      expect(updatedPrefs.soundEnabled).to.be.true;
+      expect(updatedPrefs.notificationsEnabled).to.be.true;
+      expect(updatedPrefs.customSetting).to.equal('preserved');
+    });
+  });
+});

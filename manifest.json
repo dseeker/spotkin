@@ -1,0 +1,145 @@
+{
+  "name": "SpotKin - AI Pet & Baby Monitor",
+  "short_name": "SpotKin",
+  "description": "AI-powered monitoring application for pets and babies with advanced scene analysis and safety alerts",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "lang": "en",
+  "categories": [
+    "productivity",
+    "utilities",
+    "lifestyle"
+  ],
+  "screenshots": [
+    {
+      "src": "./images/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "SpotKin mobile interface showing camera view and analysis results"
+    },
+    {
+      "src": "./images/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SpotKin desktop interface with monitoring zones and history"
+    }
+  ],
+  "icons": [
+    {
+      "src": "images//manifest-icon-192.maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images//manifest-icon-192.maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "images//manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images//manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./images/favicon.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "features": [
+    "camera",
+    "microphone",
+    "background-sync",
+    "push-messaging"
+  ],
+  "shortcuts": [
+    {
+      "name": "Take Snapshot",
+      "short_name": "Snapshot",
+      "description": "Quickly analyze current camera view",
+      "url": "./?action=snapshot",
+      "icons": [
+        {
+          "src": "./images/icon-snapshot.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Start Monitoring",
+      "short_name": "Monitor",
+      "description": "Begin continuous monitoring",
+      "url": "./?action=monitor",
+      "icons": [
+        {
+          "src": "./images/icon-monitor.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "View History",
+      "short_name": "History",
+      "description": "Review monitoring history",
+      "url": "./?action=history",
+      "icons": [
+        {
+          "src": "./images/icon-history.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

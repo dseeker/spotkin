@@ -1,5 +1,25 @@
 /* Custom styles beyond Tailwind CSS */
 
+/* PWA-specific styles */
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+    
+    /* Hide elements when running as PWA */
+    .pwa-hide {
+        display: none !important;
+    }
+    
+    /* Adjust header for PWA */
+    header {
+        padding-top: calc(1rem + env(safe-area-inset-top));
+    }
+}
+
 /* Smooth scrolling for navigation */
 html {
     scroll-behavior: smooth;
@@ -63,19 +83,6 @@ html {
 button:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .container {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-    
-    #camera-container, 
-    #results-container {
-        height: 300px;
-    }
 }
 
 /* For the history timeline */
@@ -155,45 +162,245 @@ button:focus {
     border-radius: 0.5rem;
     text-align: center;
 }
-;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+
+/* PWA install button animation */
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-/* Responsive adjustments */
+#pwa-install-banner {
+    animation: slideDown 0.5s ease-out;
+}
+
+/* Mobile-first responsive design enhancements */
 @media (max-width: 768px) {
     .container {
         padding-left: 16px;
         padding-right: 16px;
     }
     
-    #camera-container, 
+    /* Touch-friendly button sizes */
+    button {
+        min-height: 44px;
+        min-width: 44px;
+        touch-action: manipulation;
+    }
+    
+    /* Improved camera container for mobile */
+    #camera-container {
+        height: 60vh;
+        border-radius: 12px;
+    }
+    
     #results-container {
         height: 300px;
     }
+    
+    /* Better spacing for mobile */
+    .container {
+        padding: 0 1rem;
+    }
+    
+    /* Mobile-optimized tabs */
+    .tab-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Mobile modal optimization */
+    #preferences-modal .bg-white {
+        margin: 0.5rem;
+        max-height: 90vh;
+        border-radius: 12px;
+    }
+    
+    /* Touch-friendly zone drawing */
+    #zone-overlay {
+        touch-action: none;
+    }
+    
+    /* Mobile-optimized history items */
+    .timeline-item {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Better mobile navigation */
+    nav ul {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    nav ul li a {
+        padding: 0.5rem 1rem;
+        display: block;
+        text-align: center;
+    }
 }
 
-/* For the history timeline (if added later) */
-.timeline-item {
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Optimize images for high DPI */
+    img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    #camera-container {
+        height: 50vh;
+    }
+    
+    header {
+        padding: 0.5rem 0;
+    }
+    
+    .timeline-item {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #1f2937;
+        --bg-secondary: #374151;
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+    }
+    
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }
+    
+    .bg-white {
+        background-color: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .text-gray-600, .text-gray-700, .text-gray-800 {
+        color: var(--text-secondary) !important;
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .animate-pulse {
+        animation: none;
+    }
+}
+
+/* Focus improvements for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+}
+
+/* Touch feedback */
+@media (hover: none) {
+    button:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+    }
+}
+
+/* Improved camera feedback for mobile */
+#camera-feedback {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* Mobile-optimized floating action buttons */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 40;
+}
+
+/* Swipe gesture hints */
+.swipe-hint {
     position: relative;
 }
 
-.timeline-item::before {
+.swipe-hint::after {
     content: '';
     position: absolute;
-    left: -20px;
-    top: 8px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #6366F1;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: #d1d5db;
+    border-radius: 2px;
 }
 
-.timeline-item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    left: -14px;
-    top: 20px;
-    width: 2px;
-    height: calc(100% + 10px);
-    background-color: #E0E7FF;
+/* Pull-to-refresh indicator */
+.pull-refresh {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transform: translateY(-60px);
+    transition: transform 0.3s;
+}
+
+.pull-refresh.active {
+    transform: translateY(0);
+}
+
+/* Improved touch targets */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile-specific utility classes */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
 }

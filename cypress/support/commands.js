@@ -160,3 +160,6 @@ Cypress.Commands.add('testKeyboardNavigation', () => {
     cy.wrap($el).focus().should('be.focused');
   });
 });
+
+// Import PWA-specific commands
+import './pwa-commands.js';

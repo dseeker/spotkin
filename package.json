@@ -8,7 +8,13 @@
     "dev": "npx live-server --port=3000 --watch=index.html,app.js,styles.css",
     "start-app": "npx http-server . -p 3000",
     "cypress:run": "cypress run",
-    "test": "start-server-and-test start-app http://localhost:3000 cypress:run"
+    "test": "start-server-and-test start-app http://localhost:3000 cypress:run",
+    "test:pwa": "start-server-and-test start-app http://localhost:3000 \"npm run lighthouse && npm run validate-manifest\"",
+    "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./reports/lighthouse-report.html --chrome-flags=\"--headless\"",
+    "lighthouse:pwa": "lighthouse http://localhost:3000 --preset=pwa --output=json --output-path=./reports/lighthouse-pwa.json --chrome-flags=\"--headless\"",
+    "validate-manifest": "node scripts/validate-pwa.js",
+    "generate-icons": "pwa-asset-generator images/favicon.svg images --manifest=manifest.json --icon-only",
+    "audit:pwa": "npm run lighthouse:pwa && node scripts/pwa-audit.js"
   },
   "keywords": [
     "ai",
@@ -25,6 +31,10 @@
   "devDependencies": {
     "cypress": "^14.5.0",
     "puppeteer": "^24.8.2",
-    "start-server-and-test": "^2.0.12"
+    "start-server-and-test": "^2.0.12",
+    "lighthouse": "^12.2.1",
+    "pwa-asset-generator": "^6.3.2",
+    "workbox-cli": "^7.3.0",
+    "web-app-manifest-validator": "^1.0.0"
   }
 }
