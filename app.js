@@ -18,6 +18,241 @@ window.addEventListener('unhandledrejection', function(event) {
     console.error('🚨 Unhandled Promise Rejection:', event.reason);
 });
 
+// Parse the AI response text into a structured format for our app
+function parseAIResponse(responseText) {
+    console.log("Parsing AI response text:", responseText);
+
+    // Default result structure in case of parsing errors
+    const defaultResult = {
+        scene: "Could not parse AI response.",
+        objects: [],
+        alert: { type: "danger", message: "Error parsing AI response. Check console for details." },
+        hasPetsOrBabies: false
+    };
+
+    try {
+        // Clean the response text to ensure it's valid JSON
+        // The AI might return a string wrapped in ```json ... ```
+        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        const aiData = JSON.parse(jsonString);
+
+        // Validate the structure of the parsed JSON
+        if (!aiData.scene_description || !Array.isArray(aiData.subjects) || !aiData.safety_assessment) {
+            console.error("Invalid AI response structure:", aiData);
+            // For missing fields, still try to extract what we can
+            const partialResult = {
+                scene: aiData.scene_description || "Could not parse scene description.",
+                objects: Array.isArray(aiData.subjects) ? aiData.subjects.map(subject => ({
+                    type: subject.type || 'Unknown',
+                    state: subject.state || 'Unspecified',
+                    confidence: subject.confidence || 0.5
+                })) : [],
+                alert: { type: "danger", message: "Error parsing AI response. Check console for details." },
+                hasPetsOrBabies: Array.isArray(aiData.subjects) && aiData.subjects.length > 0
+            };
+            return partialResult;
+        }
+
+        const result = {
+            scene: aiData.scene_description,
+            // Map the 'subjects' array to the 'objects' array format
+            objects: aiData.subjects.map(subject => ({
+                type: subject.type || 'Unknown',
+                state: subject.state || 'Unspecified',
+                confidence: subject.confidence || 0.5
+            })),
+            // Map the 'safety_assessment' to the 'alert' object format
+            alert: {
+                type: aiData.safety_assessment.level ? aiData.safety_assessment.level.toLowerCase() : 'info',
+                message: aiData.safety_assessment.reason || 'No specific details provided.'
+            },
+            // Determine if pets or babies are present
+            hasPetsOrBabies: aiData.subjects.length > 0
+        };
+
+        console.log("Parsed AI result:", result);
+        return result;
+
+    } catch (error) {
+        console.error("Error during AI response parsing:", error);
+        // Try to extract some information even if parsing fails
+        defaultResult.scene = responseText;
+        return defaultResult;
+    }
+}
+
+// Analyze temporal changes between frames
+function analyzeTemporalChanges(frameHistory) {
+    if (frameHistory.length < 2) {
+        return {
+            hasMovement: false,
+            movementLevel: 'none',
+            temporalContext: 'Insufficient frame history for temporal analysis.'
+        };
+    }
+
+    // Simple temporal analysis based on frame differences
+    // In a more sophisticated implementation, you could use computer vision libraries
+    // to detect actual movement, but for now we'll use frame size and timestamp differences
+    
+    const currentFrame = frameHistory[frameHistory.length - 1];
+    const previousFrame = frameHistory[frameHistory.length - 2];
+    
+    // Calculate basic temporal metrics
+    const frameDifference = Math.abs(currentFrame.length - previousFrame.length);
+    // Get movement threshold from user preferences if available, otherwise use default
+    const movementThreshold = (typeof window !== 'undefined' && window.getMovementThreshold) ? 
+        window.getMovementThreshold() : 1000;
+    const hasSignificantChange = frameDifference > movementThreshold;
+    
+    let movementLevel = 'none';
+    let temporalContext = '';
+    
+    if (frameHistory.length >= 3) {
+        const olderFrame = frameHistory[frameHistory.length - 3];
+        const multiFrameDiff = Math.abs(currentFrame.length - olderFrame.length);
+        
+        if (hasSignificantChange || multiFrameDiff > 2000) {
+            movementLevel = 'high';
+            temporalContext = 'Significant changes detected across multiple frames, suggesting active movement or scene changes.';
+        } else if (hasSignificantChange) {
+            movementLevel = 'moderate';
+            temporalContext = 'Some changes detected between recent frames, indicating possible movement.';
+        } else {
+            movementLevel = 'none';
+            temporalContext = 'Scene appears stable across multiple frames with minimal changes.';
+        }
+    } else {
+        if (hasSignificantChange) {
+            movementLevel = 'moderate';
+            temporalContext = 'Changes detected between current and previous frame.';
+        } else {
+            movementLevel = 'none';
+            temporalContext = 'Scene appears stable between recent frames.';
+        }
+    }
+    
+    return {
+        hasMovement: movementLevel !== 'none',
+        movementLevel,
+        temporalContext,
+        frameCount: frameHistory.length
+    };
+}
+
+// Enhanced function to create AI prompt with temporal context
+function createEnhancedAIPrompt(temporalAnalysis) {
+    // Get user preferences for sensitivity
+    const sensitivityMultiplier = (typeof window !== 'undefined' && window.getSensitivityMultiplier) ? 
+        window.getSensitivityMultiplier() : 1.0;
+    
+    // Determine sensitivity instructions based on user preference
+    let sensitivityInstructions = '';
+    if (sensitivityMultiplier < 1.0) {
+        sensitivityInstructions = 'Use CONSERVATIVE detection - only flag clear, obvious hazards and subjects. Require high confidence levels (>0.8) for detections.';
+    } else if (sensitivityMultiplier > 1.0) {
+        sensitivityInstructions = 'Use SENSITIVE detection - flag potential hazards even if subtle. Accept moderate confidence levels (>0.6) for detections and err on the side of caution.';
+    } else {
+        sensitivityInstructions = 'Use BALANCED detection - flag clear hazards while avoiding false positives. Use standard confidence thresholds (>0.7).';
+    }
+
+    const basePrompt = `
+**System Role**: You are an expert AI vision analyst for SpotKin, a critical safety monitoring application. Your analysis directly impacts the safety of babies and pets. You must provide precise, structured analysis with zero tolerance for false negatives in safety assessment.
+
+**Temporal Context**: ${temporalAnalysis.temporalContext}
+Movement Analysis: ${temporalAnalysis.movementLevel} movement detected.
+${temporalAnalysis.hasMovement ? '⚠️ MOVEMENT DETECTED - Pay extra attention to dynamic hazards, rapid state changes, and subjects in motion.' : '✅ STABLE SCENE - Focus on static hazards, positioning safety, and environmental risks.'}
+
+**Detection Sensitivity**: ${sensitivityInstructions}
+
+**Critical Analysis Request**:
+Analyze the provided image and return a valid JSON object with exactly these fields: 'scene_description', 'subjects', and 'safety_assessment'.
+
+1. **'scene_description'**: One detailed sentence describing the scene, lighting, and context.
+   • Include environmental details: lighting quality, room type, furniture/objects present
+   • Note image quality issues if present (blurry, dark, obscured)
+   • Example: "A well-lit nursery with a wooden crib, rocking chair, and soft toys scattered on a carpeted floor."
+
+2. **'subjects'**: Array of detected babies/pets (empty array [] if none found).
+   For each subject, provide:
+   • 'type': EXACTLY one of: "Baby", "Toddler", "Dog", "Cat", "Bird", "Other Pet"
+   • 'state': Current activity - be specific about safety-relevant behaviors
+     - Good examples: "Sleeping peacefully", "Crawling toward stairs", "Chewing electrical cord", "Playing with safe toy"
+     - Bad examples: "Active", "Moving", "Present"
+   • 'confidence': Float 0.0-1.0 based on visual clarity and certainty
+
+3. **'safety_assessment'**: Critical safety evaluation
+   • 'level': EXACTLY one of: "Safe", "Warning", "Danger"
+     - "Safe": No hazards visible, subjects secure and supervised environment
+     - "Warning": Potential hazard requiring attention (unsecured objects, positioning concerns)
+     - "Danger": Immediate risk requiring urgent intervention (active hazards, unsafe positions)
+   • 'reason': Mandatory detailed explanation for ALL levels
+     - Safe: "All subjects are in secure positions with no hazards visible in the monitoring area."
+     - Warning: "Baby is crawling near an uncovered electrical outlet on the left wall."
+     - Danger: "Cat is on a high windowsill with the window open, at immediate risk of falling."
+
+**Enhanced Safety Focus Areas**:
+• Proximity to stairs, windows, doors, or elevated surfaces
+• Electrical outlets, cords, or electronic devices within reach
+• Small objects that pose choking hazards
+• Sharp furniture corners or edges
+• Open containers of liquid or chemicals
+• Unsecured furniture that could tip over
+• Temperature hazards (heaters, fireplaces, hot surfaces)
+• Pet-specific risks (toxic plants, small spaces where they could get stuck)
+• Access to areas outside the intended monitoring zone
+
+**Movement-Specific Instructions**:
+${temporalAnalysis.hasMovement ? `
+🔄 MOVEMENT DETECTED: 
+• Identify what is moving (subject, objects, or environmental changes)
+• Assess if movement indicates increased risk
+• Note direction of movement relative to hazards
+• Consider momentum and trajectory for safety assessment
+• Flag erratic or distressed movement patterns immediately
+` : `
+📷 STABLE SCENE:
+• Assess current positioning for static hazards
+• Check for environmental risks in the subject's vicinity  
+• Evaluate whether the current position is sustainable/safe over time
+• Look for signs of distress even in stationary subjects
+`}
+
+**Critical Requirements**:
+• MANDATORY: Return only valid JSON - no markdown, no explanations outside JSON
+• MANDATORY: Never return empty 'reason' field - always provide specific explanation
+• MANDATORY: If uncertain about safety, lean toward "Warning" rather than "Safe"
+• MANDATORY: Consider age-appropriate hazards (babies vs toddlers have different risk profiles)
+• MANDATORY: Account for pet behavior patterns and species-specific risks
+
+**Response Format**:
+Return ONLY the JSON object, exactly in this format:
+{
+    "scene_description": "Detailed one-sentence scene description",
+    "subjects": [
+        {
+            "type": "Baby|Toddler|Dog|Cat|Bird|Other Pet",
+            "state": "Specific activity/behavior description", 
+            "confidence": 0.95
+        }
+    ],
+    "safety_assessment": {
+        "level": "Safe|Warning|Danger",
+        "reason": "Detailed explanation of safety assessment"
+    }
+}`;
+    
+    return basePrompt;
+}
+
+// Expose parseAIResponse globally for testing
+window.parseAIResponse = parseAIResponse;
+window.analyzeTemporalChanges = analyzeTemporalChanges;
+window.createEnhancedAIPrompt = createEnhancedAIPrompt;
+// Placeholder for preferences functions (will be set after DOM loads)
+window.getMovementThreshold = () => 1000;
+
 // Main Application Initialization
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🌟 DOM Content Loaded');
@@ -91,6 +326,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let monitoringInterval = null;
     let historyData = [];
     const MAX_HISTORY_ITEMS = 50; // Maximum number of history items to store
+
+    // New: Frame history for temporal analysis
+    let frameHistory = [];
+    const FRAME_HISTORY_SIZE = 3; // Store the last 3 frames
 
     // Initialize the camera and check for Puter AI availability
     initCamera();
@@ -315,8 +554,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the image data as a base64 string (use PNG for higher quality)
             const imageData = canvas.toDataURL('image/png');
 
-            // Process the image with AI
-            processImageWithAI(imageData);
+            // Add current frame to history and maintain size
+            frameHistory.push(imageData);
+            if (frameHistory.length > FRAME_HISTORY_SIZE) {
+                frameHistory.shift(); // Remove the oldest frame
+            }
+
+            // Process the image with AI, passing the frame history
+            processImageWithAI(frameHistory);
         } catch (error) {
             console.error('Error taking snapshot:', error);
             showErrorState('Failed to capture image. Please try again.');
@@ -326,28 +571,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Image upload functionality removed
 
     // Process the image with AI using Puter's AI vision API
-    function processImageWithAI(imageData) {
-        // Create AI prompt for detecting pets and babies
-        const prompt = `
-            **System Role**: You are an advanced AI assistant for the SpotKin application, designed to monitor for the safety and well-being of babies and pets. Your primary function is to analyze images and provide clear, concise, and accurate descriptions of the scene, with a strong emphasis on identifying potential hazards.
-
-            **Analysis Request**:
-            Analyze the provided image and return a structured response. The response should be a JSON object with the following keys: 'scene_description', 'subjects', and 'safety_assessment'.
-
-            1.  **'scene_description'**: A brief, one-sentence overview of the entire scene.
-            2.  **'subjects'**: An array of JSON objects, where each object represents a detected baby or pet. Each object should include:
-                *   'type': (e.g., "Baby", "Dog", "Cat").
-                *   'state': (e.g., "Sleeping", "Playing", "Crying", "Eating", "Near window").
-                *   'confidence': A numerical value from 0.0 to 1.0 indicating your confidence in the detection.
-            3.  **'safety_assessment'**: A JSON object containing:
-                *   'level': A safety level, which must be one of "Safe", "Warning", or "Danger".
-                *   'reason': A clear and concise explanation for the assigned safety level. If the level is "Warning" or "Danger", this reason is mandatory and must describe the specific hazard (e.g., "Baby is near an uncovered electrical outlet," "Dog is chewing on a small object that could be a choking hazard").
-
-            **Instructions**:
-            *   If no babies or pets are detected, the 'subjects' array should be empty.
-            *   If the image is unclear or ambiguous, express this in the 'scene_description' and use a lower confidence score for any detected subjects.
-            *   Prioritize accuracy and safety above all else. Your analysis is critical for user peace of mind.
-        `;
+    function processImageWithAI(frameHistoryData) {
+        // Analyze temporal changes across frames
+        const temporalAnalysis = analyzeTemporalChanges(frameHistoryData);
+        console.log("Temporal analysis:", temporalAnalysis);
+        
+        // Create enhanced AI prompt with temporal context
+        const prompt = createEnhancedAIPrompt(temporalAnalysis);
+        
+        // Get the current (latest) frame for AI analysis
+        const currentImageData = frameHistoryData[frameHistoryData.length - 1];
 
         // Optional parameters for the AI
         const options = {
@@ -363,8 +596,8 @@ document.addEventListener('DOMContentLoaded', function() {
             takeSnapshotBtn.disabled = true;
         }
 
-        // Use Puter's AI chat API with the image
-        puter.ai.chat(prompt, imageData, false, options)
+        // Use Puter's AI chat API with the current frame
+        puter.ai.chat(prompt, currentImageData, false, options)
             .then(response => {
                 console.log("AI Response:", response);
                 console.log("AI Response type:", typeof response);
@@ -404,15 +637,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error("AI couldn't analyze the image properly");
                     }
 
-                    // Parse the AI response to create a structured result
                     const aiResult = parseAIResponse(responseText);
+                    // Add temporal analysis information to the result
+                    aiResult.temporalAnalysis = temporalAnalysis;
                     displayResults(aiResult);
 
-                    // If in monitoring mode and we detect babies/pets, make a sound alert
+                    // Enhanced alert system with user preferences
                     if (isMonitoring && aiResult.hasPetsOrBabies) {
-                        // Simple browser alert for now
-                        if (aiResult.alert && (aiResult.alert.type === 'warning' || aiResult.alert.type === 'danger')) {
-                            playAlertSound();
+                        const alertType = aiResult.alert ? aiResult.alert.type.toLowerCase() : 'safe';
+                        
+                        // Check if this type of alert is enabled in user preferences
+                        const shouldAlert = checkShouldAlert(alertType, aiResult, temporalAnalysis);
+                        
+                        if (shouldAlert && window.playAlertSound) {
+                            // Get severity classification for enhanced alert sound
+                            const severity = classifyAlertSeverity(aiResult.alert, aiResult);
+                            window.playAlertSound(severity.level);
                         }
                     }
                 } catch (parseError) {
@@ -432,83 +672,193 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Play a sound alert for important notifications
-    function playAlertSound() {
-        try {
-            // Create a simple beep sound
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+    // Check if an alert should be triggered based on user preferences
+    function checkShouldAlert(alertType, aiResult, temporalAnalysis) {
+        // Always alert for danger level
+        if (alertType === 'danger') {
+            return true;
+        }
+        
+        // Check warning level alerts
+        if (alertType === 'warning' && window.isAlertEnabled) {
+            return window.isAlertEnabled('safety');
+        }
+        
+        // Check movement-based alerts
+        if (temporalAnalysis.hasMovement && window.isAlertEnabled) {
+            return window.isAlertEnabled('movement');
+        }
+        
+        // Check for unusual events (subjects in unusual states)
+        if (aiResult.objects && aiResult.objects.length > 0) {
+            const hasUnusualState = aiResult.objects.some(obj => 
+                obj.state.toLowerCase().includes('crying') ||
+                obj.state.toLowerCase().includes('distressed') ||
+                obj.state.toLowerCase().includes('climbing') ||
+                obj.state.toLowerCase().includes('stuck') ||
+                obj.confidence < 0.5 // Low confidence might indicate unusual pose/position
+            );
+            
+            if (hasUnusualState && window.isAlertEnabled) {
+                return window.isAlertEnabled('unusual');
+            }
+        }
+        
+        return false;
+    }
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+    // ===== ALERT SEVERITY CLASSIFICATION SYSTEM =====
 
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 800;
-            gainNode.gain.value = 0.5;
-
-            oscillator.start();
-
-            // Stop the sound after 300ms
-            setTimeout(() => {
-                oscillator.stop();
-            }, 300);
-        } catch (error) {
-            console.error('Failed to play alert sound:', error);
+    // Classify alert severity based on multiple factors
+    function classifyAlertSeverity(alert, analysisResults) {
+        const alertType = alert.type.toLowerCase();
+        const alertMessage = alert.message.toLowerCase();
+        
+        // Base severity from alert type
+        let baseSeverity = {
+            'safe': 1,
+            'warning': 5, 
+            'danger': 9
+        }[alertType] || 3;
+        
+        // Severity modifiers based on specific conditions
+        let severityModifiers = 0;
+        
+        // High-risk keywords increase severity
+        const dangerKeywords = ['immediate', 'urgent', 'falling', 'fire', 'electrical', 'choking', 'stuck', 'entangled'];
+        const warningKeywords = ['near', 'close to', 'approaching', 'unsecured', 'potential', 'could'];
+        
+        if (dangerKeywords.some(keyword => alertMessage.includes(keyword))) {
+            severityModifiers += 2;
+        } else if (warningKeywords.some(keyword => alertMessage.includes(keyword))) {
+            severityModifiers += 1;
+        }
+        
+        // Movement-based severity adjustment
+        if (analysisResults.temporalAnalysis && analysisResults.temporalAnalysis.hasMovement) {
+            if (analysisResults.temporalAnalysis.movementLevel === 'high') {
+                severityModifiers += 2;
+            } else if (analysisResults.temporalAnalysis.movementLevel === 'medium') {
+                severityModifiers += 1;
+            }
+        }
+        
+        // Subject-specific severity adjustments
+        if (analysisResults.objects && analysisResults.objects.length > 0) {
+            analysisResults.objects.forEach(obj => {
+                const state = obj.state.toLowerCase();
+                const confidence = obj.confidence || 0.7;
+                
+                // Low confidence in dangerous situations increases severity
+                if (alertType === 'danger' && confidence < 0.6) {
+                    severityModifiers += 1;
+                }
+                
+                // Specific dangerous states
+                if (state.includes('crying') || state.includes('distressed')) {
+                    severityModifiers += 1;
+                } else if (state.includes('climbing') || state.includes('reaching')) {
+                    severityModifiers += 1;
+                }
+                
+                // Baby-specific concerns (higher vulnerability)
+                if (obj.type.toLowerCase().includes('baby') && alertType !== 'safe') {
+                    severityModifiers += 1;
+                }
+            });
+        }
+        
+        // Calculate final severity (0-10 scale)
+        const finalSeverity = Math.min(10, Math.max(0, baseSeverity + severityModifiers));
+        
+        // Return severity classification
+        if (finalSeverity >= 8) {
+            return { level: 'critical', score: finalSeverity, priority: 'HIGH' };
+        } else if (finalSeverity >= 6) {
+            return { level: 'high', score: finalSeverity, priority: 'HIGH' };
+        } else if (finalSeverity >= 4) {
+            return { level: 'medium', score: finalSeverity, priority: 'MEDIUM' };
+        } else if (finalSeverity >= 2) {
+            return { level: 'low', score: finalSeverity, priority: 'LOW' };
+        } else {
+            return { level: 'minimal', score: finalSeverity, priority: 'LOW' };
         }
     }
 
-    // Parse the AI response text into a structured format for our app
-    function parseAIResponse(responseText) {
-        console.log("Parsing AI response text:", responseText);
-
-        // Default result structure in case of parsing errors
-        const defaultResult = {
-            scene: "Could not parse AI response.",
-            objects: [],
-            alert: { type: "danger", message: "Error parsing AI response. Check console for details." },
-            hasPetsOrBabies: false
+    // Create visual severity display components
+    function createSeverityDisplay(severityLevel, alert) {
+        const { level, score, priority } = severityLevel;
+        
+        // Severity badges with color coding
+        const badges = {
+            'critical': '<span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">🚨 CRITICAL</span>',
+            'high': '<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">🔴 HIGH</span>',
+            'medium': '<span class="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">🟡 MEDIUM</span>',
+            'low': '<span class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">🟢 LOW</span>',
+            'minimal': '<span class="bg-gray-400 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">ℹ️ MINIMAL</span>'
         };
-
-        try {
-            // Clean the response text to ensure it's valid JSON
-            // The AI might return a string wrapped in ```json ... ```
-            const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            
-            const aiData = JSON.parse(jsonString);
-
-            // Validate the structure of the parsed JSON
-            if (!aiData.scene_description || !aiData.subjects || !aiData.safety_assessment) {
-                console.error("Invalid AI response structure:", aiData);
-                throw new Error("Missing required fields in AI response.");
-            }
-
-            const result = {
-                scene: aiData.scene_description,
-                // Map the 'subjects' array to the 'objects' array format
-                objects: aiData.subjects.map(subject => ({
-                    type: subject.type || 'Unknown',
-                    state: subject.state || 'Unspecified',
-                    confidence: subject.confidence || 0.5
-                })),
-                // Map the 'safety_assessment' to the 'alert' object format
-                alert: {
-                    type: aiData.safety_assessment.level ? aiData.safety_assessment.level.toLowerCase() : 'info',
-                    message: aiData.safety_assessment.reason || 'No specific details provided.'
-                },
-                // Determine if pets or babies are present
-                hasPetsOrBabies: aiData.subjects.length > 0
-            };
-
-            console.log("Parsed AI result:", result);
-            return result;
-
-        } catch (error) {
-            console.error("Error during AI response parsing:", error);
-            // Try to extract some information even if parsing fails
-            defaultResult.scene = responseText;
-            return defaultResult;
-        }
+        
+        // Severity indicators with visual bars
+        const indicators = {
+            'critical': `
+                <div class="text-right">
+                    <div class="text-xs text-red-600 font-bold">SEVERITY ${score}/10</div>
+                    <div class="flex space-x-1 mt-1">
+                        ${[...Array(10)].map((_, i) => 
+                            `<div class="w-1 h-4 ${i < score ? 'bg-red-600' : 'bg-gray-200'} rounded-sm"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `,
+            'high': `
+                <div class="text-right">
+                    <div class="text-xs text-red-500 font-bold">SEVERITY ${score}/10</div>
+                    <div class="flex space-x-1 mt-1">
+                        ${[...Array(10)].map((_, i) => 
+                            `<div class="w-1 h-4 ${i < score ? 'bg-red-500' : 'bg-gray-200'} rounded-sm"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `,
+            'medium': `
+                <div class="text-right">
+                    <div class="text-xs text-yellow-600 font-bold">SEVERITY ${score}/10</div>
+                    <div class="flex space-x-1 mt-1">
+                        ${[...Array(10)].map((_, i) => 
+                            `<div class="w-1 h-4 ${i < score ? 'bg-yellow-500' : 'bg-gray-200'} rounded-sm"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `,
+            'low': `
+                <div class="text-right">
+                    <div class="text-xs text-blue-600 font-bold">SEVERITY ${score}/10</div>
+                    <div class="flex space-x-1 mt-1">
+                        ${[...Array(10)].map((_, i) => 
+                            `<div class="w-1 h-4 ${i < score ? 'bg-blue-500' : 'bg-gray-200'} rounded-sm"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `,
+            'minimal': `
+                <div class="text-right">
+                    <div class="text-xs text-gray-600 font-bold">SEVERITY ${score}/10</div>
+                    <div class="flex space-x-1 mt-1">
+                        ${[...Array(10)].map((_, i) => 
+                            `<div class="w-1 h-4 ${i < score ? 'bg-gray-400' : 'bg-gray-200'} rounded-sm"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `
+        };
+        
+        return {
+            badge: badges[level] || badges['minimal'],
+            indicator: indicators[level] || indicators['minimal'],
+            level,
+            score,
+            priority
+        };
     }
 
     // Display the analysis results in the UI
@@ -523,8 +873,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide loading state and placeholder
         resultsPlaceholder.classList.add('hidden');
 
-        // Set scene description text
-        sceneText.textContent = results.scene;
+        // Set scene description text with temporal context
+        let sceneDescription = results.scene;
+        if (results.temporalAnalysis) {
+            const movementIndicator = results.temporalAnalysis.hasMovement ? 
+                `🔄 Movement detected (${results.temporalAnalysis.movementLevel})` : 
+                `📷 Stable scene`;
+            sceneDescription += ` ${movementIndicator}`;
+        }
+        sceneText.textContent = sceneDescription;
 
         // Clear and populate detection list
         detectionList.innerHTML = '';
@@ -605,7 +962,28 @@ document.addEventListener('DOMContentLoaded', function() {
             safetyIcon = 'fa-circle-info';
         }
 
+        // Apply enhanced safety assessment display with severity classification
+        safetyAssessmentDisplay.className = `p-4 rounded-md mb-4 border-l-4 ${safetyClass}`;
         
+        // Enhanced severity display with visual indicators
+        const severityLevel = classifyAlertSeverity(results.alert, results);
+        const severityDisplay = createSeverityDisplay(severityLevel, results.alert);
+        
+        safetyAssessmentDisplay.innerHTML = `
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <h4 class="font-semibold text-lg mb-2 flex items-center">
+                        <i class="fas ${safetyIcon} mr-2"></i>Safety Assessment
+                        ${severityDisplay.badge}
+                    </h4>
+                    <p class="font-bold text-lg mb-1">${results.alert.type.charAt(0).toUpperCase() + results.alert.type.slice(1)}</p>
+                    <p class="text-sm opacity-90">${results.alert.message}</p>
+                </div>
+                <div class="ml-4 text-right">
+                    ${severityDisplay.indicator}
+                </div>
+            </div>
+        `;
 
         // Show the results container
         analysisResults.classList.remove('hidden');
@@ -694,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Set up the interval for automatic snapshots
         const intervalMs = parseInt(refreshRateSelect.value);
-        console.log('Setting monitoring interval to:', intervalMs, 'ms'); // Added log
+        console.log('Setting new monitoring interval to:', intervalMs, 'ms'); // Added log
         monitoringInterval = setInterval(takeSnapshot, intervalMs);
 
         // Add visual indicator to camera container
@@ -788,7 +1166,8 @@ document.addEventListener('DOMContentLoaded', function() {
             scene: result.scene,
             objects: result.objects,
             alert: result.alert,
-            hasPetsOrBabies: result.hasPetsOrBabies // Directly use the value from parsed AI result
+            hasPetsOrBabies: result.hasPetsOrBabies, // Directly use the value from parsed AI result
+            temporalAnalysis: result.temporalAnalysis // Include temporal analysis information
         };
 
         console.log('New history entry:', entry); // Added log
@@ -858,13 +1237,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (entry.alert.type === 'danger') {
                 alertClass = 'text-red-600';
                 alertIcon = 'fa-circle-exclamation';
-            } else { // Default to info if type is unexpected
+            } else { // info or safe
                 alertClass = 'text-blue-600';
                 alertIcon = 'fa-info-circle';
             }
 
             // Create the content based on whether pets/babies are present
-            let objectsContent = '';
+            let objectsContent = ``;
 
             if (entry.hasPetsOrBabies && entry.objects.length > 0) {
                 objectsContent = `
@@ -951,4 +1330,645 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('User cancelled clearing history.'); // Added log
         }
     }
+
+    // ===== PREFERENCES SYSTEM =====
+
+    // Default preferences
+    const defaultPreferences = {
+        analysisSensitivity: 'medium',
+        alertMovement: true,
+        alertSafety: true,
+        alertUnusual: true,
+        soundAlerts: true,
+        defaultRefreshRate: '10000',
+        movementThreshold: 1000,
+        zonesEnabled: false,
+        monitoringZones: []
+    };
+
+    // Current preferences (loaded from localStorage or defaults)
+    let userPreferences = { ...defaultPreferences };
+
+    // DOM Elements for preferences
+    const preferencesBtn = document.getElementById('preferences-btn');
+    const preferencesModal = document.getElementById('preferences-modal');
+    const preferencesClose = document.getElementById('preferences-close');
+    const preferencesSave = document.getElementById('preferences-save');
+    const preferencesReset = document.getElementById('preferences-reset');
+
+    // Preferences form elements
+    const analysisSensitivity = document.getElementById('analysis-sensitivity');
+    const alertMovement = document.getElementById('alert-movement');
+    const alertSafety = document.getElementById('alert-safety');
+    const alertUnusual = document.getElementById('alert-unusual');
+    const soundOn = document.getElementById('sound-on');
+    const soundOff = document.getElementById('sound-off');
+    const defaultRefreshRate = document.getElementById('default-refresh-rate');
+    const movementThreshold = document.getElementById('movement-threshold');
+    const movementThresholdValue = document.getElementById('movement-threshold-value');
+    
+    // Zone-related elements
+    const zonesEnabled = document.getElementById('zones-enabled');
+    const zoneControls = document.getElementById('zone-controls');
+    const addZoneBtn = document.getElementById('add-zone');
+    const clearZonesBtn = document.getElementById('clear-zones');
+    const zoneList = document.getElementById('zone-list');
+    
+    // Camera zone elements
+    const zoneToggle = document.getElementById('zone-toggle');
+    const zoneStatus = document.getElementById('zone-status');
+    const zoneOverlay = document.getElementById('zone-overlay');
+    const zoneSvg = document.getElementById('zone-svg');
+
+    // Load user preferences from localStorage
+    function loadUserPreferences() {
+        console.log('Loading user preferences...');
+        try {
+            const savedPrefs = localStorage.getItem('spotkin_preferences');
+            if (savedPrefs) {
+                userPreferences = { ...defaultPreferences, ...JSON.parse(savedPrefs) };
+                console.log('User preferences loaded:', userPreferences);
+            } else {
+                console.log('No saved preferences found, using defaults');
+            }
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+            userPreferences = { ...defaultPreferences };
+        }
+        
+        // Apply preferences to the UI
+        applyPreferencesToUI();
+    }
+
+    // Save user preferences to localStorage
+    function saveUserPreferences() {
+        console.log('Saving user preferences:', userPreferences);
+        try {
+            localStorage.setItem('spotkin_preferences', JSON.stringify(userPreferences));
+            console.log('Preferences saved successfully');
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    }
+
+    // Apply current preferences to the form UI
+    function applyPreferencesToUI() {
+        console.log('Applying preferences to UI');
+        
+        analysisSensitivity.value = userPreferences.analysisSensitivity;
+        alertMovement.checked = userPreferences.alertMovement;
+        alertSafety.checked = userPreferences.alertSafety;
+        alertUnusual.checked = userPreferences.alertUnusual;
+        
+        if (userPreferences.soundAlerts) {
+            soundOn.checked = true;
+            soundOff.checked = false;
+        } else {
+            soundOn.checked = false;
+            soundOff.checked = true;
+        }
+        
+        defaultRefreshRate.value = userPreferences.defaultRefreshRate;
+        movementThreshold.value = userPreferences.movementThreshold;
+        movementThresholdValue.textContent = userPreferences.movementThreshold;
+        
+        // Apply zone preferences
+        zonesEnabled.checked = userPreferences.zonesEnabled;
+        if (userPreferences.zonesEnabled) {
+            zoneControls.classList.remove('hidden');
+            currentZones = [...userPreferences.monitoringZones];
+            updateZoneList();
+            updateZoneDisplay();
+        }
+        
+        // Update the main refresh rate select to match preference
+        if (refreshRateSelect.value === '10000') {
+            refreshRateSelect.value = userPreferences.defaultRefreshRate;
+        }
+    }
+
+    // Collect preferences from the form
+    function collectPreferencesFromForm() {
+        return {
+            analysisSensitivity: analysisSensitivity.value,
+            alertMovement: alertMovement.checked,
+            alertSafety: alertSafety.checked,
+            alertUnusual: alertUnusual.checked,
+            soundAlerts: soundOn.checked,
+            defaultRefreshRate: defaultRefreshRate.value,
+            movementThreshold: parseInt(movementThreshold.value),
+            zonesEnabled: zonesEnabled.checked,
+            monitoringZones: [...currentZones]
+        };
+    }
+
+    // Show preferences modal
+    function showPreferencesModal() {
+        console.log('Opening preferences modal');
+        preferencesModal.classList.remove('hidden');
+        applyPreferencesToUI(); // Refresh form with current settings
+    }
+
+    // Hide preferences modal
+    function hidePreferencesModal() {
+        console.log('Closing preferences modal');
+        preferencesModal.classList.add('hidden');
+    }
+
+    // Reset preferences to defaults
+    function resetPreferences() {
+        console.log('Resetting preferences to defaults');
+        if (confirm('Are you sure you want to reset all settings to default values?')) {
+            userPreferences = { ...defaultPreferences };
+            applyPreferencesToUI();
+            console.log('Preferences reset to defaults');
+        }
+    }
+
+    // Save preferences from form
+    function savePreferences() {
+        console.log('Saving preferences from form');
+        userPreferences = collectPreferencesFromForm();
+        saveUserPreferences();
+        hidePreferencesModal();
+        
+        // Show confirmation feedback
+        const originalText = preferencesSave.textContent;
+        preferencesSave.textContent = 'Saved!';
+        preferencesSave.classList.add('bg-green-600');
+        preferencesSave.classList.remove('bg-indigo-600');
+        
+        setTimeout(() => {
+            preferencesSave.textContent = originalText;
+            preferencesSave.classList.remove('bg-green-600');
+            preferencesSave.classList.add('bg-indigo-600');
+        }, 2000);
+        
+        console.log('Preferences saved and applied');
+    }
+
+    // Get movement threshold based on user preference
+    function getMovementThreshold() {
+        return userPreferences.movementThreshold;
+    }
+
+    // Get analysis sensitivity multiplier
+    function getSensitivityMultiplier() {
+        switch (userPreferences.analysisSensitivity) {
+            case 'low': return 0.5;
+            case 'high': return 1.5;
+            default: return 1.0; // medium
+        }
+    }
+
+    // Check if alert type is enabled
+    function isAlertEnabled(alertType) {
+        switch (alertType) {
+            case 'movement': return userPreferences.alertMovement;
+            case 'safety': return userPreferences.alertSafety;
+            case 'unusual': return userPreferences.alertUnusual;
+            default: return true;
+        }
+    }
+
+    // Play alert sound if enabled with severity-based patterns
+    function playAlertSound(severityLevel = 'medium') {
+        if (userPreferences.soundAlerts) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Define sound patterns based on severity
+                const soundPatterns = {
+                    'minimal': { frequency: 600, duration: 0.15, beeps: 1, gap: 0 },
+                    'low': { frequency: 700, duration: 0.2, beeps: 1, gap: 0 },
+                    'medium': { frequency: 800, duration: 0.25, beeps: 2, gap: 0.1 },
+                    'high': { frequency: 900, duration: 0.3, beeps: 3, gap: 0.1 },
+                    'critical': { frequency: 1000, duration: 0.4, beeps: 4, gap: 0.08 }
+                };
+                
+                const pattern = soundPatterns[severityLevel] || soundPatterns['medium'];
+                
+                // Play the specified pattern
+                for (let i = 0; i < pattern.beeps; i++) {
+                    const startTime = audioContext.currentTime + (i * (pattern.duration + pattern.gap));
+                    
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = pattern.frequency;
+                    
+                    // Different volume based on severity
+                    const volume = {
+                        'minimal': 0.2,
+                        'low': 0.25,
+                        'medium': 0.3,
+                        'high': 0.4,
+                        'critical': 0.5
+                    }[severityLevel] || 0.3;
+                    
+                    gainNode.gain.value = volume;
+                    
+                    // Add slight frequency variation for critical alerts
+                    if (severityLevel === 'critical') {
+                        oscillator.frequency.setValueAtTime(pattern.frequency, startTime);
+                        oscillator.frequency.linearRampToValueAtTime(pattern.frequency + 100, startTime + pattern.duration / 2);
+                        oscillator.frequency.linearRampToValueAtTime(pattern.frequency, startTime + pattern.duration);
+                    }
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + pattern.duration);
+                }
+            } catch (error) {
+                console.log('Could not play alert sound:', error);
+            }
+        }
+    }
+
+    // Preferences Event Listeners
+    preferencesBtn.addEventListener('click', showPreferencesModal);
+    preferencesClose.addEventListener('click', hidePreferencesModal);
+    preferencesSave.addEventListener('click', savePreferences);
+    preferencesReset.addEventListener('click', resetPreferences);
+    
+    // Close modal when clicking outside
+    preferencesModal.addEventListener('click', (e) => {
+        if (e.target === preferencesModal) {
+            hidePreferencesModal();
+        }
+    });
+
+    // Update threshold value display
+    movementThreshold.addEventListener('input', (e) => {
+        movementThresholdValue.textContent = e.target.value;
+    });
+
+    // Zone control event listeners
+    zonesEnabled.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            zoneControls.classList.remove('hidden');
+        } else {
+            zoneControls.classList.add('hidden');
+            zoneOverlay.classList.add('hidden');
+        }
+        updateZoneDisplay();
+    });
+
+    addZoneBtn.addEventListener('click', () => {
+        hidePreferencesModal();
+        enterZoneMode();
+    });
+
+    clearZonesBtn.addEventListener('click', clearAllZones);
+
+    // Camera zone toggle button
+    zoneToggle.addEventListener('click', toggleZoneMode);
+
+    // ESC key to close modal or exit zone mode
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (isZoneMode) {
+                exitZoneMode();
+            } else if (!preferencesModal.classList.contains('hidden')) {
+                hidePreferencesModal();
+            }
+        }
+    });
+
+    // ===== MONITORING ZONE SYSTEM =====
+
+    // Zone management state
+    let currentZones = [];
+    let isZoneMode = false;
+    let isDrawingZone = false;
+    let currentDrawingZone = null;
+
+    // Initialize monitoring zones system
+    function initializeZoneSystem() {
+        console.log('Initializing monitoring zone system...');
+        
+        // Show the zone toggle button when camera is ready
+        if (video.srcObject) {
+            zoneToggle.classList.remove('hidden');
+        }
+        
+        // Load zones from preferences
+        if (userPreferences.zonesEnabled && userPreferences.monitoringZones.length > 0) {
+            currentZones = [...userPreferences.monitoringZones];
+            updateZoneDisplay();
+        }
+    }
+
+    // Toggle zone setup mode
+    function toggleZoneMode() {
+        isZoneMode = !isZoneMode;
+        
+        if (isZoneMode) {
+            enterZoneMode();
+        } else {
+            exitZoneMode();
+        }
+    }
+
+    // Enter zone setup mode
+    function enterZoneMode() {
+        isZoneMode = true;
+        zoneStatus.textContent = 'Drawing Mode';
+        zoneOverlay.classList.remove('hidden');
+        zoneOverlay.style.pointerEvents = 'all';
+        
+        // Add drawing event listeners
+        zoneOverlay.addEventListener('mousedown', startZoneDrawing);
+        zoneOverlay.addEventListener('mousemove', updateZoneDrawing);
+        zoneOverlay.addEventListener('mouseup', finishZoneDrawing);
+        
+        // Show current zones
+        updateZoneDisplay();
+        
+        console.log('Zone setup mode activated');
+    }
+
+    // Exit zone setup mode
+    function exitZoneMode() {
+        isZoneMode = false;
+        isDrawingZone = false;
+        currentDrawingZone = null;
+        zoneStatus.textContent = 'Setup Zone';
+        zoneOverlay.style.pointerEvents = 'none';
+        
+        // Remove drawing event listeners
+        zoneOverlay.removeEventListener('mousedown', startZoneDrawing);
+        zoneOverlay.removeEventListener('mousemove', updateZoneDrawing);
+        zoneOverlay.removeEventListener('mouseup', finishZoneDrawing);
+        
+        // Hide overlay if no zones are enabled
+        if (!userPreferences.zonesEnabled || currentZones.length === 0) {
+            zoneOverlay.classList.add('hidden');
+        }
+        
+        console.log('Zone setup mode deactivated');
+    }
+
+    // Start drawing a new zone
+    function startZoneDrawing(e) {
+        if (!isZoneMode) return;
+        
+        isDrawingZone = true;
+        const rect = zoneOverlay.getBoundingClientRect();
+        const startX = ((e.clientX - rect.left) / rect.width) * 100;
+        const startY = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        currentDrawingZone = {
+            id: Date.now(),
+            name: `Zone ${currentZones.length + 1}`,
+            x: startX,
+            y: startY,
+            width: 0,
+            height: 0,
+            enabled: true
+        };
+        
+        console.log('Started drawing zone at:', startX, startY);
+    }
+
+    // Update zone drawing
+    function updateZoneDrawing(e) {
+        if (!isDrawingZone || !currentDrawingZone) return;
+        
+        const rect = zoneOverlay.getBoundingClientRect();
+        const currentX = ((e.clientX - rect.left) / rect.width) * 100;
+        const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Calculate width and height
+        currentDrawingZone.width = Math.abs(currentX - currentDrawingZone.x);
+        currentDrawingZone.height = Math.abs(currentY - currentDrawingZone.y);
+        
+        // Adjust x,y if dragging backwards
+        if (currentX < currentDrawingZone.x) {
+            currentDrawingZone.x = currentX;
+        }
+        if (currentY < currentDrawingZone.y) {
+            currentDrawingZone.y = currentY;
+        }
+        
+        // Update visual representation
+        updateZoneDrawingDisplay();
+    }
+
+    // Finish drawing a zone
+    function finishZoneDrawing(e) {
+        if (!isDrawingZone || !currentDrawingZone) return;
+        
+        isDrawingZone = false;
+        
+        // Only add zone if it has meaningful size
+        if (currentDrawingZone.width > 2 && currentDrawingZone.height > 2) {
+            currentZones.push(currentDrawingZone);
+            console.log('Zone created:', currentDrawingZone);
+        }
+        
+        currentDrawingZone = null;
+        updateZoneDisplay();
+        updateZoneList();
+    }
+
+    // Update zone drawing display during creation
+    function updateZoneDrawingDisplay() {
+        if (!currentDrawingZone) return;
+        
+        // Clear and redraw zones
+        updateZoneDisplay();
+        
+        // Add current drawing zone
+        const drawingRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        drawingRect.setAttribute('x', `${currentDrawingZone.x}%`);
+        drawingRect.setAttribute('y', `${currentDrawingZone.y}%`);
+        drawingRect.setAttribute('width', `${currentDrawingZone.width}%`);
+        drawingRect.setAttribute('height', `${currentDrawingZone.height}%`);
+        drawingRect.setAttribute('fill', 'rgba(99, 102, 241, 0.2)');
+        drawingRect.setAttribute('stroke', '#6366f1');
+        drawingRect.setAttribute('stroke-width', '2');
+        drawingRect.setAttribute('stroke-dasharray', '5,5');
+        
+        zoneSvg.appendChild(drawingRect);
+    }
+
+    // Update the visual display of all zones
+    function updateZoneDisplay() {
+        // Clear existing zones
+        zoneSvg.innerHTML = '';
+        
+        if (!userPreferences.zonesEnabled) return;
+        
+        // Draw each zone
+        currentZones.forEach((zone, index) => {
+            if (!zone.enabled) return;
+            
+            // Create zone rectangle
+            const zoneRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            zoneRect.setAttribute('x', `${zone.x}%`);
+            zoneRect.setAttribute('y', `${zone.y}%`);
+            zoneRect.setAttribute('width', `${zone.width}%`);
+            zoneRect.setAttribute('height', `${zone.height}%`);
+            zoneRect.setAttribute('fill', 'rgba(34, 197, 94, 0.15)');
+            zoneRect.setAttribute('stroke', '#22c55e');
+            zoneRect.setAttribute('stroke-width', '2');
+            zoneRect.classList.add('zone-rect');
+            
+            // Add zone label
+            const zoneLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            zoneLabel.setAttribute('x', `${zone.x + 1}%`);
+            zoneLabel.setAttribute('y', `${zone.y + 3}%`);
+            zoneLabel.setAttribute('fill', '#22c55e');
+            zoneLabel.setAttribute('font-size', '10');
+            zoneLabel.setAttribute('font-weight', 'bold');
+            zoneLabel.textContent = zone.name;
+            
+            zoneSvg.appendChild(zoneRect);
+            zoneSvg.appendChild(zoneLabel);
+        });
+    }
+
+    // Update the zone list in preferences
+    function updateZoneList() {
+        zoneList.innerHTML = '';
+        
+        currentZones.forEach((zone, index) => {
+            const zoneItem = document.createElement('div');
+            zoneItem.className = 'flex items-center justify-between bg-gray-50 p-2 rounded text-xs';
+            zoneItem.innerHTML = `
+                <div class="flex items-center">
+                    <input type="checkbox" ${zone.enabled ? 'checked' : ''} 
+                           class="mr-2 zone-checkbox" data-zone-id="${zone.id}">
+                    <span class="zone-name" data-zone-id="${zone.id}">${zone.name}</span>
+                </div>
+                <button class="text-red-600 hover:text-red-800 delete-zone" data-zone-id="${zone.id}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            `;
+            
+            zoneList.appendChild(zoneItem);
+        });
+        
+        // Add event listeners for zone controls
+        zoneList.querySelectorAll('.zone-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const zoneId = parseInt(e.target.dataset.zoneId);
+                const zone = currentZones.find(z => z.id === zoneId);
+                if (zone) {
+                    zone.enabled = e.target.checked;
+                    updateZoneDisplay();
+                }
+            });
+        });
+        
+        zoneList.querySelectorAll('.delete-zone').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const zoneId = parseInt(e.target.dataset.zoneId);
+                deleteZone(zoneId);
+            });
+        });
+        
+        // Make zone names editable
+        zoneList.querySelectorAll('.zone-name').forEach(nameSpan => {
+            nameSpan.addEventListener('dblclick', (e) => {
+                const zoneId = parseInt(e.target.dataset.zoneId);
+                editZoneName(zoneId, e.target);
+            });
+        });
+    }
+
+    // Delete a monitoring zone
+    function deleteZone(zoneId) {
+        currentZones = currentZones.filter(zone => zone.id !== zoneId);
+        updateZoneDisplay();
+        updateZoneList();
+    }
+
+    // Edit zone name
+    function editZoneName(zoneId, element) {
+        const zone = currentZones.find(z => z.id === zoneId);
+        if (!zone) return;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = zone.name;
+        input.className = 'bg-white border rounded px-1 text-xs w-20';
+        
+        element.replaceWith(input);
+        input.focus();
+        input.select();
+        
+        const finishEdit = () => {
+            zone.name = input.value || `Zone ${currentZones.indexOf(zone) + 1}`;
+            updateZoneList();
+            updateZoneDisplay();
+        };
+        
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                finishEdit();
+            }
+        });
+    }
+
+    // Clear all monitoring zones
+    function clearAllZones() {
+        if (currentZones.length === 0) return;
+        
+        if (confirm('Are you sure you want to remove all monitoring zones?')) {
+            currentZones = [];
+            updateZoneDisplay();
+            updateZoneList();
+        }
+    }
+
+    // Get zones for AI analysis (convert to absolute coordinates)
+    function getActiveZones() {
+        if (!userPreferences.zonesEnabled) return [];
+        
+        return currentZones
+            .filter(zone => zone.enabled)
+            .map(zone => ({
+                name: zone.name,
+                x: zone.x / 100,
+                y: zone.y / 100,
+                width: zone.width / 100,
+                height: zone.height / 100
+            }));
+    }
+
+    // Initialize preferences on load
+    loadUserPreferences();
+    
+    // Initialize zone system after preferences are loaded
+    initializeZoneSystem();
+    
+    // Expose preferences functions globally for use by other parts of the app
+    window.getMovementThreshold = getMovementThreshold;
+    window.getSensitivityMultiplier = getSensitivityMultiplier;
+    window.isAlertEnabled = isAlertEnabled;
+    window.playAlertSound = playAlertSound;
+    
+    // Expose alert severity functions globally for testing
+    window.classifyAlertSeverity = classifyAlertSeverity;
+    window.createSeverityDisplay = createSeverityDisplay;
+    window.displayResults = displayResults;
+    
+    // Expose zone functions globally for testing  
+    window.getActiveZones = getActiveZones;
+    window.updateZoneDisplay = updateZoneDisplay;
+    window.updateZoneList = updateZoneList;
+    window.collectPreferencesFromForm = collectPreferencesFromForm;
+    
+    // Expose zone state for testing
+    Object.defineProperty(window, 'currentZones', {
+        get: () => currentZones,
+        set: (value) => { currentZones = value; }
+    });
+    
+    console.log('Preferences system initialized');
 });

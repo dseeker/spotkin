@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ccr code \"who are you?\")",
+      "Bash(ccr status:*)",
+      "Bash(ccr:*)",
+      "Bash(timeout:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(start /B ccr start)",
+      "Bash(dir \"C:\\Users\\MagnusOne\\.claude-code-router\")",
+      "Bash(npm test)",
+      "Bash(npm run cypress:run:*)",
+      "Bash(rm:*)",
+      "Bash(npx cypress run:*)"
+    ],
+    "deny": []
+  }
+}

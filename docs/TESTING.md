@@ -1,17 +1,88 @@
-# SpotKin Visual Testing Guide
+# SpotKin Comprehensive Testing Guide
 
 ## Overview
-This document provides a comprehensive guide for visual and interactive testing of the SpotKin application using Puppeteer-based testing directly within Claude Desktop.
+SpotKin now features a professional-grade testing suite with multiple testing methodologies including Cypress E2E testing, visual regression validation, and Puppeteer-based testing directly within Claude Desktop. This document covers all testing approaches and capabilities.
 
 ## Testing Environment
-- Claude Desktop
-- Integrated Puppeteer MCP (Master Control Program) Tools
-- Direct browser interaction capabilities
 
-## Testing Methodology
+### 🔧 **Primary Testing Stack**
+- **Cypress Testing Framework**: Comprehensive E2E and unit testing
+- **Visual Regression Testing**: Automated screenshot analysis and comparison
+- **Custom Test Commands**: Domain-specific testing utilities
+- **Accessibility Testing**: WCAG compliance and keyboard navigation validation
 
-### Approach
-Unlike traditional Node.js-based Puppeteer testing, this environment allows direct interaction through:
+### 🖥️ **Secondary Testing Tools**
+- **Claude Desktop**: Integrated development environment
+- **Puppeteer MCP**: Master Control Program tools for browser automation
+- **Direct Browser Interaction**: Real-time testing capabilities
+
+## Comprehensive Testing Suite
+
+### 🎯 **Cypress E2E Testing**
+
+SpotKin includes 30+ comprehensive test cases covering all major functionality:
+
+#### **Core Feature Tests**
+- **Unit Tests** (`cypress/e2e/unit.cy.js`): parseAIResponse function and temporal analysis
+- **User Preferences** (`cypress/e2e/preferences.cy.js`): Settings panel and customization 
+- **Enhanced AI Prompts** (`cypress/e2e/enhanced-ai.cy.js`): Context-aware AI analysis
+- **Alert Severity** (`cypress/e2e/alert-severity.cy.js`): 10-point severity classification system
+- **Monitoring Zones** (`cypress/e2e/monitoring-zones.cy.js`): Interactive zone drawing and management
+- **Advanced E2E** (`cypress/e2e/demo-e2e.cy.js`): Complete workflow validation with screenshots
+
+#### **Custom Testing Commands** (`cypress/support/commands.js`)
+```javascript
+// Advanced workflow testing
+cy.takeSnapshotAndAnalyze()           // Automated AI analysis workflow
+cy.waitForAIAnalysis()                // Wait for processing completion
+cy.verifyTemporalAnalysis()           // Movement detection validation
+cy.testResponsiveLayout()             // Multi-viewport testing
+cy.visualSnapshot('test-name')        // Screenshot capture
+cy.checkA11y()                        // Accessibility validation
+```
+
+#### **Running Tests**
+```bash
+# Run all tests
+npx cypress run
+
+# Run specific test suite
+npx cypress run --spec "cypress/e2e/preferences.cy.js"
+
+# Open interactive test runner
+npx cypress open
+```
+
+### 🎨 **Visual Regression Testing**
+
+Automated screenshot capture and analysis at key workflow points:
+- Initial application state
+- After AI analysis completion
+- Monitoring mode activation
+- Error state handling
+- Responsive design validation
+- Accessibility compliance checks
+
+### 📱 **Responsive Design Testing**
+
+Multi-viewport testing across:
+- **Desktop**: 1280x720 (primary)
+- **Tablet**: 768x1024 (portrait)
+- **Mobile**: 375x667 (compact)
+
+### ♿ **Accessibility Testing**
+
+Comprehensive WCAG compliance validation:
+- Semantic HTML structure verification
+- Keyboard navigation testing
+- Alt text validation for images
+- Focus management verification
+- Screen reader compatibility
+
+## Legacy Testing Methodology (Puppeteer)
+
+### Manual Browser Testing Approach
+For advanced debugging and manual testing, direct browser interaction through:
 - `puppeteer_navigate`
 - `puppeteer_click`
 - `puppeteer_screenshot`

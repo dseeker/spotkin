@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npx http-server ./D:/Dados/Code/spotkin -p 3000",
     "dev": "npx live-server --port=3000 --watch=index.html,app.js,styles.css",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start-app": "npx http-server . -p 3000",
+    "cypress:run": "cypress run",
+    "test": "start-server-and-test start-app http://localhost:3000 cypress:run"
   },
   "keywords": [
     "ai",
@@ -21,6 +23,8 @@
     "http-server": "^14.1.1"
   },
   "devDependencies": {
-    "puppeteer": "^24.8.2"
+    "cypress": "^14.5.0",
+    "puppeteer": "^24.8.2",
+    "start-server-and-test": "^2.0.12"
   }
 }
