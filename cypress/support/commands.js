@@ -163,3 +163,6 @@ Cypress.Commands.add('testKeyboardNavigation', () => {
 
 // Import PWA-specific commands
 import './pwa-commands.js';
+
+// Import test helper commands
+import './test-helpers.js';

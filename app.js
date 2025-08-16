@@ -373,6 +373,12 @@ window.getMovementThreshold = () => 1000;
 // Main Application Initialization
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🌟 DOM Content Loaded');
+    
+    // Initialize splash screen
+    initializeSplashScreen();
+    
+    // Initialize share target functionality
+    initializeShareTarget();
 
     try {
         // Validate Critical DOM Elements
@@ -1816,17 +1822,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const zoneOverlay = document.getElementById('zone-overlay');
     const zoneSvg = document.getElementById('zone-svg');
 
-    // Load user preferences from localStorage
-    function loadUserPreferences() {
+    // Load user preferences from secure storage
+    async function loadUserPreferences() {
         console.log('Loading user preferences...');
         try {
-            const savedPrefs = localStorage.getItem('spotkin_preferences');
-            if (savedPrefs) {
-                userPreferences = { ...defaultPreferences, ...JSON.parse(savedPrefs) };
-                window.userPreferences = userPreferences; // Update global reference
-                console.log('User preferences loaded:', userPreferences);
+            if (window.secureStorage) {
+                const savedPrefs = await window.secureStorage.getItem('spotkin_preferences');
+                if (savedPrefs) {
+                    userPreferences = { ...defaultPreferences, ...savedPrefs };
+                    window.userPreferences = userPreferences; // Update global reference
+                    console.log('🔐 User preferences loaded securely:', userPreferences);
+                } else {
+                    console.log('No saved preferences found, using defaults');
+                }
             } else {
-                console.log('No saved preferences found, using defaults');
+                // Fallback to regular localStorage if secure storage not available
+                const savedPrefs = localStorage.getItem('spotkin_preferences');
+                if (savedPrefs) {
+                    userPreferences = { ...defaultPreferences, ...JSON.parse(savedPrefs) };
+                    window.userPreferences = userPreferences;
+                    console.log('⚠️ User preferences loaded from fallback storage:', userPreferences);
+                } else {
+                    console.log('No saved preferences found, using defaults');
+                }
             }
         } catch (error) {
             console.error('Error loading preferences:', error);
@@ -1838,14 +1856,32 @@ document.addEventListener('DOMContentLoaded', function() {
         applyPreferencesToUI();
     }
 
-    // Save user preferences to localStorage
-    function saveUserPreferences() {
+    // Save user preferences to secure storage
+    async function saveUserPreferences() {
         console.log('Saving user preferences:', userPreferences);
         try {
-            localStorage.setItem('spotkin_preferences', JSON.stringify(userPreferences));
-            console.log('Preferences saved successfully');
+            if (window.secureStorage) {
+                const saved = await window.secureStorage.setItem('spotkin_preferences', userPreferences);
+                if (saved) {
+                    console.log('🔐 Preferences saved securely');
+                } else {
+                    console.warn('⚠️ Failed to save preferences securely, trying fallback');
+                    localStorage.setItem('spotkin_preferences', JSON.stringify(userPreferences));
+                }
+            } else {
+                // Fallback to regular localStorage if secure storage not available
+                localStorage.setItem('spotkin_preferences', JSON.stringify(userPreferences));
+                console.log('⚠️ Preferences saved to fallback storage');
+            }
         } catch (error) {
             console.error('Error saving preferences:', error);
+            // Final fallback
+            try {
+                localStorage.setItem('spotkin_preferences', JSON.stringify(userPreferences));
+                console.log('💾 Preferences saved to emergency fallback');
+            } catch (fallbackError) {
+                console.error('❌ All preference saving methods failed:', fallbackError);
+            }
         }
     }
 
@@ -1945,11 +1981,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Save preferences from form
-    function savePreferences() {
+    async function savePreferences() {
         console.log('Saving preferences from form');
         userPreferences = collectPreferencesFromForm();
         window.userPreferences = userPreferences; // Update global reference
-        saveUserPreferences();
+        await saveUserPreferences();
         
         // Queue preferences for background sync
         if (backgroundSyncManager) {
@@ -2066,7 +2102,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Preferences Event Listeners
     preferencesBtn.addEventListener('click', showPreferencesModal);
     preferencesClose.addEventListener('click', hidePreferencesModal);
-    preferencesSave.addEventListener('click', savePreferences);
+    preferencesSave.addEventListener('click', async () => {
+        try {
+            await savePreferences();
+        } catch (error) {
+            console.error('❌ Failed to save preferences:', error);
+        }
+    });
     preferencesReset.addEventListener('click', resetPreferences);
     
     // Setup Wizard button
@@ -2464,11 +2506,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }));
     }
 
+    // Wait for security modules to initialize before loading preferences
+    function waitForSecurityModules() {
+        return new Promise((resolve) => {
+            const checkModules = () => {
+                if (window.spotkinSecurity && window.secureStorage) {
+                    console.log('🔐 Security modules ready');
+                    resolve();
+                } else {
+                    console.log('⏳ Waiting for security modules...');
+                    setTimeout(checkModules, 100);
+                }
+            };
+            checkModules();
+        });
+    }
+
     // Initialize preferences on load
-    loadUserPreferences();
-    
-    // Initialize zone system after preferences are loaded
-    initializeZoneSystem();
+    // Load user preferences asynchronously and then initialize zone system
+    (async () => {
+        try {
+            await waitForSecurityModules();
+            await loadUserPreferences();
+            // Initialize zone system after preferences are loaded
+            initializeZoneSystem();
+            console.log('✅ App initialization complete');
+        } catch (error) {
+            console.error('❌ App initialization failed:', error);
+        }
+    })();
     
     // Expose preferences functions globally for use by other parts of the app
     window.getMovementThreshold = getMovementThreshold;
@@ -2494,6 +2560,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     console.log('Preferences system initialized');
+    
+    // Initialize daily summary system
+    console.log('📊 Initializing daily summary system...');
+    setTimeout(() => {
+        initializeDailySummary();
+    }, 1000); // Delay to ensure all other systems are loaded
+    
+    console.log('✅ SpotKin application fully initialized');
 });
 
 // PWA Capabilities and Offline Management
@@ -2606,6 +2680,322 @@ function retryFailedOperations() {
     // Implementation depends on specific needs
 }
 
+function initializeSplashScreen() {
+    // Initialize PWA splash screen
+    const splashScreen = document.getElementById('pwa-splash');
+    if (!splashScreen) return;
+    
+    console.log('🎨 Initializing splash screen');
+    
+    // Track app loading progress
+    let loadingTasks = 0;
+    let completedTasks = 0;
+    
+    const updateProgress = () => {
+        const progress = completedTasks / loadingTasks;
+        console.log(`📊 Loading progress: ${Math.round(progress * 100)}%`);
+        
+        if (progress >= 1) {
+            hideSplashScreen();
+        }
+    };
+    
+    // Define loading tasks
+    const loadingTaskPromises = [
+        // Wait for critical resources
+        new Promise(resolve => {
+            if (document.readyState === 'complete') {
+                resolve();
+            } else {
+                window.addEventListener('load', resolve);
+            }
+        }),
+        
+        // Wait for service worker registration
+        new Promise(resolve => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(resolve).catch(() => resolve());
+            } else {
+                resolve();
+            }
+        }),
+        
+        // Minimum display time for better UX
+        new Promise(resolve => setTimeout(resolve, 1500))
+    ];
+    
+    loadingTasks = loadingTaskPromises.length;
+    
+    // Execute loading tasks
+    loadingTaskPromises.forEach(promise => {
+        promise.then(() => {
+            completedTasks++;
+            updateProgress();
+        }).catch(() => {
+            completedTasks++;
+            updateProgress();
+        });
+    });
+    
+    // Fallback timeout
+    setTimeout(() => {
+        console.log('⏰ Splash screen timeout, force hiding');
+        hideSplashScreen();
+    }, 5000);
+}
+
+function hideSplashScreen() {
+    const splashScreen = document.getElementById('pwa-splash');
+    if (!splashScreen) return;
+    
+    console.log('🎨 Hiding splash screen');
+    
+    splashScreen.classList.add('hidden');
+    
+    // Remove from DOM after animation
+    setTimeout(() => {
+        if (splashScreen.parentNode) {
+            splashScreen.parentNode.removeChild(splashScreen);
+        }
+    }, 500);
+}
+
+function initializeShareTarget() {
+    // Initialize share target functionality for PWA
+    console.log('📤 Initializing share target functionality');
+    
+    // Check if launched via share target
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedTitle = urlParams.get('title');
+    const sharedText = urlParams.get('text');
+    const sharedUrl = urlParams.get('url');
+    
+    if (sharedTitle || sharedText || sharedUrl) {
+        console.log('📤 App launched via share target');
+        handleSharedContent({ title: sharedTitle, text: sharedText, url: sharedUrl });
+    }
+    
+    // Register service worker message handler for shared files
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'SHARED_FILES') {
+                console.log('📤 Received shared files via service worker');
+                handleSharedFiles(event.data.files);
+            }
+        });
+    }
+    
+    // Add share functionality to the app
+    if (navigator.share) {
+        console.log('📤 Native sharing supported');
+        addNativeShareButtons();
+    } else {
+        console.log('📤 Native sharing not supported, using fallback');
+        addFallbackShareButtons();
+    }
+}
+
+function handleSharedContent({ title, text, url }) {
+    console.log('📤 Processing shared content:', { title, text, url });
+    
+    // Show notification about shared content
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+    notification.innerHTML = `
+        <div class="flex items-start">
+            <i class="fas fa-share-alt mr-2 mt-1"></i>
+            <div>
+                <div class="font-semibold">Content Shared</div>
+                <div class="text-sm opacity-90">
+                    ${title ? `Title: ${title}` : ''}
+                    ${text ? `Text: ${text.substring(0, 50)}...` : ''}
+                    ${url ? `URL: ${url}` : ''}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+    
+    // Process the shared content - could be used for analysis
+    if (url && url.includes('image')) {
+        // If shared content is an image URL, try to analyze it
+        analyzeSharedImage(url);
+    }
+}
+
+function handleSharedFiles(files) {
+    console.log('📤 Processing shared files:', files);
+    
+    files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+            console.log('📤 Processing shared image:', file.name);
+            analyzeSharedImage(file);
+        } else if (file.type.startsWith('video/')) {
+            console.log('📤 Processing shared video:', file.name);
+            analyzeSharedVideo(file);
+        }
+    });
+}
+
+function analyzeSharedImage(imageSource) {
+    // Analyze shared image using SpotKin's AI capabilities
+    console.log('🔍 Analyzing shared image');
+    
+    // Convert to canvas for analysis
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (typeof imageSource === 'string') {
+        // URL
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            // Convert to data URL and analyze
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            performSharedImageAnalysis(dataUrl, 'Shared Image');
+        };
+        img.src = imageSource;
+    } else {
+        // File object
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                performSharedImageAnalysis(dataUrl, imageSource.name);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(imageSource);
+    }
+}
+
+function performSharedImageAnalysis(imageData, filename) {
+    // Use existing AI analysis functionality
+    if (typeof analyzeWithAI === 'function') {
+        console.log('🧠 Analyzing shared image with AI');
+        
+        // Switch to history tab to show results
+        const historyTab = document.getElementById('tab-history');
+        if (historyTab) {
+            historyTab.click();
+        }
+        
+        // Perform analysis
+        analyzeWithAI(imageData, `Shared: ${filename}`)
+            .then(result => {
+                console.log('✅ Shared image analysis complete:', result);
+                
+                // Show success notification
+                showNotification('Shared image analyzed successfully', 'success');
+            })
+            .catch(error => {
+                console.error('❌ Shared image analysis failed:', error);
+                showNotification('Failed to analyze shared image', 'error');
+            });
+    } else {
+        console.warn('⚠️ AI analysis function not available');
+        showNotification('Image analysis not available', 'warning');
+    }
+}
+
+function analyzeSharedVideo(videoFile) {
+    console.log('🎥 Shared video analysis not yet implemented');
+    showNotification('Video analysis coming soon', 'info');
+}
+
+function addNativeShareButtons() {
+    // Add native share buttons to appropriate places in the UI
+    const shareButtons = document.querySelectorAll('.share-btn');
+    shareButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const shareData = {
+                title: 'SpotKin Analysis',
+                text: 'Check out this monitoring analysis from SpotKin',
+                url: window.location.href
+            };
+            
+            if (navigator.share) {
+                navigator.share(shareData).catch(console.error);
+            }
+        });
+    });
+}
+
+function addFallbackShareButtons() {
+    // Add fallback share functionality for browsers that don't support native sharing
+    const shareButtons = document.querySelectorAll('.share-btn');
+    shareButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const shareUrl = `${window.location.origin}${window.location.pathname}`;
+            
+            // Copy to clipboard
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showNotification('Link copied to clipboard', 'success');
+                }).catch(() => {
+                    showFallbackShareDialog(shareUrl);
+                });
+            } else {
+                showFallbackShareDialog(shareUrl);
+            }
+        });
+    });
+}
+
+function showFallbackShareDialog(url) {
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    dialog.innerHTML = `
+        <div class="bg-white p-6 rounded-lg max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">Share SpotKin</h3>
+            <div class="mb-4">
+                <input type="text" value="${url}" readonly 
+                       class="w-full p-2 border rounded bg-gray-50" 
+                       onclick="this.select()">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="this.closest('.fixed').remove()" 
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                    Cancel
+                </button>
+                <button onclick="this.previousElementSibling.previousElementSibling.querySelector('input').select(); document.execCommand('copy'); this.closest('.fixed').remove(); showNotification('Copied to clipboard', 'success')"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                    Copy
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.remove();
+        }
+    });
+}
+
 function setupInstallPrompt() {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -2617,11 +3007,22 @@ function setupInstallPrompt() {
 function setupAppShortcuts() {
     // Handle shortcuts from manifest when app is launched
     const params = new URLSearchParams(window.location.search);
-    const shortcut = params.get('shortcut');
+    const action = params.get('action');
+    const shortcut = params.get('shortcut'); // Legacy support
     
-    if (shortcut) {
-        console.log('🚀 Launched via shortcut:', shortcut);
-        handleAppShortcut(shortcut);
+    const shortcutAction = action || shortcut;
+    
+    if (shortcutAction) {
+        console.log('🚀 Launched via shortcut:', shortcutAction);
+        handleAppShortcut(shortcutAction);
+        
+        // Add visual feedback for shortcut usage
+        showShortcutFeedback(shortcutAction);
+    }
+    
+    // Register shortcuts with keyboard API if available
+    if ('keyboard' in navigator && 'getLayoutMap' in navigator.keyboard) {
+        registerKeyboardShortcuts();
     }
 }
 
@@ -2630,24 +3031,116 @@ function handleAppShortcut(shortcut) {
     setTimeout(() => {
         switch (shortcut) {
             case 'snapshot':
+                console.log('🔥 Executing snapshot shortcut');
                 if (typeof takeSnapshot === 'function') {
                     takeSnapshot();
+                } else {
+                    console.warn('⚠️ takeSnapshot function not available');
                 }
                 break;
             case 'monitor':
+                console.log('🔥 Executing monitor shortcut');
                 const toggleBtn = document.getElementById('toggle-monitoring');
                 if (toggleBtn && toggleBtn.textContent.includes('Start')) {
                     toggleBtn.click();
+                } else {
+                    console.warn('⚠️ Monitor toggle button not available or already monitoring');
                 }
                 break;
             case 'history':
+                console.log('🔥 Executing history shortcut');
                 const historyTab = document.getElementById('tab-history');
                 if (historyTab) {
                     historyTab.click();
+                } else {
+                    console.warn('⚠️ History tab not available');
                 }
                 break;
+            case 'settings':
+                console.log('🔥 Executing settings shortcut');
+                const settingsTab = document.getElementById('tab-settings');
+                if (settingsTab) {
+                    settingsTab.click();
+                } else {
+                    console.warn('⚠️ Settings tab not available');
+                }
+                break;
+            default:
+                console.warn('⚠️ Unknown shortcut action:', shortcut);
         }
     }, 2000);
+}
+
+function showShortcutFeedback(action) {
+    // Show visual feedback when app is launched via shortcut
+    const messages = {
+        'snapshot': 'Quick Snapshot Mode Activated',
+        'monitor': 'Starting Monitoring Mode',
+        'history': 'Opening Monitoring History',
+        'settings': 'Opening Settings'
+    };
+    
+    const message = messages[action] || `Shortcut activated: ${action}`;
+    
+    // Create temporary notification banner
+    const banner = document.createElement('div');
+    banner.className = 'fixed top-0 left-0 right-0 bg-indigo-600 text-white p-3 text-center z-50 transform -translate-y-full transition-transform duration-300';
+    banner.innerHTML = `
+        <div class="flex items-center justify-center">
+            <i class="fas fa-rocket mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(banner);
+    
+    // Animate in
+    setTimeout(() => {
+        banner.style.transform = 'translateY(0)';
+    }, 100);
+    
+    // Remove after delay
+    setTimeout(() => {
+        banner.style.transform = 'translateY(-100%)';
+        setTimeout(() => {
+            if (banner.parentNode) {
+                banner.parentNode.removeChild(banner);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function registerKeyboardShortcuts() {
+    // Register keyboard shortcuts for PWA
+    const shortcuts = [
+        { key: 'KeyS', ctrlKey: true, action: 'snapshot', description: 'Take snapshot (Ctrl+S)' },
+        { key: 'KeyM', ctrlKey: true, action: 'monitor', description: 'Toggle monitoring (Ctrl+M)' },
+        { key: 'KeyH', ctrlKey: true, action: 'history', description: 'View history (Ctrl+H)' },
+        { key: 'KeyP', ctrlKey: true, action: 'settings', description: 'Open settings (Ctrl+P)' }
+    ];
+    
+    document.addEventListener('keydown', (event) => {
+        // Only handle shortcuts when not typing in input fields
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        const shortcut = shortcuts.find(s => 
+            s.key === event.code && 
+            s.ctrlKey === event.ctrlKey &&
+            !event.altKey && 
+            !event.shiftKey
+        );
+        
+        if (shortcut) {
+            event.preventDefault();
+            console.log('⌨️ Keyboard shortcut triggered:', shortcut.action);
+            handleAppShortcut(shortcut.action);
+            showShortcutFeedback(shortcut.action);
+        }
+    });
+    
+    console.log('⌨️ Keyboard shortcuts registered:', shortcuts.map(s => s.description));
 }
 
 // PWA-enhanced error handling
@@ -4135,6 +4628,502 @@ function loadSyncPreferences() {
     }
 }
 
+// ===== AI-POWERED DAILY SUMMARY SYSTEM =====
+
+class DailySummaryManager {
+    constructor() {
+        this.summaryCache = new Map(); // Cache summaries by date
+        this.isGenerating = false;
+    }
+
+    // Aggregate daily monitoring data for AI analysis
+    aggregateDailyData(targetDate = new Date()) {
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        // Get history data from global scope or storage
+        let currentHistoryData = [];
+        try {
+            const savedHistory = localStorage.getItem('monitoring-history');
+            if (savedHistory) {
+                currentHistoryData = JSON.parse(savedHistory);
+            } else if (typeof historyData !== 'undefined') {
+                currentHistoryData = historyData;
+            }
+        } catch (error) {
+            console.warn('Failed to get history data for daily summary:', error);
+            currentHistoryData = [];
+        }
+        
+        // Filter events for the target date
+        const todaysEvents = currentHistoryData.filter(entry => {
+            const entryTime = new Date(entry.timestamp);
+            return entryTime >= startOfDay && entryTime <= endOfDay;
+        });
+
+        if (todaysEvents.length === 0) {
+            return {
+                totalEvents: 0,
+                alertCounts: { safe: 0, warning: 0, danger: 0 },
+                activityPeriods: [],
+                mostCommonStates: [],
+                keyEvents: [],
+                timeSpan: { start: startOfDay, end: endOfDay },
+                hasData: false
+            };
+        }
+
+        // Calculate alert distribution
+        const alertCounts = {
+            safe: todaysEvents.filter(e => e.alert.type === 'safe').length,
+            warning: todaysEvents.filter(e => e.alert.type === 'warning').length,
+            danger: todaysEvents.filter(e => e.alert.type === 'danger').length
+        };
+
+        // Extract activity periods based on temporal analysis
+        const activityPeriods = this.extractActivityPeriods(todaysEvents);
+        
+        // Find most common states
+        const mostCommonStates = this.extractCommonStates(todaysEvents);
+        
+        // Identify key events (high severity, unusual states, etc.)
+        const keyEvents = this.extractKeyEvents(todaysEvents);
+
+        return {
+            totalEvents: todaysEvents.length,
+            alertCounts,
+            activityPeriods,
+            mostCommonStates,
+            keyEvents,
+            timeSpan: { start: startOfDay, end: endOfDay },
+            hasData: true
+        };
+    }
+
+    // Extract activity periods from temporal analysis data
+    extractActivityPeriods(events) {
+        const periods = [];
+        let currentPeriod = null;
+
+        events.forEach(event => {
+            if (event.temporalAnalysis && event.temporalAnalysis.hasMovement) {
+                if (!currentPeriod || 
+                    new Date(event.timestamp) - new Date(currentPeriod.end) > 30 * 60 * 1000) { // 30 min gap
+                    // Start new period
+                    currentPeriod = {
+                        start: event.timestamp,
+                        end: event.timestamp,
+                        movementLevel: event.temporalAnalysis.movementLevel,
+                        eventCount: 1
+                    };
+                    periods.push(currentPeriod);
+                } else {
+                    // Extend current period
+                    currentPeriod.end = event.timestamp;
+                    currentPeriod.eventCount++;
+                    currentPeriod.movementLevel = this.getHigherMovementLevel(
+                        currentPeriod.movementLevel, 
+                        event.temporalAnalysis.movementLevel
+                    );
+                }
+            }
+        });
+
+        return periods;
+    }
+
+    // Extract most common states from detected objects
+    extractCommonStates(events) {
+        const stateCount = {};
+        
+        events.forEach(event => {
+            if (event.objects && event.objects.length > 0) {
+                event.objects.forEach(obj => {
+                    const state = obj.state || 'unspecified';
+                    stateCount[state] = (stateCount[state] || 0) + 1;
+                });
+            }
+        });
+
+        return Object.entries(stateCount)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 5) // Top 5 most common states
+            .map(([state, count]) => ({ state, count }));
+    }
+
+    // Extract key/notable events from the day
+    extractKeyEvents(events) {
+        return events
+            .filter(event => {
+                // Include danger alerts, unusual states, or high-confidence detections
+                return event.alert.type === 'danger' ||
+                       event.alert.type === 'warning' ||
+                       (event.objects && event.objects.some(obj => 
+                           obj.state.toLowerCase().includes('crying') ||
+                           obj.state.toLowerCase().includes('distressed') ||
+                           obj.state.toLowerCase().includes('climbing')
+                       ));
+            })
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 10); // Top 10 key events
+    }
+
+    // Helper to determine higher movement level
+    getHigherMovementLevel(level1, level2) {
+        const levels = { low: 1, medium: 2, high: 3 };
+        const higher = Math.max(levels[level1] || 1, levels[level2] || 1);
+        return Object.keys(levels).find(key => levels[key] === higher) || 'low';
+    }
+
+    // Create AI prompt for generating daily summary
+    createDailySummaryPrompt(dailyData) {
+        const date = dailyData.timeSpan.start.toLocaleDateString();
+        
+        if (!dailyData.hasData) {
+            return `Generate a brief, caring message for a monitoring app user for ${date} when no monitoring data was recorded. 
+
+Please create a warm, supportive message that:
+1. Acknowledges there was no monitoring activity today
+2. Suggests this might mean a peaceful day
+3. Encourages continued use when needed
+4. Uses a caring, positive tone
+
+Format as JSON: {"summary": "brief message", "highlights": [], "insights": ["gentle encouragement"], "mood": "positive"}`;
+        }
+
+        const keyEventsDesc = dailyData.keyEvents.length > 0 
+            ? dailyData.keyEvents.map(e => `${new Date(e.timestamp).toLocaleTimeString()}: ${e.scene}`).join('; ')
+            : 'No significant events';
+
+        return `Generate a caring, insightful daily monitoring summary for ${date} based on this data:
+
+**Monitoring Overview:**
+- Total monitoring events: ${dailyData.totalEvents}
+- Safety status: ${dailyData.alertCounts.safe} safe periods, ${dailyData.alertCounts.warning} minor concerns, ${dailyData.alertCounts.danger} alerts
+
+**Activity Patterns:**
+- Active periods: ${dailyData.activityPeriods.length} periods of movement detected
+- Most observed states: ${dailyData.mostCommonStates.map(s => `${s.state} (${s.count}x)`).join(', ')}
+
+**Notable Events:** ${keyEventsDesc}
+
+Please create a warm, informative summary that:
+1. Highlights the day's key patterns and milestones in a caring tone
+2. Notes any concerns or improvements with gentle guidance
+3. Celebrates positive moments and peaceful periods  
+4. Provides helpful insights for parents/caregivers
+5. Uses supportive, encouraging language
+6. Keeps the tone professional but warm
+
+Format as JSON: {
+    "summary": "main narrative summary (2-3 sentences)",
+    "highlights": ["positive moments", "peaceful periods", "milestones"],
+    "insights": ["helpful patterns observed", "gentle recommendations"], 
+    "mood": "positive/neutral/concerned"
+}`;
+    }
+
+    // Generate daily summary using Puter.js AI
+    async generateDailySummary(targetDate = new Date()) {
+        const dateKey = targetDate.toISOString().split('T')[0];
+        
+        // Check cache first
+        if (this.summaryCache.has(dateKey)) {
+            console.log('📋 Using cached daily summary for', dateKey);
+            return this.summaryCache.get(dateKey);
+        }
+
+        if (this.isGenerating) {
+            throw new Error('Summary generation already in progress');
+        }
+
+        this.isGenerating = true;
+
+        try {
+            console.log('🤖 Generating daily summary for', dateKey);
+            
+            const dailyData = this.aggregateDailyData(targetDate);
+            const prompt = this.createDailySummaryPrompt(dailyData);
+            
+            // Use existing Puter.js integration (no image data needed)
+            if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
+                console.warn('Puter.js AI not available, generating fallback summary');
+                return this.generateFallbackSummary(dailyData, targetDate);
+            }
+
+            const response = await puter.ai.chat(prompt, null, false, {
+                max_tokens: 600,
+                temperature: 0.7
+            });
+            
+            console.log('🤖 Raw AI summary response:', response);
+            
+            let summary;
+            try {
+                // Parse AI response (handle both string and object responses)
+                summary = typeof response === 'string' ? JSON.parse(response) : response;
+            } catch (parseError) {
+                console.warn('Failed to parse AI response, generating fallback:', parseError);
+                return this.generateFallbackSummary(dailyData, targetDate);
+            }
+
+            // Validate and enrich the summary
+            const enrichedSummary = {
+                ...summary,
+                date: dateKey,
+                dataStats: {
+                    totalEvents: dailyData.totalEvents,
+                    alertCounts: dailyData.alertCounts,
+                    hasData: dailyData.hasData
+                },
+                generatedAt: new Date().toISOString()
+            };
+
+            // Cache the result
+            this.summaryCache.set(dateKey, enrichedSummary);
+            
+            console.log('✅ Generated daily summary for', dateKey, enrichedSummary);
+            return enrichedSummary;
+
+        } catch (error) {
+            console.error('❌ Failed to generate daily summary:', error);
+            const dailyData = this.aggregateDailyData(targetDate);
+            return this.generateFallbackSummary(dailyData, targetDate);
+        } finally {
+            this.isGenerating = false;
+        }
+    }
+
+    // Fallback summary when AI is unavailable
+    generateFallbackSummary(dailyData, targetDate) {
+        const dateKey = targetDate.toISOString().split('T')[0];
+        
+        if (!dailyData.hasData) {
+            return {
+                summary: "No monitoring activity was recorded today. This might indicate a peaceful, quiet day.",
+                highlights: ["Peaceful day with no monitoring needed"],
+                insights: ["Consider monitoring during active periods for better insights"],
+                mood: "positive",
+                date: dateKey,
+                dataStats: dailyData,
+                generatedAt: new Date().toISOString(),
+                fallback: true
+            };
+        }
+
+        const totalAlerts = dailyData.alertCounts.warning + dailyData.alertCounts.danger;
+        const safetyRate = dailyData.alertCounts.safe / dailyData.totalEvents * 100;
+        
+        let mood = "positive";
+        let summary = `Today had ${dailyData.totalEvents} monitoring checks with ${dailyData.alertCounts.safe} safe periods.`;
+        
+        if (totalAlerts > dailyData.totalEvents * 0.3) {
+            mood = "concerned";
+            summary += " Several alerts were detected - please review the timeline for details.";
+        } else if (totalAlerts > 0) {
+            mood = "neutral";
+            summary += ` ${totalAlerts} minor concerns were noted but overall activity was normal.`;
+        } else {
+            summary += " All monitoring periods showed safe, normal activity.";
+        }
+
+        return {
+            summary,
+            highlights: safetyRate > 80 ? ["High safety rate", "Normal activity patterns"] : ["Some concerns noted"],
+            insights: [
+                `${Math.round(safetyRate)}% of monitoring periods were safe`,
+                dailyData.activityPeriods.length > 0 ? 
+                    `${dailyData.activityPeriods.length} active periods detected` : 
+                    "Mostly quiet day with minimal movement"
+            ],
+            mood,
+            date: dateKey,
+            dataStats: dailyData,
+            generatedAt: new Date().toISOString(),
+            fallback: true
+        };
+    }
+
+    // Clear old cached summaries (keep last 30 days)
+    cleanCache() {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const cutoffKey = thirtyDaysAgo.toISOString().split('T')[0];
+        
+        for (const [dateKey] of this.summaryCache) {
+            if (dateKey < cutoffKey) {
+                this.summaryCache.delete(dateKey);
+            }
+        }
+    }
+
+    // Get summary for display (generates if needed)
+    async getSummaryForDate(targetDate = new Date()) {
+        try {
+            return await this.generateDailySummary(targetDate);
+        } catch (error) {
+            console.error('Failed to get summary for date:', error);
+            const dailyData = this.aggregateDailyData(targetDate);
+            return this.generateFallbackSummary(dailyData, targetDate);
+        }
+    }
+}
+
+// Initialize daily summary manager
+const dailySummaryManager = new DailySummaryManager();
+
+// Daily Summary UI Functions
+function createDailySummaryCard(summary) {
+    const moodColors = {
+        positive: 'border-green-200 bg-green-50',
+        neutral: 'border-yellow-200 bg-yellow-50', 
+        concerned: 'border-red-200 bg-red-50'
+    };
+
+    const moodIcons = {
+        positive: '😊',
+        neutral: '😐',
+        concerned: '😟'
+    };
+
+    const cardColor = moodColors[summary.mood] || moodColors.neutral;
+    const moodIcon = moodIcons[summary.mood] || moodIcons.neutral;
+
+    return `
+        <div class="daily-summary-card border-2 rounded-lg p-6 mb-6 ${cardColor}">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-calendar-day mr-2"></i>
+                    Daily Summary - ${new Date(summary.date).toLocaleDateString()}
+                    <span class="ml-2 text-2xl">${moodIcon}</span>
+                </h3>
+                ${summary.fallback ? '<span class="text-xs bg-gray-200 px-2 py-1 rounded">Offline Mode</span>' : '<span class="text-xs bg-blue-200 px-2 py-1 rounded">AI Generated</span>'}
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-gray-700 leading-relaxed">${summary.summary}</p>
+            </div>
+
+            ${summary.highlights && summary.highlights.length > 0 ? `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-star mr-2 text-yellow-500"></i>
+                        Highlights
+                    </h4>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        ${summary.highlights.map(highlight => `<li>${highlight}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+
+            ${summary.insights && summary.insights.length > 0 ? `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-lightbulb mr-2 text-blue-500"></i>
+                        Insights
+                    </h4>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        ${summary.insights.map(insight => `<li>${insight}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+
+            ${summary.dataStats && summary.dataStats.hasData ? `
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="grid grid-cols-3 gap-4 text-sm text-gray-600">
+                        <div class="text-center">
+                            <div class="font-medium text-gray-800">${summary.dataStats.totalEvents}</div>
+                            <div>Total Checks</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-medium text-green-600">${summary.dataStats.alertCounts.safe}</div>
+                            <div>Safe Periods</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-medium ${summary.dataStats.alertCounts.danger > 0 ? 'text-red-600' : 'text-gray-600'}">${summary.dataStats.alertCounts.warning + summary.dataStats.alertCounts.danger}</div>
+                            <div>Alerts</div>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
+            <div class="mt-3 text-xs text-gray-500 text-right">
+                Generated: ${new Date(summary.generatedAt).toLocaleString()}
+            </div>
+        </div>
+    `;
+}
+
+async function showDailySummary(targetDate = new Date()) {
+    const loadingHtml = `
+        <div class="daily-summary-loading border-2 border-blue-200 bg-blue-50 rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-center">
+                <i class="fas fa-spinner fa-spin mr-3 text-blue-600"></i>
+                <span class="text-blue-800">Generating your daily summary...</span>
+            </div>
+        </div>
+    `;
+
+    // Show loading state
+    let summaryContainer = document.getElementById('daily-summary-container');
+    if (!summaryContainer) {
+        summaryContainer = document.createElement('div');
+        summaryContainer.id = 'daily-summary-container';
+        
+        // Insert after camera section but before analysis results
+        const cameraSection = document.querySelector('.camera-section') || document.querySelector('main > div');
+        if (cameraSection && cameraSection.nextSibling) {
+            cameraSection.parentNode.insertBefore(summaryContainer, cameraSection.nextSibling);
+        } else {
+            document.querySelector('main').prepend(summaryContainer);
+        }
+    }
+
+    summaryContainer.innerHTML = loadingHtml;
+
+    try {
+        const summary = await dailySummaryManager.getSummaryForDate(targetDate);
+        summaryContainer.innerHTML = createDailySummaryCard(summary);
+        
+        console.log('📊 Daily summary displayed successfully');
+    } catch (error) {
+        console.error('❌ Failed to display daily summary:', error);
+        summaryContainer.innerHTML = `
+            <div class="daily-summary-error border-2 border-red-200 bg-red-50 rounded-lg p-6 mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3 text-red-600"></i>
+                    <div>
+                        <h4 class="font-medium text-red-800">Unable to Generate Daily Summary</h4>
+                        <p class="text-red-700 text-sm mt-1">Please try again or check your connection.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Auto-generate daily summary when app loads (if there's data from today)
+function initializeDailySummary() {
+    // Clean old cached summaries periodically
+    dailySummaryManager.cleanCache();
+    
+    // Check if there's data from today to show summary
+    const today = new Date();
+    const todayData = dailySummaryManager.aggregateDailyData(today);
+    
+    if (todayData.hasData && todayData.totalEvents > 3) {
+        console.log('📊 Auto-generating daily summary - sufficient data available');
+        setTimeout(() => {
+            showDailySummary(today);
+        }, 2000); // Delay to let other components load first
+    } else {
+        console.log('📊 No daily summary generated - insufficient data for today');
+    }
+}
+
 // Expose PWA functions globally for testing
 window.initPWACapabilities = initPWACapabilities;
 window.handlePWAError = handlePWAError;
@@ -4145,3 +5134,6 @@ window.testNotification = testNotification;
 window.showSetupWizard = showSetupWizard;
 window.SetupWizard = SetupWizard;
 window.BackgroundSyncManager = BackgroundSyncManager;
+window.DailySummaryManager = DailySummaryManager;
+window.dailySummaryManager = dailySummaryManager;
+window.showDailySummary = showDailySummary;

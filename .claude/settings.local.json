@@ -21,7 +21,13 @@
       "Bash(npm install:*)",
       "Bash(pwa-asset-generator images/favicon.svg images --icon-only --path-override images/ --manifest manifest.json)",
       "Bash(npm run lighthouse:pwa:*)",
-      "Bash(lighthouse:*)"
+      "Bash(lighthouse:*)",
+      "WebFetch(domain:docs.puter.com)",
+      "WebFetch(domain:developer.puter.com)",
+      "Bash(grep:*)",
+      "Bash(npm run lighthouse:*)",
+      "Bash(npm run validate-manifest:*)",
+      "Bash(ls)"
     ],
     "deny": []
   }

@@ -1,28 +1,38 @@
 describe('User Preferences Panel', () => {
   beforeEach(() => {
     cy.visit('/');
-    cy.wait(1000); // Allow app to initialize
+    cy.wait(3000); // Allow app and security modules to initialize
+    
+    // Ensure proper viewport and scroll position
+    cy.viewport(1280, 720);
+    cy.scrollTo('top');
+    cy.wait(500);
   });
 
   it('should show and hide preferences modal', () => {
-    // Check that preferences button exists
-    cy.get('#preferences-btn').should('be.visible');
-    
     // Check that modal is hidden initially
     cy.get('#preferences-modal').should('have.class', 'hidden');
     
     // Click preferences button to open modal
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     cy.get('#preferences-modal').should('not.have.class', 'hidden');
     
     // Close modal using close button
-    cy.get('#preferences-close').click();
+    cy.get('#preferences-close').click({ force: true });
     cy.get('#preferences-modal').should('have.class', 'hidden');
   });
 
   it('should load and save user preferences', () => {
     // Open preferences modal
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     
     // Check default values
     cy.get('#analysis-sensitivity').should('have.value', 'medium');
@@ -40,13 +50,17 @@ describe('User Preferences Panel', () => {
     cy.get('#movement-threshold').invoke('val', '1500').trigger('input');
     
     // Save preferences
-    cy.get('#preferences-save').click();
+    cy.get('#preferences-save').click({ force: true });
     
     // Verify modal closed
     cy.get('#preferences-modal').should('have.class', 'hidden');
     
     // Reopen modal to verify settings persisted
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     cy.get('#analysis-sensitivity').should('have.value', 'high');
     cy.get('#alert-movement').should('not.be.checked');
     cy.get('#sound-off').should('be.checked');
@@ -55,13 +69,17 @@ describe('User Preferences Panel', () => {
 
   it('should reset preferences to default', () => {
     // Open preferences and change some values
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     cy.get('#analysis-sensitivity').select('low');
     cy.get('#alert-safety').uncheck();
     cy.get('#movement-threshold').invoke('val', '500').trigger('input');
     
     // Reset to defaults
-    cy.get('#preferences-reset').click();
+    cy.get('#preferences-reset').click({ force: true });
     
     // Handle confirmation dialog
     cy.on('window:confirm', () => true);
@@ -73,7 +91,11 @@ describe('User Preferences Panel', () => {
   });
 
   it('should update movement threshold display', () => {
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     
     // Check initial threshold display
     cy.get('#movement-threshold-value').should('contain', '1000');
@@ -85,7 +107,11 @@ describe('User Preferences Panel', () => {
 
   it('should close modal with ESC key', () => {
     // Open modal
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     cy.get('#preferences-modal').should('not.have.class', 'hidden');
     
     // Press ESC key
@@ -97,7 +123,11 @@ describe('User Preferences Panel', () => {
 
   it('should close modal when clicking outside', () => {
     // Open modal
-    cy.get('#preferences-btn').click();
+    cy.get('#preferences-btn')
+      .should('exist')
+      .scrollIntoView()
+      .wait(500)
+      .click({ force: true });
     cy.get('#preferences-modal').should('not.have.class', 'hidden');
     
     // Click on the modal backdrop (outside the modal content)

@@ -785,13 +785,13 @@ E2E tests should validate:
 
 ## Future Technical Considerations
 
-### Mobile App Development
+### App Store Distribution
 
-When expanding to native mobile apps:
+When packaging for app store distribution:
 
-- Use React Native for code sharing
-- Implement native camera access for better performance
-- Develop offline-first capabilities
+- Use PWABuilder or similar tools for app store compliance
+- Enhance PWA features for optimal store experience  
+- Optimize performance and offline capabilities for store requirements
 
 ### Backend Service Integration
 

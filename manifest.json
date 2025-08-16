@@ -98,11 +98,32 @@
       "purpose": "any"
     }
   ],
+  "splash_pages": null,
   "features": [
     "camera",
     "microphone",
     "background-sync",
-    "push-messaging"
+    "push-messaging",
+    "offline-support",
+    "installability"
+  ],
+  "capabilities": [
+    "background_sync",
+    "push_messaging",
+    "share_target",
+    "shortcuts",
+    "offline_support",
+    "splash_screen",
+    "smart_queue_management"
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+spotkin",
+      "url": "/?handler=%s"
+    }
   ],
   "shortcuts": [
     {
@@ -140,6 +161,34 @@
           "sizes": "96x96"
         }
       ]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Open app settings and preferences",
+      "url": "./?action=settings",
+      "icons": [
+        {
+          "src": "./images/icon-settings.png",
+          "sizes": "96x96"
+        }
+      ]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/share-target/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/*", "video/*"]
+        }
+      ]
+    }
+  }
 }

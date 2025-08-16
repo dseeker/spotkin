@@ -251,5 +251,144 @@ Cypress.Commands.add('testNotificationFlow', () => {
   });
 });
 
+// Command to test enhanced app shortcuts
+Cypress.Commands.add('testEnhancedAppShortcut', (action) => {
+  cy.visit(`/?action=${action}`);
+  cy.wait(3000); // Wait for shortcut processing
+  
+  // Should show shortcut feedback
+  switch (action) {
+    case 'snapshot':
+      cy.get('body').should('contain', 'Quick Snapshot Mode Activated');
+      break;
+    case 'monitor':
+      cy.get('body').should('contain', 'Starting Monitoring Mode');
+      break;
+    case 'history':
+      cy.get('body').should('contain', 'Opening Monitoring History');
+      break;
+    case 'settings':
+      cy.get('body').should('contain', 'Opening Settings');
+      break;
+  }
+});
+
+// Command to test enhanced keyboard shortcuts
+Cypress.Commands.add('testEnhancedKeyboardShortcuts', () => {
+  // Test Ctrl+S for snapshot
+  cy.get('body').type('{ctrl}s');
+  cy.get('body').should('contain', 'Quick Snapshot Mode Activated');
+  cy.wait(1000);
+  
+  // Test Ctrl+M for monitor
+  cy.get('body').type('{ctrl}m');
+  cy.get('body').should('contain', 'Starting Monitoring Mode');
+  cy.wait(1000);
+  
+  // Test Ctrl+H for history
+  cy.get('body').type('{ctrl}h');
+  cy.get('body').should('contain', 'Opening Monitoring History');
+  cy.wait(1000);
+  
+  // Test Ctrl+P for settings
+  cy.get('body').type('{ctrl}p');
+  cy.get('body').should('contain', 'Opening Settings');
+});
+
+// Command to test enhanced share target functionality
+Cypress.Commands.add('testEnhancedShareTarget', (shareData = {}) => {
+  const { title = 'Test Title', text = 'Test content', url = 'https://example.com' } = shareData;
+  const shareParams = `?title=${encodeURIComponent(title)}&text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  
+  cy.visit('/' + shareParams);
+  cy.wait(2000);
+  
+  // Should show shared content notification
+  cy.get('body').should('contain', 'Content Shared');
+  if (title) cy.get('body').should('contain', `Title: ${title}`);
+  
+  // Test notification can be closed
+  cy.get('.fixed .fa-times').should('be.visible').click();
+  cy.get('.fixed').contains('Content Shared').should('not.exist');
+});
+
+// Command to test enhanced background sync
+Cypress.Commands.add('testEnhancedBackgroundSync', () => {
+  cy.window().then((win) => {
+    if (win.navigator.serviceWorker && win.navigator.serviceWorker.controller) {
+      const messageChannel = new MessageChannel();
+      
+      // Test smart sync
+      win.navigator.serviceWorker.controller.postMessage({
+        type: 'TRIGGER_MANUAL_SYNC'
+      }, [messageChannel.port2]);
+      
+      return new Promise((resolve) => {
+        messageChannel.port1.onmessage = (event) => {
+          expect(event.data.success).to.be.true;
+          expect(event.data.results).to.exist;
+          resolve(event.data);
+        };
+      });
+    }
+  });
+});
+
+// Command to test smart queue prioritization
+Cypress.Commands.add('testSmartQueuePrioritization', () => {
+  cy.window().then((win) => {
+    if (win.navigator.serviceWorker && win.navigator.serviceWorker.controller) {
+      // Queue items with different priorities
+      const priorities = ['critical', 'high', 'normal', 'low'];
+      const promises = priorities.map(priority => {
+        const messageChannel = new MessageChannel();
+        
+        win.navigator.serviceWorker.controller.postMessage({
+          type: 'QUEUE_FOR_SYNC',
+          storeName: 'alerts',
+          data: {
+            message: `${priority} priority test`,
+            priority: priority,
+            timestamp: Date.now()
+          }
+        }, [messageChannel.port2]);
+        
+        return new Promise((resolve) => {
+          messageChannel.port1.onmessage = (event) => {
+            expect(event.data.success).to.be.true;
+            resolve({ priority, result: event.data });
+          };
+        });
+      });
+      
+      return Promise.all(promises);
+    }
+  });
+});
+
+// Command to test splash screen enhanced features
+Cypress.Commands.add('testEnhancedSplashScreen', () => {
+  cy.clearAllLocalStorage();
+  cy.clearAllCookies();
+  cy.reload();
+  
+  // Splash screen should be visible initially
+  cy.get('#pwa-splash').should('be.visible');
+  cy.get('.splash-logo').should('be.visible').and('have.css', 'animation');
+  cy.get('.splash-title').should('contain', 'SpotKin');
+  cy.get('.splash-subtitle').should('contain', 'AI-powered monitoring');
+  cy.get('.splash-spinner').should('be.visible').and('have.css', 'animation');
+  
+  // Test responsive design of splash screen
+  cy.viewport(375, 667); // Mobile
+  cy.get('#pwa-splash').should('be.visible');
+  
+  cy.viewport(1920, 1080); // Desktop
+  cy.get('#pwa-splash').should('be.visible');
+  
+  // Wait for splash screen to disappear with animation
+  cy.get('#pwa-splash', { timeout: 10000 }).should('not.exist');
+});
+
 // Register all commands in commands.js
 // This ensures they're available globally in all tests

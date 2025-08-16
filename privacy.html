@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - SpotKin</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; font-src 'self' https://cdnjs.cloudflare.com">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom styles -->
+    <style>
+        .privacy-section {
+            @apply mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200;
+        }
+        .privacy-heading {
+            @apply text-xl font-semibold text-gray-800 mb-4;
+        }
+        .privacy-subheading {
+            @apply text-lg font-medium text-gray-700 mb-3 mt-6;
+        }
+        .privacy-text {
+            @apply text-gray-600 leading-relaxed mb-4;
+        }
+        .privacy-list {
+            @apply list-disc list-inside text-gray-600 mb-4 space-y-2;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-eye text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">SpotKin</h1>
+            </div>
+            <a href="/" class="text-white hover:text-indigo-200 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Back to App
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Privacy Policy</h1>
+            <p class="text-gray-600">Effective Date: August 16, 2025</p>
+            <p class="text-gray-600">Last Updated: August 16, 2025</p>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-shield-alt text-indigo-600 mr-2"></i>
+                Our Privacy Commitment
+            </h2>
+            <p class="privacy-text">
+                SpotKin is designed with privacy as a fundamental principle. We believe that your monitoring data, preferences, and usage patterns should remain private and under your control. This privacy policy explains how we handle your information in our AI-powered monitoring application.
+            </p>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="font-semibold text-green-800 mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>Key Privacy Benefits
+                </h3>
+                <ul class="privacy-list text-green-700">
+                    <li>All AI processing happens locally on your device</li>
+                    <li>No camera feeds or images are transmitted to our servers</li>
+                    <li>Your data is encrypted and stored securely</li>
+                    <li>You can export or delete all your data at any time</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-database text-indigo-600 mr-2"></i>
+                Information We Collect
+            </h2>
+            
+            <h3 class="privacy-subheading">Data Stored Locally</h3>
+            <p class="privacy-text">
+                The following information is stored locally on your device using encrypted storage:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>User Preferences:</strong> Your monitoring settings, sensitivity levels, and alert preferences</li>
+                <li><strong>Monitoring History:</strong> Timestamps, AI analysis results, and alert records</li>
+                <li><strong>Zone Configurations:</strong> Custom monitoring zones you create</li>
+                <li><strong>Usage Statistics:</strong> App performance metrics and feature usage</li>
+            </ul>
+
+            <h3 class="privacy-subheading">Data We Do NOT Collect</h3>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <ul class="privacy-list text-red-700">
+                    <li>Camera feeds or video streams</li>
+                    <li>Individual images or photographs</li>
+                    <li>Personal identification information</li>
+                    <li>Location data or device identifiers</li>
+                    <li>Contact information or communications</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-microchip text-indigo-600 mr-2"></i>
+                Local AI Processing
+            </h2>
+            <p class="privacy-text">
+                SpotKin uses artificial intelligence to analyze your camera feed, but this analysis happens entirely on your device:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>Local Processing:</strong> All AI analysis is performed locally using the Puter.js AI engine</li>
+                <li><strong>No Image Transmission:</strong> Camera images never leave your device</li>
+                <li><strong>Offline Capability:</strong> The app functions fully offline with cached AI models</li>
+                <li><strong>Privacy by Design:</strong> Technical architecture ensures data cannot be extracted</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-lock text-indigo-600 mr-2"></i>
+                Data Security
+            </h2>
+            <p class="privacy-text">
+                We implement industry-standard security measures to protect your data:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>AES-256 Encryption:</strong> All sensitive data is encrypted using military-grade encryption</li>
+                <li><strong>Secure Storage:</strong> Data is stored in encrypted browser storage with integrity checks</li>
+                <li><strong>Content Security Policy:</strong> Strict security headers prevent unauthorized access</li>
+                <li><strong>Input Validation:</strong> All user inputs are validated and sanitized</li>
+                <li><strong>Regular Security Audits:</strong> We conduct regular security assessments</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-cloud text-indigo-600 mr-2"></i>
+                External Services
+            </h2>
+            <p class="privacy-text">
+                SpotKin integrates with minimal external services:
+            </p>
+            
+            <h3 class="privacy-subheading">Puter.js AI Service</h3>
+            <ul class="privacy-list">
+                <li><strong>Purpose:</strong> Provides AI analysis capabilities when online</li>
+                <li><strong>Data Sent:</strong> Only processed analysis requests, no raw images</li>
+                <li><strong>Fallback:</strong> Local mock AI when service is unavailable</li>
+                <li><strong>Privacy Policy:</strong> <a href="https://puter.com/privacy" class="text-indigo-600 hover:underline">Puter Privacy Policy</a></li>
+            </ul>
+
+            <h3 class="privacy-subheading">Content Delivery Networks (CDNs)</h3>
+            <ul class="privacy-list">
+                <li><strong>Tailwind CSS:</strong> Styling framework loaded from CDN</li>
+                <li><strong>Font Awesome:</strong> Icon library loaded from CDN</li>
+                <li><strong>Data Collection:</strong> These services may collect standard web analytics</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-user-check text-indigo-600 mr-2"></i>
+                Your Rights (GDPR Compliance)
+            </h2>
+            <p class="privacy-text">
+                You have complete control over your data with the following rights:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>Right to Access:</strong> Export all your data in JSON format</li>
+                <li><strong>Right to Deletion:</strong> Permanently delete all stored data</li>
+                <li><strong>Right to Portability:</strong> Download your data for use elsewhere</li>
+                <li><strong>Right to Rectification:</strong> Modify or correct your preferences</li>
+                <li><strong>Right to Restriction:</strong> Control data processing through app settings</li>
+            </ul>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <h4 class="font-semibold text-blue-800 mb-2">Exercise Your Rights</h4>
+                <p class="text-blue-700 mb-2">Access these features through the app settings:</p>
+                <ul class="list-disc list-inside text-blue-700 space-y-1">
+                    <li>Settings → Privacy → Export Data</li>
+                    <li>Settings → Privacy → Delete All Data</li>
+                    <li>Settings → Preferences → Manage Settings</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-chart-line text-indigo-600 mr-2"></i>
+                Analytics and Monitoring
+            </h2>
+            <p class="privacy-text">
+                We use privacy-compliant analytics to improve the app:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>Performance Metrics:</strong> App load times, error rates, and usage patterns</li>
+                <li><strong>Feature Usage:</strong> Which features are used most to guide development</li>
+                <li><strong>Anonymization:</strong> All analytics data is aggregated and anonymized</li>
+                <li><strong>Opt-Out:</strong> Analytics can be disabled in app settings</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-child text-indigo-600 mr-2"></i>
+                Children's Privacy
+            </h2>
+            <p class="privacy-text">
+                SpotKin is designed to monitor children but does not collect children's personal information:
+            </p>
+            <ul class="privacy-list">
+                <li>No personal information is collected from users of any age</li>
+                <li>Camera feeds are processed locally and never transmitted</li>
+                <li>Parents retain full control over all monitoring data</li>
+                <li>The app complies with COPPA (Children's Online Privacy Protection Act)</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-mobile-alt text-indigo-600 mr-2"></i>
+                Progressive Web App (PWA) Considerations
+            </h2>
+            <p class="privacy-text">
+                As a PWA, SpotKin has additional privacy characteristics:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>Local Installation:</strong> App can be installed and run offline</li>
+                <li><strong>Service Workers:</strong> Enable offline functionality while respecting privacy</li>
+                <li><strong>Background Sync:</strong> Queues data locally until connectivity is restored</li>
+                <li><strong>Push Notifications:</strong> Alerts are generated locally, not from servers</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-balance-scale text-indigo-600 mr-2"></i>
+                Legal Basis for Processing
+            </h2>
+            <p class="privacy-text">
+                Our legal basis for processing data under GDPR:
+            </p>
+            <ul class="privacy-list">
+                <li><strong>Legitimate Interest:</strong> Providing monitoring functionality as requested</li>
+                <li><strong>Consent:</strong> User consent for optional features like analytics</li>
+                <li><strong>Performance of Service:</strong> Essential app functionality</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-edit text-indigo-600 mr-2"></i>
+                Policy Updates
+            </h2>
+            <p class="privacy-text">
+                We may update this privacy policy to reflect changes in our practices or legal requirements:
+            </p>
+            <ul class="privacy-list">
+                <li>Material changes will be prominently displayed in the app</li>
+                <li>You will be notified before changes take effect</li>
+                <li>Continued use constitutes acceptance of updated terms</li>
+                <li>Previous versions are available upon request</li>
+            </ul>
+        </div>
+
+        <div class="privacy-section">
+            <h2 class="privacy-heading">
+                <i class="fas fa-envelope text-indigo-600 mr-2"></i>
+                Contact Information
+            </h2>
+            <p class="privacy-text">
+                For questions about this privacy policy or data practices:
+            </p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <ul class="privacy-list">
+                    <li><strong>In-App Support:</strong> Settings → Help → Privacy Questions</li>
+                    <li><strong>Data Controller:</strong> SpotKin Development Team</li>
+                    <li><strong>Response Time:</strong> We aim to respond within 72 hours</li>
+                    <li><strong>Regulatory Authority:</strong> You may contact your local data protection authority</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12 pt-8 border-t border-gray-200">
+            <p class="text-gray-500 mb-4">
+                This privacy policy is effective as of August 16, 2025 and applies to all users of SpotKin.
+            </p>
+            <div class="flex justify-center space-x-6">
+                <a href="/" class="text-indigo-600 hover:underline">Back to App</a>
+                <a href="/terms.html" class="text-indigo-600 hover:underline">Terms of Service</a>
+                <a href="#" onclick="window.print()" class="text-indigo-600 hover:underline">Print Policy</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
