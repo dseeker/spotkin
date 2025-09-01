@@ -828,12 +828,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageCapture = new ImageCapture(videoTrack);
             }
 
-            // Update the camera feedback with success message
-            cameraFeedback.innerHTML = `
-                <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                    <i class="fas fa-check-circle mr-1"></i>Camera active
-                </div>
-            `;
+            // Hide the camera feedback to reveal the video feed
+            cameraFeedback.style.display = 'none';
 
             // Reset error count on successful camera init
             errorManager.resetErrorCount();
@@ -892,9 +888,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 recoveryActions.push('Check your camera permissions');
             }
 
-            // Display enhanced error feedback with recovery actions
+            // Show the camera feedback and display error message
+            cameraFeedback.style.display = 'flex';
             cameraFeedback.innerHTML = `
-                <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
+                <div class="bg-red-50 text-red-900 px-3 py-1 rounded-full text-sm">
                     <i class="fas fa-exclamation-circle mr-1"></i>
                     <div class="font-medium">${userMessage}</div>
                     <div class="text-xs mt-1">
@@ -910,6 +907,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Toggle between front and rear cameras
     function toggleCamera() {
+        // Show feedback while switching cameras
+        cameraFeedback.style.display = 'flex';
+        cameraFeedback.innerHTML = `
+            <div class="text-center text-gray-400">
+                <div class="relative mb-4">
+                    <i class="fas fa-sync-alt text-6xl opacity-50 animate-spin"></i>
+                </div>
+                <p class="text-lg font-medium">Switching Camera...</p>
+            </div>
+        `;
+        
         facingMode = facingMode === 'environment' ? 'user' : 'environment';
         initCamera();
     }
@@ -1554,13 +1562,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let alertIcon = '';
 
         if (type === 'warning') {
-            alertClass = 'bg-yellow-100 border-yellow-400 text-yellow-800';
+            alertClass = 'bg-yellow-50 border-yellow-500 text-yellow-900';
             alertIcon = 'fa-triangle-exclamation';
         } else if (type === 'danger') {
-            alertClass = 'bg-red-100 border-red-400 text-red-800';
+            alertClass = 'bg-red-50 border-red-500 text-red-900';
             alertIcon = 'fa-circle-exclamation';
         } else { // info or safe
-            alertClass = 'bg-blue-100 border-blue-400 text-blue-800';
+            alertClass = 'bg-blue-50 border-blue-500 text-blue-900';
             alertIcon = 'fa-circle-info';
         }
 
@@ -1572,16 +1580,16 @@ document.addEventListener('DOMContentLoaded', function() {
         let safetyIcon = '';
 
         if (type === 'safe') {
-            safetyClass = 'bg-green-100 border-green-400 text-green-800';
+            safetyClass = 'bg-green-50 border-green-500 text-green-900';
             safetyIcon = 'fa-check-circle';
         } else if (type === 'warning') {
-            safetyClass = 'bg-yellow-100 border-yellow-400 text-yellow-800';
+            safetyClass = 'bg-yellow-50 border-yellow-500 text-yellow-900';
             safetyIcon = 'fa-triangle-exclamation';
         } else if (type === 'danger') {
-            safetyClass = 'bg-red-100 border-red-400 text-red-800';
+            safetyClass = 'bg-red-50 border-red-500 text-red-900';
             safetyIcon = 'fa-circle-exclamation';
         } else { // Default to info if type is unexpected
-            safetyClass = 'bg-blue-100 border-blue-400 text-blue-800';
+            safetyClass = 'bg-blue-50 border-blue-500 text-blue-900';
             safetyIcon = 'fa-circle-info';
         }
 
@@ -1658,7 +1666,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Create error message with retry button
         resultsPlaceholder.innerHTML = `
-            <div class="bg-red-100 text-red-800 p-4 rounded-md">
+            <div class="bg-red-50 text-red-900 p-4 rounded-md">
                 <div class="flex items-center mb-2">
                     <i class="fas fa-circle-exclamation mr-2"></i>
                     <p class="font-medium">Error</p>

@@ -107,7 +107,7 @@ Cypress.Commands.add('simulateCameraError', (errorMessage = 'Mock camera error f
     const cameraFeedback = win.document.getElementById('camera-feedback');
     if (cameraFeedback) {
       cameraFeedback.innerHTML = `
-        <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
+        <div class="bg-red-50 text-red-900 px-3 py-1 rounded-full text-sm">
           <i class="fas fa-exclamation-circle mr-1"></i>Camera error: ${errorMessage}
         </div>
       `;
