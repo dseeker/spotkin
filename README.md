@@ -1,11 +1,13 @@
 # SpotKin
 
-SpotKin is a **production-ready** intelligent monitoring application that transforms your ordinary devices into AI-powered guardians for babies, pets, and home environments. Unlike traditional monitors that simply relay raw video or sound, SpotKin understands what it sees, providing meaningful insights and alerts only when something truly matters.
+SpotKin is a **production-ready** intelligent monitoring application that transforms your ordinary devices into AI-powered guardians for babies, pets, and home environments. Perfect for **temporary monitoring scenarios** like pet-sitting at friends' houses or quick errands - no downloads, no accounts, just open your browser and start monitoring with voice alerts.
 
-**🎯 Now Available: Version 4.0 - Beta MVP Ready**
+**🎯 Now Available: Version 4.1 - TTS-Enhanced Beta MVP**
+- **🔊 NEW: Voice Alert System** with multi-layered text-to-speech
+- **🎯 NEW: Temporary Monitoring Focus** - perfect for pet-sitting scenarios
 - **100% Security Implementation** with military-grade AES-256 encryption
 - **Full Progressive Web App** with 83% PWA compliance score  
-- **60+ Automated Tests** with 100% success rate on critical functionality
+- **65+ Automated Tests** with 100% success rate on critical functionality
 - **Complete Privacy Compliance** with GDPR-compliant data handling
 - **Enterprise-Grade Security** with CSP headers and input validation
 
@@ -22,6 +24,13 @@ Our mission is to transform off-the-shelf devices into AI-powered "nannies" that
 - **Multi-Frame Temporal Analysis**: Advanced movement detection using frame comparison algorithms
 - **10-Point Severity Classification**: Intelligent risk assessment with color-coded visual indicators  
 - **Comprehensive Safety Detection**: Identifies hazards, unusual activities, and environmental risks
+
+### 🔊 **Voice Alert System** ✅ PRODUCTION READY
+- **Multi-Layered TTS System**: Three-tier text-to-speech with intelligent fallbacks (Puter.js → Pollinations.ai → Web Speech API)
+- **Smart Alert Triggering**: Voice alerts activate only for high-severity events (≥7/10 scale)
+- **Contextual Voice Messages**: Tailored spoken alerts based on alert type and severity level
+- **Easy Toggle Control**: One-click voice alerts activation button in camera controls
+- **Cross-Browser Compatibility**: Reliable voice alerts across all modern browsers
 
 ### 🎨 **Complete User Experience** ✅ PRODUCTION READY
 - **Interactive Setup Wizard**: Guided 4-step onboarding for first-time users

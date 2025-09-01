@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SpotKin">
-    <meta name="description" content="AI-powered monitoring application for pets and babies with advanced scene analysis and safety alerts">
+    <meta name="description" content="Instant pet & baby monitoring - no downloads needed! Open browser, point camera, get voice alerts. Perfect for pet-sitting or quick errands.">
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="msapplication-TileColor" content="#4f46e5">
@@ -27,26 +27,33 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Performance Optimizations: DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="//js.puter.com">
+    <link rel="dns-prefetch" href="//api.puter.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    
+    <!-- Performance Optimizations: Preload critical resources -->
+    <link rel="preload" href="app.js" as="script">
+    <link rel="preload" href="utils/security.js" as="script">
+    <link rel="preload" href="utils/secure-storage.js" as="script">
+    
+    <!-- Critical CSS Framework - Load immediately for UI -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
+    
+    <!-- Font Awesome for icons - Load early for UI elements -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Puter.js -->
-    <script src="https://js.puter.com/v2/"></script>
-    <!-- Security Module -->
+    
+    <!-- Critical Security Modules - Load immediately for data protection -->
     <script src="utils/security.js"></script>
-    <!-- Secure Storage Module -->
     <script src="utils/secure-storage.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Favicons and App Icons -->
-    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="images/favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="images/icon-180.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="images/icon-152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="images/icon-167.png">
+    <!-- PWA Icons -->
+    <link rel="icon" href="./images/favicon.png">
+    <link rel="apple-touch-icon" href="./images/apple-icon-180.png">
+    <link rel="mask-icon" href="./images/favicon.svg" color="#4f46e5">
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <!-- PWA Splash Screen -->
@@ -55,40 +62,58 @@
             <i class="fas fa-eye"></i>
         </div>
         <div class="splash-title">SpotKin</div>
-        <div class="splash-subtitle">AI-powered monitoring for pets and babies</div>
+        <div class="splash-subtitle">Instant monitoring - no downloads needed</div>
         <div class="splash-spinner"></div>
     </div>
     
     <!-- Header -->
-    <header class="bg-indigo-700 text-white shadow-md">
+    <header class="bg-indigo-700 text-white shadow-md relative">
         <div class="container mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center">
-                <i class="fas fa-eye text-2xl mr-2"></i>
+                <i class="fas fa-eye text-2xl mr-3"></i>
                 <h1 class="text-xl font-bold">SpotKin</h1>
             </div>
-            <nav>
-                <ul class="flex space-x-4">
-                    <li><a href="#features" class="hover:text-indigo-200 transition">Features</a></li>
-                    <li><a href="#demo" class="hover:text-indigo-200 transition">Try It</a></li>
-                    <li><a href="#about" class="hover:text-indigo-200 transition">About</a></li>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:block">
+                <ul class="flex space-x-6">
+                    <li><a href="#features" class="hover:text-indigo-200 transition-colors duration-200 text-sm font-medium">Features</a></li>
+                    <li><a href="#demo" class="hover:text-indigo-200 transition-colors duration-200 text-sm font-medium">Try It</a></li>
+                    <li><a href="#about" class="hover:text-indigo-200 transition-colors duration-200 text-sm font-medium">About</a></li>
+                </ul>
+            </nav>
+
+            <!-- Mobile Navigation Toggle -->
+            <button id="mobile-menu-toggle" class="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-indigo-600 transition-colors duration-200">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="md:hidden bg-indigo-800 border-t border-indigo-600 hidden">
+            <nav class="container mx-auto px-4 py-3">
+                <ul class="space-y-3">
+                    <li><a href="#features" class="block py-3 px-4 hover:bg-indigo-700 rounded-lg transition-colors duration-200 text-base font-medium">Features</a></li>
+                    <li><a href="#demo" class="block py-3 px-4 hover:bg-indigo-700 rounded-lg transition-colors duration-200 text-base font-medium">Try Demo</a></li>
+                    <li><a href="#about" class="block py-3 px-4 hover:bg-indigo-700 rounded-lg transition-colors duration-200 text-base font-medium">About</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="bg-gradient-to-b from-indigo-800 to-indigo-600 text-white py-16">
+    <section class="hero-section bg-gradient-to-b from-indigo-800 to-indigo-600 text-white py-16">
         <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl font-bold mb-4">Smart, Caring Eyes for Your Loved Ones</h2>
+            <h2 class="text-2xl md:text-4xl font-bold mb-4">Instant Pet & Baby Monitoring</h2>
             <p class="text-xl max-w-3xl mx-auto mb-8">
-                Transform your smartphone into an intelligent guardian that watches over your pets and babies, 
-                providing meaningful alerts when they matter most.
+                Pet-sitting at a friend's house? Need to step away for a moment? Open SpotKin in your browser, 
+                point your camera, and get voice alerts instantly. No apps to download, no accounts to create.
             </p>
             <div class="flex justify-center">
-                <a href="#demo" class="bg-white text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition mr-4">
+                <a href="#demo" class="bg-white text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 focus:ring-4 focus:ring-white focus:ring-opacity-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl mr-4">
                     Try the Demo
                 </a>
-                <a href="#features" class="border-2 border-white text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 transition">
+                <a href="#features" class="border-2 border-white text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 hover:bg-opacity-20 focus:ring-4 focus:ring-white focus:ring-opacity-30 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
                     Learn More
                 </a>
             </div>
@@ -96,43 +121,49 @@
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="py-16 bg-white">
+    <section id="features" class="section-mobile py-20 bg-gradient-to-br from-gray-50 to-indigo-50">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Key Features</h2>
+            <div class="text-center mb-16">
+                <h2 class="section-title text-4xl font-bold text-gray-800 mb-4">Key Features</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Discover what makes SpotKin the perfect monitoring solution for modern families</p>
+            </div>
             
-            <div class="grid md:grid-cols-3 gap-8">
+            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 <!-- Feature 1 -->
-                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-brain"></i>
+                <div class="feature-card group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-indigo-200">
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-5xl mb-6 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                        <i class="fas fa-bolt"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">Semantic Analysis</h3>
-                    <p class="text-gray-600">
-                        Our AI understands scenes and events, not just motion or sound. It recognizes activities
-                        and states to give meaningful context.
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800 group-hover:text-indigo-700 transition-colors">Instant Setup</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Open your browser, point your camera, and start monitoring immediately. No apps to download, 
+                        no accounts to create, no complicated setup.
                     </p>
                 </div>
                 
                 <!-- Feature 2 -->
-                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-bell-slash"></i>
+                <div class="feature-card group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-green-200">
+                    <div class="bg-gradient-to-br from-green-500 to-teal-600 text-white text-5xl mb-6 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                        <i class="fas fa-volume-up"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">Smart Alerts</h3>
-                    <p class="text-gray-600">
-                        No more false alarms. Only get notified when something meaningful happens, reducing
-                        alert fatigue and anxiety.
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800 group-hover:text-green-700 transition-colors">Voice Alerts</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Get spoken alerts for urgent situations. Perfect for when you're in another room - 
+                        hear important notifications while focused on other tasks!
                     </p>
                 </div>
                 
                 <!-- Feature 3 -->
-                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-                    <div class="text-indigo-600 text-4xl mb-4">
+                <div class="feature-card group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-blue-200">
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-5xl mb-6 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                         <i class="fas fa-lock"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">Privacy-First Design</h3>
-                    <p class="text-gray-600">
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800 group-hover:text-blue-700 transition-colors">Privacy-First Design</h3>
+                    <p class="text-gray-600 leading-relaxed">
                         Processing happens on your device, with minimal data sharing. No constant video
+                        uploading or privacy concerns.
+                    </p>
+                </div>
                         uploading or privacy concerns.
                     </p>
                 </div>
@@ -140,25 +171,78 @@
         </div>
     </section>
 
-    <!-- Demo Section -->
-    <section id="demo" class="py-16 bg-gray-100">
+    <!-- Use Cases Section -->
+    <section class="py-16 bg-indigo-50">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Live Demo</h2>
-            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
-                Experience SpotKin in action. Position your camera to view a pet or baby (or use a photo) and our AI will
-                analyze the scene and provide smart insights.
-            </p>
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Perfect For These Situations</h2>
             
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Pet-sitting scenario -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-indigo-600 text-3xl mb-4">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Pet-Sitting at Friends</h3>
+                    <p class="text-gray-600 mb-4">
+                        Watching your friend's pet but need to step into another room? Set up your phone camera, 
+                        enable voice alerts, and go. If the pet gets into trouble, you'll hear it immediately.
+                    </p>
+                    <div class="text-sm text-indigo-600 font-medium">
+                        ✓ No downloads on their device  •  ✓ Works instantly  •  ✓ Voice alerts from other rooms
+                    </div>
+                </div>
+
+                <!-- Quick errands -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-indigo-600 text-3xl mb-4">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Quick Errands & Breaks</h3>
+                    <p class="text-gray-600 mb-4">
+                        Need to grab something from the car or answer the door? Position your phone and 
+                        get instant alerts if your baby or pet needs attention.
+                    </p>
+                    <div class="text-sm text-indigo-600 font-medium">
+                        ✓ Temporary monitoring  •  ✓ Smart alerts only  •  ✓ Privacy-first (no cloud storage)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section py-20 bg-gradient-to-br from-gray-800 via-gray-900 to-indigo-900">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-4">Live Demo</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Experience SpotKin's AI-powered monitoring in real-time. Point your camera at anything and watch our intelligent analysis in action.
+                </p>
+            </div>
+            
+            <!-- Demo Container: Responsive grid layout - portrait: stacked, landscape: side-by-side -->
+            <div class="demo-container max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8">
                 <!-- Camera View -->
-                <div class="bg-white p-4 rounded-lg shadow-md">
-                    <h3 class="text-xl font-semibold mb-4">Camera Feed</h3>
-                    <div id="camera-container" class="bg-gray-200 aspect-video relative rounded-md overflow-hidden">
+                <div class="bg-gradient-to-br from-gray-700 to-gray-800 p-4 sm:p-6 rounded-3xl shadow-2xl border border-gray-600 backdrop-blur-sm">
+                    <div class="flex items-center justify-between mb-4 sm:mb-6">
+                        <h3 class="text-xl sm:text-2xl font-bold text-white">Camera Feed</h3>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            <span class="text-sm text-gray-300">LIVE</span>
+                        </div>
+                    </div>
+                    <div id="camera-container" class="bg-gradient-to-br from-gray-900 to-black aspect-video relative rounded-2xl overflow-hidden border-2 border-gray-600 shadow-inner">
                         <video id="camera" playsinline autoplay muted class="absolute inset-0 w-full h-full object-cover"></video>
-                        <div id="camera-feedback" class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-gray-400">
-                                <i class="fas fa-camera text-4xl mb-2"></i>
-                                <p>Camera loading...</p>
+                        <div id="camera-feedback" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                            <div class="text-center text-gray-400">
+                                <div class="relative mb-4">
+                                    <i class="fas fa-camera text-6xl opacity-50"></i>
+                                    <div class="absolute -top-2 -right-2 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-plus text-xs text-white"></i>
+                                    </div>
+                                </div>
+                                <p class="text-lg font-medium">Camera Initializing...</p>
+                                <p class="text-sm opacity-75">Click to allow camera access</p>
                             </div>
                         </div>
                         
@@ -169,14 +253,17 @@
                             </svg>
                         </div>
                         
-                        <div id="camera-controls" class="absolute bottom-4 right-4">
-                            <button id="take-snapshot" class="bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700">
-                                <i class="fas fa-camera"></i>
+                        <div id="camera-controls" class="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col space-y-2">
+                            <button id="voice-alerts-toggle" class="bg-green-600 text-white p-3 sm:p-3 rounded-full shadow-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 w-12 h-12 sm:w-auto sm:h-auto flex items-center justify-center" title="Toggle Voice Alerts">
+                                <i class="fas fa-volume-up text-sm"></i>
+                            </button>
+                            <button id="take-snapshot" class="bg-indigo-600 text-white p-3 sm:p-3 rounded-full shadow-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 w-12 h-12 sm:w-auto sm:h-auto flex items-center justify-center">
+                                <i class="fas fa-camera text-sm"></i>
                             </button>
                         </div>
-                        <div class="absolute top-2 left-2">
+                        <div class="absolute top-2 left-2 sm:top-3 sm:left-3">
                             <span id="ai-status" class="text-xs bg-black bg-opacity-50 text-white px-2 py-1 rounded-full hidden">
-                                <i class="fas fa-robot mr-1"></i><span>AI Ready</span>
+                                <i class="fas fa-robot mr-1"></i><span class="hidden sm:inline">AI Ready</span><span class="sm:hidden">AI</span>
                             </span>
                         </div>
                         <div class="absolute top-2 right-2">
@@ -185,18 +272,27 @@
                             </button>
                         </div>
                     </div>
-                    <div class="mt-4 flex flex-col space-y-3">
-                        <div>
-                            <button id="toggle-camera" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 w-full">
-                                <i class="fas fa-sync-alt mr-2"></i>Switch Camera
-                            </button>
-                        </div>
-                        <div class="flex justify-between items-center p-2 bg-gray-100 rounded-md">
-                            <button id="toggle-monitoring" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
-                                <i class="fas fa-play mr-2"></i><span id="monitoring-status-text">Start Monitoring</span>
-                            </button>
-                            <div class="flex items-center">
-                                <label for="refresh-rate" class="text-sm text-gray-600 mr-2">Refresh:</label>
+                    
+                    <!-- Camera Controls at bottom of camera feed -->
+                    <div class="mt-4">
+                        <button id="toggle-camera" class="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-500 hover:to-gray-600 focus:ring-2 focus:ring-gray-400 transition-all duration-200 transform hover:scale-[1.02] font-medium shadow-lg text-base">
+                            <i class="fas fa-sync-alt mr-2"></i>Switch Camera
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls & Analysis Container -->
+                <div class="bg-gradient-to-br from-gray-700 to-gray-800 p-4 sm:p-6 rounded-3xl shadow-2xl border border-gray-600 backdrop-blur-sm">
+                    <!-- Monitoring Controls -->
+                    <div class="monitoring-controls mb-6">
+                        
+                        <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-600">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <button id="toggle-monitoring" class="w-full sm:flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 sm:py-3 rounded-xl hover:from-indigo-500 hover:to-purple-500 focus:ring-2 focus:ring-indigo-400 transition-all duration-200 transform hover:scale-[1.02] font-medium shadow-lg text-base">
+                                    <i class="fas fa-play mr-2"></i><span id="monitoring-status-text">Start Monitoring</span>
+                                </button>
+                                <div class="flex items-center justify-center bg-gray-700 px-4 py-3 sm:py-2 rounded-xl border border-gray-600 min-w-0 sm:min-w-max">
+                                    <label for="refresh-rate" class="text-sm text-gray-300 mr-3 font-medium whitespace-nowrap">Refresh:</label>
                                 <select id="refresh-rate" class="bg-white border border-gray-300 text-gray-700 rounded-md px-2 py-1 text-sm">
                                     <option value="5000">5s</option>
                                     <option value="10000" selected>10s</option>
@@ -207,31 +303,47 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Analysis Results -->
-                <div id="results-container" class="bg-white p-4 rounded-lg shadow-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">Scene Analysis</h3>
-                        <div class="flex items-center space-x-2">
-                            <div class="flex border border-gray-200 rounded-md overflow-hidden">
-                                <button id="tab-current" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-l-md font-medium">Current</button>
-                                <button id="tab-history" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-r-md font-medium">History</button>
+                    <!-- Scene Analysis Section -->
+                    <div id="results-container" class="mt-6">
+                        <div class="flex flex-col mb-6 space-y-4">
+                            <!-- Scene Analysis Title -->
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+                                <h3 class="text-xl sm:text-2xl font-bold text-white">Scene Analysis</h3>
                             </div>
-                            <button id="preferences-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-md text-sm">
-                                <i class="fas fa-cog mr-1"></i>Settings
-                            </button>
-                            <button id="help-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm ml-2">
-                                <i class="fas fa-question-circle mr-1"></i>Help
-                            </button>
+                            
+                            <!-- Tab Navigation -->
+                            <div class="flex bg-gray-600 rounded-xl overflow-hidden border border-gray-500 w-full sm:max-w-xs">
+                                <button id="tab-current" class="flex-1 px-4 py-2 bg-indigo-600 text-white font-medium transition-all duration-200 hover:bg-indigo-700 text-sm">Current</button>
+                                <button id="tab-history" class="flex-1 px-4 py-2 text-gray-300 font-medium transition-all duration-200 hover:bg-gray-500 hover:text-white text-sm">History</button>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <button id="preferences-btn" onclick="console.log('🔧 INLINE: Settings clicked!'); showPreferencesModal();" class="bg-gray-600 hover:bg-gray-500 text-gray-300 hover:text-white px-4 py-3 rounded-xl text-sm transition-all duration-200 transform hover:scale-105 border border-gray-500 flex items-center justify-center">
+                                    <i class="fas fa-cog mr-2"></i>Settings
+                                </button>
+                                <button id="setup-wizard-btn" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-3 rounded-xl text-sm transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center">
+                                    <i class="fas fa-magic mr-2"></i>Setup
+                                </button>
+                                <button id="help-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl text-sm transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center col-span-2 sm:col-span-1">
+                                    <i class="fas fa-question-circle mr-2"></i>Help
+                                </button>
+                            </div>
                         </div>
-                    </div>
                     
                     <!-- Current Analysis Tab -->
-                    <div id="current-tab" class="tab-content">
-                        <div id="results-placeholder" class="bg-gray-100 p-6 rounded-md text-center">
-                            <i class="fas fa-search text-4xl text-gray-400 mb-3"></i>
-                            <p class="text-gray-500">Capture an image to see real-time analysis of what's happening in the scene.</p>
+                    <div id="current-tab" class="transition-opacity duration-300 ease-in-out">
+                        <div id="results-placeholder" class="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl text-center border border-gray-600">
+                            <div class="relative mb-4">
+                                <i class="fas fa-search text-5xl text-gray-500 opacity-50"></i>
+                                <div class="absolute -top-1 -right-1 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-robot text-xs text-white"></i>
+                                </div>
+                            </div>
+                            <p class="text-gray-300 text-lg font-medium mb-2">Ready for AI Analysis</p>
+                            <p class="text-gray-400 text-sm">Capture an image to see real-time analysis of what's happening in the scene.</p>
                         </div>
                         <div id="analysis-results" class="hidden">
                             <div id="scene-description" class="p-4 bg-indigo-50 rounded-md mb-4">
@@ -252,7 +364,7 @@
                     </div>
                     
                     <!-- History Tab -->
-                    <div id="history-tab" class="tab-content hidden">
+                    <div id="history-tab" class="transition-opacity duration-300 ease-in-out hidden">
                         <div class="flex justify-between mb-3">
                             <h4 class="font-semibold text-lg">Event Timeline</h4>
                             <button id="clear-history" class="text-xs text-red-600 hover:text-red-800">
@@ -315,8 +427,14 @@
                     <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
                 </div>
             </div>
-            <div class="mt-6 text-center text-sm text-gray-400">
-                <p>&copy; 2025 SpotKin. All rights reserved.</p>
+            <div class="mt-6 text-center">
+                <!-- Legal Links -->
+                <div class="flex justify-center space-x-6 mb-4 text-sm">
+                    <a href="privacy-policy.html" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="terms-of-service.html" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+                    <a href="cookie-policy.html" class="text-gray-400 hover:text-white transition-colors">Cookie Policy</a>
+                </div>
+                <p class="text-sm text-gray-400">&copy; 2024 SpotKin. All rights reserved. Built with privacy and security first.</p>
             </div>
         </div>
     </footer>
@@ -326,7 +444,7 @@
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-full overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b">
                 <h3 class="text-xl font-semibold text-gray-800">SpotKin Settings</h3>
-                <button id="preferences-close" class="text-gray-400 hover:text-gray-600">
+                <button id="preferences-close" onclick="hidePreferencesModal();" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -538,7 +656,7 @@
                 <button id="preferences-reset" class="px-4 py-2 text-gray-600 hover:text-gray-800">
                     Reset to Default
                 </button>
-                <button id="preferences-save" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                <button id="preferences-save" onclick="savePreferences(); hidePreferencesModal();" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
                     Save Settings
                 </button>
             </div>
@@ -812,11 +930,11 @@
 
             <!-- Help Navigation -->
             <div class="flex border-b">
-                <button id="help-tab-getting-started" class="help-tab px-6 py-3 border-b-2 border-blue-600 text-blue-600 font-medium">Getting Started</button>
-                <button id="help-tab-features" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Features</button>
-                <button id="help-tab-setup" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Setup Guide</button>
-                <button id="help-tab-troubleshooting" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Troubleshooting</button>
-                <button id="help-tab-faq" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">FAQ</button>
+                <button id="help-tab-getting-started" data-tab="getting-started" class="help-tab px-6 py-3 border-b-2 border-blue-600 text-blue-600 font-medium">Getting Started</button>
+                <button id="help-tab-features" data-tab="features" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Features</button>
+                <button id="help-tab-setup" data-tab="setup" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Setup Guide</button>
+                <button id="help-tab-troubleshooting" data-tab="troubleshooting" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Troubleshooting</button>
+                <button id="help-tab-faq" data-tab="faq" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">FAQ</button>
             </div>
 
             <!-- Help Content -->
@@ -1138,11 +1256,96 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="app.js"></script>
-    
-    <!-- PWA Service Worker Registration -->
+    <!-- Performance Optimization: Lazy Loading Implementation -->
     <script>
-        // Register service worker for PWA functionality
+        // Lazy load Puter.js after critical app initialization
+        function loadPuterJS() {
+            return new Promise((resolve, reject) => {
+                if (window.puter) {
+                    resolve(window.puter);
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://js.puter.com/v2/';
+                script.async = true;
+                script.onload = () => {
+                    console.log('✅ Puter.js loaded lazily');
+                    resolve(window.puter);
+                };
+                script.onerror = () => {
+                    console.log('⚠️ Puter.js failed to load, using mock AI');
+                    reject(new Error('Puter.js load failed'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Store the lazy loader globally for app.js
+        window.loadPuterJS = loadPuterJS;
+        
+        // Performance optimization: Load critical app components
+        window.addEventListener('DOMContentLoaded', () => {
+            // Start loading Puter.js in background after DOM is ready
+            setTimeout(() => {
+                loadPuterJS().catch(() => {
+                    console.log('🔄 Puter.js lazy loading failed, app will use mock AI');
+                });
+            }, 100); // Small delay to prioritize critical rendering
+        });
+    </script>
+    
+    <!-- Performance Optimization: Module loader temporarily disabled for compatibility -->
+    <!-- <script type="module" src="modules/module-loader.js"></script> -->
+    
+    <!-- Preference Migration System for version upgrades -->
+    <script src="modules/preference-migration.js"></script>
+    
+    <!-- FAQ System for comprehensive user help -->
+    <script src="modules/faq-system.js"></script>
+    
+    <!-- Feedback Collection System for user insights -->
+    <script src="modules/feedback-collection.js"></script>
+    
+    <!-- Load main application after lazy loading setup -->
+    <script src="app.js?v=fixed-save-function-v6"></script>
+    
+    <!-- PWA Service Worker Registration - DISABLED FOR DEVELOPMENT -->
+    <script>
+        // DEVELOPMENT: Disable service worker and clear all caches
+        console.log('🚫 Service Worker disabled for development');
+        
+        if ('serviceWorker' in navigator) {
+            // Unregister any existing service workers
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister().then(() => {
+                        console.log('🗑️ Service Worker unregistered');
+                        // Force page reload after unregistration
+                        if (registrations.length > 0) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Clear all caches
+        if ('caches' in window) {
+            caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                        console.log('🗑️ Deleting cache:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+            }).then(() => {
+                console.log('✅ All caches cleared for development');
+            });
+        }
+        
+        // ORIGINAL SERVICE WORKER CODE (COMMENTED OUT FOR DEVELOPMENT)
+        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', {
@@ -1174,6 +1377,7 @@
         } else {
             console.warn('⚠️ Service Workers not supported in this browser');
         }
+        */
         
         // Show PWA install prompt
         let deferredPrompt;
@@ -1325,5 +1529,29 @@
             });
         }
     </script>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-40 flex justify-around px-4 py-2 pb-3 transform translate-y-0 transition-transform duration-300 visible lg:hidden">
+        <button class="mobile-nav-item flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-14 active bg-indigo-600/10 text-indigo-600" data-target="#demo">
+            <i class="fas fa-camera text-xl mb-1"></i>
+            <span class="text-xs font-medium">Monitor</span>
+        </button>
+        <button class="mobile-nav-item flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-14" data-target="#features">
+            <i class="fas fa-star text-xl mb-1"></i>
+            <span class="text-xs font-medium">Features</span>
+        </button>
+        <button class="mobile-nav-item flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-14" data-target="#about">
+            <i class="fas fa-info-circle text-xl mb-1"></i>
+            <span class="text-xs font-medium">About</span>
+        </button>
+        <button class="mobile-nav-item flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-14" id="mobile-setup-btn">
+            <i class="fas fa-cog text-xl mb-1"></i>
+            <span class="text-xs font-medium">Setup</span>
+        </button>
+        <button class="mobile-nav-item flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-14" id="mobile-help-btn">
+            <i class="fas fa-question-circle text-xl mb-1"></i>
+            <span class="text-xs font-medium">Help</span>
+        </button>
+    </nav>
 </body>
 </html>

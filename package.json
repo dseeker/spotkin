@@ -6,6 +6,8 @@
   "scripts": {
     "start": "npx http-server ./D:/Dados/Code/spotkin -p 3000",
     "dev": "npx live-server --port=3000 --watch=index.html,app.js,styles.css",
+    "dev:stop": "npx kill-port 3000",
+    "dev:restart": "npm run dev:stop && npm run dev",
     "start-app": "npx http-server . -p 3000",
     "cypress:run": "cypress run",
     "test": "start-server-and-test start-app http://localhost:3000 cypress:run",
@@ -14,7 +16,8 @@
     "lighthouse:pwa": "lighthouse http://localhost:3000 --preset=pwa --output=json --output-path=./reports/lighthouse-pwa.json --chrome-flags=\"--headless\"",
     "validate-manifest": "node scripts/validate-pwa.js",
     "generate-icons": "pwa-asset-generator images/favicon.svg images --manifest=manifest.json --icon-only",
-    "audit:pwa": "npm run lighthouse:pwa && node scripts/pwa-audit.js"
+    "audit:pwa": "npm run lighthouse:pwa && node scripts/pwa-audit.js",
+    "build": "esbuild app.js --bundle --outfile=bundle.js"
   },
   "keywords": [
     "ai",
@@ -29,12 +32,14 @@
     "http-server": "^14.1.1"
   },
   "devDependencies": {
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.5",
     "cypress": "^14.5.0",
-    "puppeteer": "^24.8.2",
-    "start-server-and-test": "^2.0.12",
+    "esbuild": "^0.25.9",
     "lighthouse": "^12.2.1",
+    "puppeteer": "^24.8.2",
     "pwa-asset-generator": "^6.3.2",
-    "workbox-cli": "^7.3.0",
-    "web-app-manifest-validator": "^1.0.0"
+    "start-server-and-test": "^2.0.12",
+    "web-app-manifest-validator": "^1.0.0",
+    "workbox-cli": "^7.3.0"
   }
 }

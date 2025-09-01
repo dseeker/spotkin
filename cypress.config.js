@@ -3,15 +3,12 @@ const { defineConfig } = require("cypress");
 module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      // implement node event listeners here
-      
-      // Screenshot comparison plugin setup (if needed in future)
-      // require('cypress-visual-regression/dist/plugin')(on, config);
-      
+      const createBundler = require("@bahmutov/cypress-esbuild-preprocessor");
+      on("file:preprocessor", createBundler());
       return config;
     },
     supportFile: "cypress/support/commands.js",
-    baseUrl: "http://localhost:3000",
+    baseUrl: "http://localhost:8080",
     specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
     
     // Enhanced screenshot and video settings

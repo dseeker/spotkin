@@ -27,7 +27,22 @@
       "Bash(grep:*)",
       "Bash(npm run lighthouse:*)",
       "Bash(npm run validate-manifest:*)",
-      "Bash(ls)"
+      "Bash(ls)",
+      "Bash(git add:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(npm start)",
+      "Bash(npm run dev:*)",
+      "Bash(npx cypress:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run:*)",
+      "Bash(start http://localhost:3000/test-manual-setup.html)",
+      "Bash(del \"D:\\Dados\\Code\\spotkin\\test-manual-setup.html\")"
     ],
     "deny": []
   }

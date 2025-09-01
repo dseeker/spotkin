@@ -1,9 +1,9 @@
 // SpotKin Service Worker
 // Provides offline functionality and caching for PWA
 
-const CACHE_NAME = 'spotkin-v1.0.0';
-const STATIC_CACHE = 'spotkin-static-v1';
-const DYNAMIC_CACHE = 'spotkin-dynamic-v1';
+const CACHE_NAME = 'spotkin-dev-v1.0.1';
+const STATIC_CACHE = 'spotkin-static-dev-v1';
+const DYNAMIC_CACHE = 'spotkin-dynamic-dev-v1';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -23,7 +23,13 @@ const STATIC_FILES = [
 const NETWORK_FIRST_URLS = [
     '/api/',  // Any API calls
     'https://api.puter.com/', // Puter AI API
-    'https://puter.com/'      // Puter platform
+    'https://puter.com/',     // Puter platform
+    // DEVELOPMENT: Force server-first for our modified files
+    'app.js',
+    'styles.css', 
+    'index.html',
+    'modules/',
+    '/modules/'
 ];
 
 // Install event - cache static assets
