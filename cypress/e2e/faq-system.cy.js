@@ -6,8 +6,14 @@ describe('FAQ System Tests', () => {
             win.localStorage.removeItem('spotkin_faq_state');
         });
         
-        cy.visit('/');
-        cy.wait(2000); // Wait for FAQ system to load
+        cy.visit('/?test=true');
+        
+        // Verify splash screen is skipped in test mode
+        cy.get('#pwa-splash').should('not.exist');
+        
+        // Wait 1 second for page to fully load, then FAQ system to load
+        cy.wait(1000);
+        cy.wait(1000);
         cy.viewport(1280, 720);
     });
 
@@ -513,7 +519,11 @@ describe('FAQ System Tests', () => {
 
 describe('FAQ System Integration Tests', () => {
     beforeEach(() => {
-        cy.visit('/');
+        cy.visit('/?test=true');
+        
+        // Verify splash screen is skipped in test mode
+        cy.get('#pwa-splash').should('not.exist');
+        
         cy.wait(2000);
     });
 

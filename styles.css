@@ -1,5 +1,58 @@
 /* Optimized SpotKin Styles - Using Tailwind Classes */
 
+/* ===== PWA SPLASH SCREEN ===== */
+
+.pwa-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+}
+
+.splash-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 1rem 0 0.5rem 0;
+    text-align: center;
+}
+
+.splash-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.splash-logo {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: splash-pulse 2s ease-in-out infinite;
+}
+
+.splash-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: splash-spin 1s linear infinite;
+}
+
+/* Hide splash screen when hidden class is added */
+.pwa-splash.hidden {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+}
+
 /* ===== MOBILE-FIRST RESPONSIVE DESIGN ===== */
 
 /* Mobile Bottom Navigation - Now using Tailwind classes in HTML */
@@ -15,7 +68,9 @@
         position: sticky;
         top: 0;
         z-index: 30;
-        background: rgba(255, 255, 255, 0.95);
+        /* Keep the original indigo background and white text */
+        background: rgb(79, 70, 229) !important;
+        color: white !important;
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     }
@@ -28,6 +83,7 @@
     /* Compact header on mobile */
     header h1 {
         font-size: 1.5rem;
+        color: white !important;
     }
     
     /* Add mobile menu button */
@@ -36,7 +92,7 @@
         background: none;
         border: none;
         font-size: 1.5rem;
-        color: rgb(79, 70, 229);
+        color: white !important;
     }
 }
 
@@ -282,6 +338,27 @@
     animation: splash-spin 1s linear infinite;
 }
 
+/* Splash screen animations */
+@keyframes splash-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+@keyframes splash-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 
 /* ===== ESSENTIAL BROWSER BEHAVIOR (Keep these) ===== */
 
@@ -479,132 +556,11 @@ html {
 
 /* ===== DARK MODE IMPROVEMENTS ===== */
 
+/* Minimal dark mode support - let browsers and Tailwind handle most of it */
 @media (prefers-color-scheme: dark) {
-    :root {
-        --bg-primary: #1f2937;
-        --bg-secondary: #374151;
-        --bg-tertiary: #4b5563;
-        --text-primary: #f9fafb;
-        --text-secondary: #d1d5db;
-        --text-muted: #9ca3af;
-        --border-color: #4b5563;
-    }
-    
-    /* Global dark mode */
     body {
-        background-color: var(--bg-primary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    /* All light backgrounds become dark */
-    .bg-white {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    .bg-gray-50 {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    .bg-gray-100 {
-        background-color: var(--bg-tertiary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    .bg-indigo-50 {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    /* Text colors - ensure good contrast */
-    .text-gray-400 {
-        color: var(--text-muted) !important;
-    }
-    
-    .text-gray-500 {
-        color: var(--text-secondary) !important;
-    }
-    
-    .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Fix tab contrast in dark mode */
-    #tab-current.text-gray-800, #tab-history.text-gray-800 {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Improve indigo text contrast in dark mode */
-    .text-indigo-600 {
-        color: #818cf8 !important;
-    }
-    
-    .text-indigo-700 {
-        color: #a5b4fc !important;
-    }
-    
-    /* Border colors */
-    .border-gray-200, .border-gray-300 {
-        border-color: var(--border-color) !important;
-    }
-    
-    /* Shadows */
-    .shadow-md, .shadow-lg, .shadow-xl {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
-    }
-    
-    /* Button adjustments */
-    .bg-gray-200 {
-        background-color: var(--bg-tertiary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    .bg-gray-200:hover {
-        background-color: #6b7280 !important;
-    }
-    
-    /* Ensure all text on light backgrounds is visible */
-    .bg-white *, .bg-gray-50 *, .bg-gray-100 *, .bg-indigo-50 * {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Enhanced gradients for dark mode */
-    .bg-gradient-to-br {
-        background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-primary)) !important;
-    }
-    
-    .from-gray-50 {
-        background: var(--bg-primary) !important;
-    }
-    
-    .to-indigo-50 {
-        background: var(--bg-secondary) !important;
-    }
-    
-    /* Enhanced cards and components */
-    .shadow-lg, .shadow-xl, .shadow-2xl {
-        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
-    }
-    
-    /* Gradient backgrounds maintain visibility */
-    .from-gray-700, .from-gray-800 {
-        background: var(--bg-secondary) !important;
-    }
-    
-    .to-gray-800, .to-gray-900 {
-        background: var(--bg-primary) !important;
-    }
-    
-    /* Input elements */
-    input, select, textarea {
-        background-color: var(--bg-tertiary) !important;
-        color: var(--text-primary) !important;
-        border-color: var(--border-color) !important;
-    }
-    
-    input::placeholder, textarea::placeholder {
-        color: var(--text-muted) !important;
+        background-color: #1f2937;
+        color: #f3f4f6;
     }
 }
 

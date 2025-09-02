@@ -8,7 +8,7 @@ module.exports = defineConfig({
       return config;
     },
     supportFile: "cypress/support/commands.js",
-    baseUrl: "http://localhost:8080",
+    baseUrl: "http://localhost:3000",
     specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
     
     // Enhanced screenshot and video settings

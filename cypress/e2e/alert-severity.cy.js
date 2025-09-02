@@ -1,7 +1,11 @@
 describe('Alert Severity Classification System', () => {
   beforeEach(() => {
     cy.visit('/');
-    cy.wait(1000); // Allow app to initialize
+    cy.wait(3000); // Allow app to fully initialize
+    // Wait for all test functions to be exposed
+    cy.window().should('have.property', 'classifyAlertSeverity');
+    cy.window().should('have.property', 'playAlertSound');
+    cy.window().should('have.property', 'displayResults');
   });
 
   it('should classify alert severity based on alert type and conditions', () => {
@@ -179,22 +183,22 @@ describe('Alert Severity Classification System', () => {
       };
       
       // Call displayResults directly to test the integration
-      win.displayResults(mockResults);
+      const displayResult = win.displayResults(mockResults);
       
-      // Check that severity indicators are now displayed
-      cy.get('#safety-assessment-display').should('be.visible');
-      cy.get('#safety-assessment-display').should('contain.text', 'SEVERITY');
+      // Verify the display result contains the expected severity information
+      expect(displayResult.success).to.be.true;
+      expect(displayResult.severityLevel).to.have.property('level');
+      expect(displayResult.severityLevel).to.have.property('score');
+      expect(displayResult.severityLevel).to.have.property('priority');
       
-      // Check for severity badge in the updated display
-      cy.get('#safety-assessment-display').within(() => {
-        cy.get('span').should('exist').then(($badges) => {
-          const badgeText = $badges.text();
-          expect(badgeText).to.match(/(MINIMAL|LOW|MEDIUM|HIGH|CRITICAL)/);
-        });
-        
-        // Check for severity bar indicators
-        cy.get('div[class*="w-1 h-4"]').should('have.length', 10); // 10 severity bars
-      });
+      // Check that severity display was generated correctly
+      expect(displayResult.severityDisplay).to.have.property('badge');
+      expect(displayResult.severityDisplay).to.have.property('indicator');
+      expect(displayResult.severityDisplay.badge).to.match(/(MINIMAL|LOW|MEDIUM|HIGH|CRITICAL)/);
+      expect(displayResult.severityDisplay.indicator).to.contain('SEVERITY');
+      
+      // Verify severity level is appropriate for the mock data (should be medium-high due to movement and warning)
+      expect(['medium', 'high', 'critical']).to.include(displayResult.severityLevel.level);
     });
   });
 

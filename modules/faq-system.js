@@ -558,12 +558,12 @@ npx serve .
         faqContainer.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden';
         
         faqContainer.innerHTML = `
-            <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                <div class="p-6 border-b border-gray-200">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <span class="text-2xl">❓</span>
-                            <h2 class="text-xl font-bold text-gray-900">Help & FAQ</h2>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Help & FAQ</h2>
                         </div>
                         <button id="faq-close" class="text-gray-400 hover:text-gray-600 text-xl">
                             ✕
@@ -574,13 +574,13 @@ npx serve .
                             type="text" 
                             id="faq-search" 
                             placeholder="Search for help..." 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                         />
                     </div>
                 </div>
                 
                 <div class="flex h-[calc(90vh-200px)]">
-                    <div class="w-1/3 border-r border-gray-200 p-4 overflow-y-auto" id="faq-categories">
+                    <div class="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto" id="faq-categories">
                         <!-- Categories will be inserted here -->
                     </div>
                     <div class="flex-1 p-6 overflow-y-auto" id="faq-content">
@@ -628,24 +628,24 @@ npx serve .
         const categoriesHTML = Object.entries(this.faqData.categories)
             .sort((a, b) => a[1].priority - b[1].priority)
             .map(([id, category]) => `
-                <div class="faq-category mb-2 p-3 rounded-lg cursor-pointer hover:bg-gray-100" data-category="${id}">
+                <div class="faq-category mb-2 p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" data-category="${id}">
                     <div class="flex items-center space-x-3">
                         <span class="text-lg">${category.icon}</span>
                         <div>
-                            <h3 class="font-semibold text-gray-900">${category.title}</h3>
-                            <p class="text-sm text-gray-600">${category.questions.length} questions</p>
+                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">${category.title}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${category.questions.length} questions</p>
                         </div>
                     </div>
                 </div>
             `).join('');
 
         categoriesContainer.innerHTML = `
-            <div class="faq-category mb-2 p-3 rounded-lg cursor-pointer hover:bg-gray-100 bg-indigo-50" data-category="overview">
+            <div class="faq-category mb-2 p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 bg-indigo-50 dark:bg-indigo-900/30" data-category="overview">
                 <div class="flex items-center space-x-3">
                     <span class="text-lg">🏠</span>
                     <div>
-                        <h3 class="font-semibold text-indigo-900">Overview</h3>
-                        <p class="text-sm text-indigo-600">Quick start guide</p>
+                        <h3 class="font-semibold text-indigo-900 dark:text-indigo-200">Overview</h3>
+                        <p class="text-sm text-indigo-600 dark:text-indigo-300">Quick start guide</p>
                     </div>
                 </div>
             </div>
@@ -676,16 +676,16 @@ npx serve .
 
         contentContainer.innerHTML = `
             <div class="faq-overview">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Welcome to SpotKin Help</h2>
-                <p class="text-gray-600 mb-6">Find answers to common questions and get help with SpotKin.</p>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome to SpotKin Help</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-6">Find answers to common questions and get help with SpotKin.</p>
                 
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🚀 Quick Fixes</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">🚀 Quick Fixes</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${quickFixes.map(fix => `
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="font-medium text-gray-900 mb-2">${fix.problem}</h4>
-                                <p class="text-sm text-gray-600">${fix.solution}</p>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">${fix.problem}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">${fix.solution}</p>
                             </div>
                         `).join('')}
                     </div>
@@ -693,21 +693,21 @@ npx serve .
                 
                 ${popularQuestions.length > 0 ? `
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📈 Popular Questions</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">📈 Popular Questions</h3>
                     <div class="space-y-3">
                         ${popularQuestions.map(question => `
-                            <div class="faq-question-preview p-4 border border-gray-200 rounded-lg hover:border-indigo-300 cursor-pointer" data-question="${question.id}">
-                                <h4 class="font-medium text-gray-900">${question.question}</h4>
-                                <p class="text-sm text-gray-600 mt-1">Category: ${question.category} • ${question.views} views</p>
+                            <div class="faq-question-preview p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-400 cursor-pointer" data-question="${question.id}">
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100">${question.question}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Category: ${question.category} • ${question.views} views</p>
                             </div>
                         `).join('')}
                     </div>
                 </div>
                 ` : ''}
                 
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-blue-900 mb-2">💡 Need More Help?</h3>
-                    <p class="text-blue-800">Browse categories on the left or use the search bar to find specific solutions.</p>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2">💡 Need More Help?</h3>
+                    <p class="text-blue-800 dark:text-blue-300">Browse categories on the left or use the search bar to find specific solutions.</p>
                 </div>
             </div>
         `;
@@ -739,17 +739,17 @@ npx serve .
                 <div class="flex items-center space-x-3 mb-6">
                     <span class="text-3xl">${category.icon}</span>
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">${category.title}</h2>
-                        <p class="text-gray-600">${category.description}</p>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">${category.title}</h2>
+                        <p class="text-gray-600 dark:text-gray-300">${category.description}</p>
                     </div>
                 </div>
                 
                 <div class="space-y-4">
                     ${category.questions.map(question => `
-                        <div class="faq-question-item border border-gray-200 rounded-lg p-4 hover:border-indigo-300 cursor-pointer" data-question="${question.id}">
+                        <div class="faq-question-item border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:border-indigo-300 dark:hover:border-indigo-400 cursor-pointer" data-question="${question.id}">
                             <div class="flex items-start justify-between">
-                                <h3 class="font-semibold text-gray-900 mb-2">${question.question}</h3>
-                                <div class="flex items-center space-x-2 text-xs text-gray-500">
+                                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">${question.question}</h3>
+                                <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                                     <span class="difficulty-badge difficulty-${question.difficulty} px-2 py-1 rounded">
                                         ${question.difficulty}
                                     </span>
@@ -758,7 +758,7 @@ npx serve .
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 ${question.tags.map(tag => `
-                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>
+                                    <span class="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">${tag}</span>
                                 `).join('')}
                             </div>
                         </div>

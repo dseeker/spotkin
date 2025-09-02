@@ -7,8 +7,15 @@ describe('Contextual Help System Tests', () => {
             win.localStorage.removeItem('spotkin_help_events');
         });
         
-        cy.visit('/');
-        cy.wait(4000); // Wait for help system to load
+        cy.visit('/?test=true');
+        
+        // Verify splash screen is skipped in test mode
+        cy.get('#pwa-splash').should('not.exist');
+        
+        // Wait 1 second for page to fully load
+        cy.wait(1000);
+        
+        cy.wait(3000); // Wait for help system to load
         cy.viewport(1280, 720);
     });
 
