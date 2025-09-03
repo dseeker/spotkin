@@ -172,3 +172,146 @@ import './pwa-commands.js';
 
 // Import test helper commands
 import './test-helpers.js';
+
+// ***********************************************
+// Console Error Detection Commands
+// ***********************************************
+
+// Command to set up console error monitoring
+Cypress.Commands.add('startConsoleErrorDetection', () => {
+  cy.window().then((win) => {
+    // Initialize error collection array
+    win.cypressConsoleErrors = [];
+    
+    // Store original console methods
+    win.originalConsoleError = win.console.error;
+    win.originalConsoleWarn = win.console.warn;
+    
+    // Override console.error to capture errors
+    win.console.error = (...args) => {
+      const errorMessage = args.map(arg => 
+        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+      ).join(' ');
+      
+      win.cypressConsoleErrors.push({
+        type: 'console.error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+        stack: new Error().stack
+      });
+      
+      // Still call original method for debugging
+      win.originalConsoleError.apply(win.console, args);
+    };
+    
+    // Override console.warn for warnings (optional)
+    win.console.warn = (...args) => {
+      const warnMessage = args.map(arg => 
+        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+      ).join(' ');
+      
+      win.cypressConsoleErrors.push({
+        type: 'console.warn',
+        message: warnMessage,
+        timestamp: new Date().toISOString()
+      });
+      
+      win.originalConsoleWarn.apply(win.console, args);
+    };
+    
+    // Capture uncaught JavaScript errors
+    win.addEventListener('error', (event) => {
+      win.cypressConsoleErrors.push({
+        type: 'uncaught.error',
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error?.toString(),
+        timestamp: new Date().toISOString()
+      });
+    });
+    
+    // Capture unhandled promise rejections
+    win.addEventListener('unhandledrejection', (event) => {
+      win.cypressConsoleErrors.push({
+        type: 'unhandled.rejection',
+        message: event.reason?.message || String(event.reason),
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+});
+
+// Command to check for console errors and fail test if found
+Cypress.Commands.add('checkForConsoleErrors', (options = {}) => {
+  const { 
+    failOnError = true, 
+    failOnWarning = false,
+    ignorePatterns = [],
+    logErrors = true 
+  } = options;
+  
+  cy.window().then((win) => {
+    const errors = win.cypressConsoleErrors || [];
+    
+    // Filter errors based on options
+    const filteredErrors = errors.filter(error => {
+      // Skip warnings if not configured to fail on them
+      if (!failOnWarning && error.type === 'console.warn') return false;
+      
+      // Skip errors matching ignore patterns
+      return !ignorePatterns.some(pattern => {
+        if (pattern instanceof RegExp) {
+          return pattern.test(error.message);
+        }
+        return error.message.includes(pattern);
+      });
+    });
+    
+    if (logErrors && filteredErrors.length > 0) {
+      cy.log(`🚨 Console Errors Found (${filteredErrors.length}):`);
+      filteredErrors.forEach((error, index) => {
+        cy.log(`${index + 1}. ${error.type}: ${error.message}`);
+      });
+    }
+    
+    if (failOnError && filteredErrors.length > 0) {
+      const errorSummary = filteredErrors.map(e => 
+        `[${e.type}] ${e.message}`
+      ).join('\n');
+      
+      throw new Error(`Console errors detected:\n${errorSummary}`);
+    }
+    
+    return filteredErrors;
+  });
+});
+
+// Command to clear collected console errors
+Cypress.Commands.add('clearConsoleErrors', () => {
+  cy.window().then((win) => {
+    if (win.cypressConsoleErrors) {
+      win.cypressConsoleErrors.length = 0;
+    }
+  });
+});
+
+// Command to restore original console methods
+Cypress.Commands.add('restoreConsole', () => {
+  cy.window().then((win) => {
+    if (win.originalConsoleError) {
+      win.console.error = win.originalConsoleError;
+    }
+    if (win.originalConsoleWarn) {
+      win.console.warn = win.originalConsoleWarn;
+    }
+  });
+});
+
+// Command to get current console errors without failing
+Cypress.Commands.add('getConsoleErrors', () => {
+  return cy.window().then((win) => {
+    return win.cypressConsoleErrors || [];
+  });
+});

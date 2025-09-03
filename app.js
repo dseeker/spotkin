@@ -15,6 +15,12 @@ class ErrorManager {
     setupGlobalHandlers() {
         // Enhanced global error handler
         window.onerror = (message, source, lineno, colno, error) => {
+            // Filter out generic "Script error" messages that provide no useful information
+            if (message === 'Script error.' && source === '' && lineno === 0 && colno === 0) {
+                console.log('🔕 Filtered generic script error (likely CORS/external resource)');
+                return true; // Suppress the error
+            }
+            
             this.handleError({
                 type: 'javascript',
                 message,
@@ -29,6 +35,20 @@ class ErrorManager {
 
         // Enhanced promise rejection handler
         window.addEventListener('unhandledrejection', (event) => {
+            // Filter out common harmless promise rejections
+            const reason = event.reason?.message || event.reason || 'Unhandled Promise Rejection';
+            const reasonStr = String(reason).toLowerCase();
+            
+            // Filter out Puter.js and other external service errors
+            if (reasonStr.includes('puter') || 
+                reasonStr.includes('network error') ||
+                reasonStr.includes('load failed') ||
+                reasonStr.includes('cors')) {
+                console.log('🔕 Filtered harmless promise rejection:', reason);
+                event.preventDefault(); // Prevent the error from being logged
+                return;
+            }
+            
             this.handleError({
                 type: 'promise_rejection',
                 message: event.reason?.message || 'Unhandled Promise Rejection',
@@ -43,6 +63,24 @@ class ErrorManager {
         
         this.errorCount++;
         this.errorHistory.unshift(errorInfo);
+        
+        // Store errors for automated testing
+        if (typeof window !== 'undefined') {
+            if (!window.testErrors) {
+                window.testErrors = [];
+            }
+            window.testErrors.push({
+                ...errorInfo,
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                stack: errorInfo.error || new Error().stack
+            });
+            
+            // Keep test errors manageable 
+            if (window.testErrors.length > 50) {
+                window.testErrors = window.testErrors.slice(0, 30);
+            }
+        }
         
         // Keep error history manageable
         if (this.errorHistory.length > this.maxErrorHistory) {
@@ -989,11 +1027,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await window.moduleLoader.loadDailySummaryModule();
             } else {
                 console.log('Using optimized fallback daily summary');
-                return createFallbackDailySummary();
+                const fallback = createFallbackDailySummary();
+                if (!fallback) {
+                    throw new Error('Failed to create fallback daily summary');
+                }
+                return fallback;
             }
         } catch (error) {
             console.error('Failed to load Daily Summary module:', error);
-            return createFallbackDailySummary();
+            console.log('Creating emergency fallback daily summary...');
+            try {
+                return createFallbackDailySummary();
+            } catch (fallbackError) {
+                console.error('Even fallback creation failed:', fallbackError);
+                // Return absolute minimal fallback
+                return {
+                    generateDailySummary: async () => ({ summary: 'Unavailable', fallback: true }),
+                    aggregateDailyData: () => ({ hasData: false, totalEvents: 0 }),
+                    clearCache: () => {},
+                    getCachedSummary: () => null
+                };
+            }
         }
     }
 
@@ -1032,6 +1086,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     fallback: true,
                     date: targetDate.toISOString().split('T')[0]
                 };
+            },
+            aggregateDailyData: (targetDate = new Date()) => {
+                // Simple fallback - check if there's any history data for today
+                if (typeof historyData !== 'undefined' && historyData && historyData.length > 0) {
+                    const today = targetDate.toISOString().split('T')[0];
+                    const todayEvents = historyData.filter(entry => {
+                        return entry.timestamp && entry.timestamp.startsWith(today);
+                    });
+                    return {
+                        hasData: todayEvents.length > 0,
+                        totalEvents: todayEvents.length
+                    };
+                }
+                return { hasData: false, totalEvents: 0 };
             },
             getCachedSummary: () => null,
             clearCache: () => {}
@@ -1467,6 +1535,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Add temporal analysis information to the result
                     aiResult.temporalAnalysis = temporalAnalysis;
                     displayResults(aiResult);
+                    
+                    // Add to history with thumbnail
+                    addToHistory(aiResult, canvas);
 
                     // Enhanced alert system with user preferences
                     if (isMonitoring && aiResult.hasPetsOrBabies) {
@@ -1731,17 +1802,17 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('switchTab() called with tabName:', tabName); // Added log
         if (tabName === 'current') {
             tabCurrent.classList.remove('bg-gray-100', 'text-gray-800');
-            tabCurrent.classList.add('bg-indigo-100', 'text-indigo-700');
-            tabHistory.classList.remove('bg-indigo-100', 'text-indigo-700');
-            tabHistory.classList.add('bg-gray-100', 'text-gray-800');
+            tabCurrent.classList.add('bg-indigo-600', 'text-white');
+            tabHistory.classList.remove('bg-indigo-600', 'text-white');
+            tabHistory.classList.add('bg-gray-100', 'text-gray-700');
 
             currentTab.classList.remove('hidden');
             historyTab.classList.add('hidden');
         } else if (tabName === 'history') {
-            tabHistory.classList.remove('bg-gray-100', 'text-gray-800');
-            tabHistory.classList.add('bg-indigo-100', 'text-indigo-700');
-            tabCurrent.classList.remove('bg-indigo-100', 'text-indigo-700');
-            tabCurrent.classList.add('bg-gray-100', 'text-gray-800');
+            tabHistory.classList.remove('bg-gray-100', 'text-gray-700');
+            tabHistory.classList.add('bg-indigo-600', 'text-white');
+            tabCurrent.classList.remove('bg-indigo-600', 'text-white');
+            tabCurrent.classList.add('bg-gray-100', 'text-gray-700');
 
             historyTab.classList.remove('hidden');
             currentTab.classList.add('hidden');
@@ -1753,8 +1824,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Add a new event to the history
-    function addToHistory(result) {
+    function addToHistory(result, sourceCanvas = null) {
         console.log('addToHistory() called with result:', result); // Added log
+        
+        // Generate thumbnail if canvas is provided
+        let thumbnail = null;
+        if (sourceCanvas) {
+            try {
+                // Create thumbnail using existing compression function
+                thumbnail = compressImageForStorage(sourceCanvas, {
+                    maxDimension: 150, // Small thumbnail size
+                    quality: 0.7,
+                    preferWebP: true
+                });
+                console.log('📷 Generated thumbnail for history entry');
+            } catch (error) {
+                console.warn('Failed to generate thumbnail:', error);
+            }
+        }
+        
         // Create a new history entry
         const entry = {
             timestamp: new Date().toISOString(),
@@ -1762,7 +1850,8 @@ document.addEventListener('DOMContentLoaded', function() {
             objects: result.objects,
             alert: result.alert,
             hasPetsOrBabies: result.hasPetsOrBabies, // Directly use the value from parsed AI result
-            temporalAnalysis: result.temporalAnalysis // Include temporal analysis information
+            temporalAnalysis: result.temporalAnalysis, // Include temporal analysis information
+            thumbnail: thumbnail // Add compressed thumbnail data
         };
 
         console.log('New history entry:', entry); // Added log
@@ -1901,17 +1990,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
 
-            // Build the timeline item content
-            timelineItem.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
-                    <span class="${alertClass} text-xs">
-                        <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
-                    </span>
-                </div>
-                <p class="text-sm text-gray-600 mt-1">${entry.scene}</p>
-                ${objectsContent}
-            `;
+            // Build the timeline item content with thumbnail on left, text on right
+            if (entry.thumbnail) {
+                timelineItem.innerHTML = `
+                    <div class="flex gap-3 items-start">
+                        <!-- Thumbnail section (20%) -->
+                        <div class="w-1/5 flex-shrink-0">
+                            <img src="${entry.thumbnail}" 
+                                 alt="Scene thumbnail" 
+                                 class="w-full aspect-square object-cover rounded-lg border-2 border-gray-200 shadow-sm"
+                                 loading="lazy">
+                        </div>
+                        
+                        <!-- Content section (80%) -->
+                        <div class="w-4/5">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
+                                <span class="${alertClass} text-xs">
+                                    <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">${entry.scene}</p>
+                            ${objectsContent}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fallback layout without thumbnail (full width text)
+                timelineItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
+                        <span class="${alertClass} text-xs">
+                            <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">${entry.scene}</p>
+                    ${objectsContent}
+                `;
+            }
 
             // Add to fragment instead of directly to DOM
             fragment.appendChild(timelineItem);
@@ -1941,6 +2057,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     message: entry.alert.message.substring(0, 150) // Limit alert message length
                 },
                 hasPetsOrBabies: entry.hasPetsOrBabies,
+                // Keep thumbnail data (already compressed)
+                thumbnail: entry.thumbnail || null,
                 // Compress temporal analysis data
                 temporalAnalysis: entry.temporalAnalysis ? {
                     hasMovement: entry.temporalAnalysis.hasMovement,
@@ -2583,6 +2701,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Missing elements for test');
             }
         };
+        
+        // Close modal when clicking outside
+        if (preferencesModal) {
+            preferencesModal.addEventListener('click', (e) => {
+                if (e.target === preferencesModal) {
+                    hidePreferencesModal();
+                }
+            });
+        }
+        
+        // Update threshold value display
+        if (movementThreshold && movementThresholdValue) {
+            movementThreshold.addEventListener('input', (e) => {
+                movementThresholdValue.textContent = e.target.value;
+            });
+        }
     });
     
     // Setup Wizard button
@@ -2596,20 +2730,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Close modal when clicking outside
-    preferencesModal.addEventListener('click', (e) => {
-        if (e.target === preferencesModal) {
-            hidePreferencesModal();
-        }
-    });
 
-    // Update threshold value display
-    movementThreshold.addEventListener('input', (e) => {
-        movementThresholdValue.textContent = e.target.value;
-    });
 
     // Notification control event listeners
-    notificationsEnabled.addEventListener('change', async (e) => {
+    if (notificationsEnabled) {
+        notificationsEnabled.addEventListener('change', async (e) => {
         if (e.target.checked) {
             // Request notification permission
             const permission = await requestNotificationPermission();
@@ -2624,9 +2749,11 @@ document.addEventListener('DOMContentLoaded', function() {
             notificationControls.classList.add('hidden');
         }
     });
+    }
 
     // Test notification button
-    testNotificationBtn.addEventListener('click', async () => {
+    if (testNotificationBtn) {
+        testNotificationBtn.addEventListener('click', async () => {
         console.log('🧪 Test notification button clicked');
         
         // Ensure we have permission first
@@ -2637,6 +2764,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotificationPermissionDenied();
         }
     });
+    }
 
     // Zone control event listeners
     zonesEnabled.addEventListener('change', (e) => {
@@ -5970,7 +6098,13 @@ async function initializeDailySummary() {
         }
         
         // Clean old cached summaries periodically
-        dailySummaryManager.clearCache();
+        if (dailySummaryManager && typeof dailySummaryManager.clearCache === 'function') {
+            try {
+                dailySummaryManager.clearCache();
+            } catch (clearCacheError) {
+                console.warn('Failed to clear daily summary cache:', clearCacheError);
+            }
+        }
         
         // Check if there's data from today to show summary
         const today = new Date();
@@ -5988,6 +6122,12 @@ async function initializeDailySummary() {
         }
     } catch (error) {
         console.error('❌ Failed to initialize daily summary:', error);
+        console.error('Daily summary initialization error details:', {
+            message: error?.message || 'Unknown error',
+            stack: error?.stack || 'No stack trace',
+            dailySummaryManagerExists: !!dailySummaryManager,
+            errorType: typeof error
+        });
     }
 }
 
