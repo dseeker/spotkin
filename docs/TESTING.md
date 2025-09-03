@@ -20,7 +20,7 @@ SpotKin now features a professional-grade testing suite with multiple testing me
 
 ### 🎯 **Cypress E2E Testing - Production-Grade Test Suite**
 
-SpotKin features a **comprehensive 80+ test suite** across **32 specialized test files**, representing one of the most thorough testing implementations for a PWA monitoring application:
+SpotKin features a **comprehensive 85+ test suite** across **30 specialized test files**, representing one of the most thorough testing implementations for a PWA monitoring application:
 
 #### **Core Functionality Tests**
 - **Core Functionality** (`cypress/e2e/core-functionality.cy.js`): Essential application features
@@ -43,6 +43,11 @@ SpotKin features a **comprehensive 80+ test suite** across **32 specialized test
 - **Daily Summary E2E** (`cypress/e2e/daily-summary-e2e.cy.js`): End-to-end daily summary workflows
 - **Text-to-Speech** (`cypress/e2e/text-to-speech.cy.js` & `cypress/e2e/tts-edge-cases.cy.js`): Voice alerts and TTS functionality
 - **Demo E2E** (`cypress/e2e/demo-e2e.cy.js`): Complete workflow validation with visual screenshots
+
+#### **Error Detection & Quality Assurance Tests** 🆕
+- **Error Detection Core** (`cypress/e2e/error-detection-core.cy.js`): Essential error monitoring and addEventListener fixes validation
+- **Error Detection Advanced** (`cypress/e2e/error-detection-advanced.cy.js`): Advanced diagnostics, visual reporting, and edge cases
+- **Error Detection Validation** (`cypress/e2e/error-detection-validation.cy.js`): CI/CD integration and production readiness validation
 
 #### **Progressive Web App (PWA) Tests**
 - **PWA Core** (`cypress/e2e/pwa.cy.js`): Basic PWA functionality and service worker
@@ -81,7 +86,7 @@ SpotKin features a **comprehensive 80+ test suite** across **32 specialized test
 
 #### **Custom Testing Commands** (`cypress/support/commands.js`)
 
-SpotKin includes **30+ specialized testing commands** for complex workflow automation:
+SpotKin includes **35+ specialized testing commands** for complex workflow automation:
 
 ```javascript
 // Core Testing Commands - Production Implementation
@@ -90,6 +95,13 @@ cy.takeSnapshotAndAnalyze()           // Complete snapshot + AI analysis workflo
 cy.verifyTemporalAnalysis()           // Validate movement detection indicators
 cy.startMonitoring(refreshRate)       // Start monitoring mode with specified interval
 cy.stopMonitoring()                   // Stop monitoring and verify state changes
+
+// Error Detection Commands - NEW 🆕
+cy.startConsoleErrorDetection()       // Initialize console error monitoring system
+cy.checkForConsoleErrors(options)     // Validate no critical errors with filtering options
+cy.getConsoleErrors()                 // Retrieve current error list for analysis
+cy.clearConsoleErrors()               // Clear collected error history
+cy.restoreConsole()                   // Restore original console methods
 
 // Advanced Workflow Commands  
 cy.tab()                              // Keyboard navigation for accessibility testing
@@ -138,6 +150,12 @@ npx cypress run --spec "cypress/e2e/legal-pages.cy.js"
 
 # Run security and legal tests together
 npx cypress run --spec "cypress/e2e/{security-*,legal-*}.cy.js"
+
+# Run error detection tests - NEW 🆕
+npx cypress run --spec "cypress/e2e/error-detection*.cy.js"
+npx cypress run --spec "cypress/e2e/error-detection-core.cy.js"        # Basic functionality
+npx cypress run --spec "cypress/e2e/error-detection-advanced.cy.js"   # Advanced diagnostics  
+npx cypress run --spec "cypress/e2e/error-detection-validation.cy.js" # CI/CD validation
 
 # Open interactive test runner
 npx cypress open

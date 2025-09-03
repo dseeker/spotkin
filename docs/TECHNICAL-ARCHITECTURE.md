@@ -437,7 +437,7 @@ const EventBus = (function() {
 
 ## Error Handling Strategy
 
-A comprehensive error handling strategy ensures application stability:
+A comprehensive error handling strategy with automated detection ensures application stability:
 
 ```javascript
 /**
@@ -506,6 +506,108 @@ const ErrorHandler = (function() {
     };
 })();
 ```
+
+### Automated Error Detection System 🆕
+
+SpotKin includes a comprehensive automated error detection system for real-time JavaScript error monitoring:
+
+```javascript
+/**
+ * Enhanced Error Manager with Automated Detection
+ * Real-time error monitoring with intelligent filtering
+ */
+class ErrorManager {
+    setupGlobalHandlers() {
+        // Filter out generic "Script error" messages
+        window.onerror = (message, source, lineno, colno, error) => {
+            if (message === 'Script error.' && source === '' && lineno === 0) {
+                console.log('🔕 Filtered generic script error (CORS/external resource)');
+                return true; // Suppress unhelpful errors
+            }
+            
+            this.handleError({
+                type: 'javascript',
+                message, source, lineno, colno,
+                error: error ? error.toString() : null,
+                timestamp: new Date().toISOString()
+            });
+        };
+
+        // Filter harmless promise rejections
+        window.addEventListener('unhandledrejection', (event) => {
+            const reason = String(event.reason || '').toLowerCase();
+            
+            if (reason.includes('puter') || 
+                reason.includes('network error') ||
+                reason.includes('load failed')) {
+                console.log('🔕 Filtered harmless promise rejection');
+                event.preventDefault();
+                return;
+            }
+            
+            this.handleError({
+                type: 'promise_rejection',
+                message: event.reason?.message || 'Unhandled Promise Rejection',
+                timestamp: new Date().toISOString()
+            });
+        });
+    }
+    
+    handleError(errorInfo) {
+        // Store for automated testing
+        if (!window.testErrors) window.testErrors = [];
+        window.testErrors.push({
+            ...errorInfo,
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            stack: errorInfo.error || new Error().stack
+        });
+        
+        // Keep manageable for memory
+        if (window.testErrors.length > 50) {
+            window.testErrors = window.testErrors.slice(0, 30);
+        }
+    }
+}
+```
+
+#### Cypress Error Detection Integration
+
+The system includes specialized Cypress commands for automated testing:
+
+```javascript
+// cypress/support/commands.js - Error Detection Commands
+Cypress.Commands.add('startConsoleErrorDetection', () => {
+    // Initialize error monitoring system
+});
+
+Cypress.Commands.add('checkForConsoleErrors', (options = {}) => {
+    // Validate no critical errors with intelligent filtering
+    const { failOnError = true, ignorePatterns = [] } = options;
+    
+    cy.window().then((win) => {
+        const errors = win.cypressConsoleErrors || [];
+        const filteredErrors = errors.filter(error => 
+            !ignorePatterns.some(pattern => 
+                pattern.test ? pattern.test(error.message) : 
+                error.message.includes(pattern)
+            )
+        );
+        
+        if (failOnError && filteredErrors.length > 0) {
+            throw new Error(`Console errors detected: ${filteredErrors.length}`);
+        }
+    });
+});
+```
+
+#### Test Suites for Error Detection
+
+Three specialized test suites provide comprehensive error validation:
+
+- **Core** (`error-detection-core.cy.js`): Basic error detection and addEventListener fixes
+- **Advanced** (`error-detection-advanced.cy.js`): Edge cases and visual diagnostics  
+- **Validation** (`error-detection-validation.cy.js`): CI/CD integration and production readiness
 
 ## Multi-Frame Analysis Implementation
 
