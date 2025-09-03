@@ -661,9 +661,9 @@ npx serve .
                 
                 // Update active category
                 document.querySelectorAll('.faq-category').forEach(cat => {
-                    cat.classList.remove('bg-indigo-50');
+                    cat.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/30');
                 });
-                categoryElement.classList.add('bg-indigo-50');
+                categoryElement.classList.add('bg-indigo-50', 'dark:bg-indigo-900/30');
             }
         });
     }
@@ -816,7 +816,7 @@ npx serve .
                 
                 <div class="flex flex-wrap gap-2 mb-6">
                     ${question.tags.map(tag => `
-                        <span class="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">${tag}</span>
+                        <span class="text-sm bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 px-3 py-1 rounded-full">${tag}</span>
                     `).join('')}
                 </div>
                 
@@ -876,20 +876,20 @@ npx serve .
 
         contentContainer.innerHTML = `
             <div class="faq-search-results">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                     Search Results for "${query}"
                 </h2>
                 
                 ${results.length > 0 ? `
                     <div class="space-y-4">
                         ${results.map(question => `
-                            <div class="faq-question-item border border-gray-200 rounded-lg p-4 hover:border-indigo-300 cursor-pointer" data-question="${question.id}">
-                                <h3 class="font-semibold text-gray-900 mb-2">${question.question}</h3>
-                                <p class="text-gray-600 text-sm mb-3">${question.answer.substring(0, 150)}...</p>
+                            <div class="faq-question-item border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:border-indigo-300 dark:hover:border-indigo-400 cursor-pointer" data-question="${question.id}">
+                                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">${question.question}</h3>
+                                <p class="text-gray-600 dark:text-gray-300 text-sm mb-3">${question.answer.substring(0, 150)}...</p>
                                 <div class="flex items-center justify-between">
                                     <div class="flex flex-wrap gap-2">
                                         ${question.tags.slice(0, 3).map(tag => `
-                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>
+                                            <span class="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">${tag}</span>
                                         `).join('')}
                                     </div>
                                     <span class="text-xs text-gray-500">${question.category}</span>
@@ -900,9 +900,9 @@ npx serve .
                 ` : `
                     <div class="text-center py-12">
                         <span class="text-6xl mb-4 block">🔍</span>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No results found</h3>
-                        <p class="text-gray-600 mb-4">Try different keywords or browse our categories.</p>
-                        <button class="faq-clear-search bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No results found</h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Try different keywords or browse our categories.</p>
+                        <button class="faq-clear-search bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white px-4 py-2 rounded">
                             Clear Search
                         </button>
                     </div>

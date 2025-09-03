@@ -59,11 +59,10 @@ it('should not have errors during interaction', () => {
 
 ### 3. Test Suites
 
-**Created Test Files:**
-- `cypress/e2e/console-error-detection.cy.js` - Comprehensive error detection tests
-- `cypress/e2e/error-detection-integration.cy.js` - Integration with existing tests
-- `cypress/e2e/error-detection-final.cy.js` - Production-ready error checks
-- `cypress/e2e/quick-error-check.cy.js` - Quick diagnostic tool
+**Consolidated Test Files:**
+- `cypress/e2e/error-detection-core.cy.js` - Core error detection functionality and basic tests
+- `cypress/e2e/error-detection-advanced.cy.js` - Advanced diagnostics, edge cases, and visual reporting
+- `cypress/e2e/error-detection-validation.cy.js` - Final validation, CI/CD integration, and production readiness
 
 ## Fixed Issues
 
@@ -183,13 +182,15 @@ it('should work with existing commands', () => {
 
 ```bash
 # Run all error detection tests
-npm run cypress:run -- --spec "cypress/e2e/*error*.cy.js"
+npm run cypress:run -- --spec "cypress/e2e/error-detection*.cy.js"
 
-# Run specific test suite
-npm run cypress:run -- --spec "cypress/e2e/error-detection-final.cy.js"
+# Run specific test suites
+npm run cypress:run -- --spec "cypress/e2e/error-detection-core.cy.js"        # Basic functionality
+npm run cypress:run -- --spec "cypress/e2e/error-detection-advanced.cy.js"   # Advanced diagnostics  
+npm run cypress:run -- --spec "cypress/e2e/error-detection-validation.cy.js" # CI/CD validation
 
-# Quick error check
-npm run cypress:run -- --spec "cypress/e2e/quick-error-check.cy.js"
+# Quick core test
+npm run cypress:run -- --spec "cypress/e2e/error-detection-core.cy.js"
 ```
 
 ## Future Enhancements

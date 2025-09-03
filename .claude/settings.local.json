@@ -42,7 +42,11 @@
       "Bash(npm run build:*)",
       "Bash(npm run:*)",
       "Bash(start http://localhost:3000/test-manual-setup.html)",
-      "Bash(del \"D:\\Dados\\Code\\spotkin\\test-manual-setup.html\")"
+      "Bash(del \"D:\\Dados\\Code\\spotkin\\test-manual-setup.html\")",
+      "Bash(start http://localhost:3000)",
+      "Bash(TASKKILL /f /im node.exe)",
+      "Read(D:\\/**)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }
