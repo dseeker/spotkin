@@ -1086,6 +1086,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide the camera feedback to reveal the video feed
             cameraFeedback.style.display = 'none';
 
+            // Show camera controls when camera is active
+            const cameraControls = document.getElementById('camera-controls');
+            if (cameraControls) {
+                cameraControls.classList.remove('hidden');
+            }
+
             // Reset error count on successful camera init
             errorManager.resetErrorCount();
 
@@ -1146,15 +1152,34 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show the camera feedback and display error message
             cameraFeedback.style.display = 'flex';
             cameraFeedback.innerHTML = `
-                <div class="bg-red-50 text-red-900 px-3 py-1 rounded-full text-sm">
-                    <i class="fas fa-exclamation-circle mr-1"></i>
-                    <div class="font-medium">${userMessage}</div>
-                    <div class="text-xs mt-1">
-                        <strong>Try:</strong> ${recoveryActions.join(' • ')}
+                <div class="text-center max-w-md mx-auto p-6">
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-lg">
+                        <div class="flex flex-col items-center space-y-4">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                            </div>
+                            <div class="text-center">
+                                <h3 class="text-lg font-semibold text-red-900 mb-2">Camera Access Issue</h3>
+                                <p class="text-red-800 mb-4">${userMessage.replace('Camera error: ', '')}</p>
+                            </div>
+                            <div class="w-full">
+                                <h4 class="text-sm font-medium text-red-900 mb-2">
+                                    <i class="fas fa-lightbulb mr-1"></i>Quick Fixes:
+                                </h4>
+                                <ul class="text-sm text-red-800 space-y-1 text-left">
+                                    ${recoveryActions.map(action => `<li class="flex items-start"><i class="fas fa-arrow-right text-red-600 mr-2 mt-0.5 text-xs"></i>${action}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="flex space-x-3 pt-2">
+                                <button onclick="initCamera()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center">
+                                    <i class="fas fa-redo mr-2"></i>Try Again
+                                </button>
+                                <button onclick="location.reload()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center">
+                                    <i class="fas fa-refresh mr-2"></i>Refresh Page
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="initCamera()" class="text-xs bg-red-200 hover:bg-red-300 px-2 py-1 rounded mt-1">
-                        Retry
-                    </button>
                 </div>
             `;
         }
@@ -1221,6 +1246,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop monitoring if it's active
         if (isMonitoring) {
             stopMonitoring();
+        }
+
+        // Hide camera controls when camera is closed
+        const cameraControls = document.getElementById('camera-controls');
+        if (cameraControls) {
+            cameraControls.classList.add('hidden');
         }
 
         // Show the camera feedback overlay with start button
