@@ -801,9 +801,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize PWA capabilities
     initPWACapabilities();
-    
-    // Initialize the camera and check for Puter AI availability
-    initCamera();
+
+    // Check for Puter AI availability (camera will be initialized when user clicks start button)
     checkPuterAIAvailability().catch(error => {
         console.error('Error during Puter AI availability check:', error);
     });
@@ -813,6 +812,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Setting up event listeners...'); // Added log
     takeSnapshotBtn.addEventListener('click', takeSnapshot);
     toggleCameraBtn.addEventListener('click', toggleCamera);
+
+    // Start camera button event listener
+    const startCameraBtn = document.getElementById('start-camera-btn');
+    if (startCameraBtn) {
+        startCameraBtn.addEventListener('click', startCamera);
+    }
     // Event listeners updated to remove upload image functionality
 
     // Monitoring event listeners
@@ -1020,37 +1025,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Performance optimization: Load Daily Summary module dynamically
-    async function loadDailySummary() {
-        try {
-            if (window.moduleLoader && false) { // Temporarily disabled for compatibility
-                return await window.moduleLoader.loadDailySummaryModule();
-            } else {
-                console.log('Using optimized fallback daily summary');
-                const fallback = createFallbackDailySummary();
-                if (!fallback) {
-                    throw new Error('Failed to create fallback daily summary');
-                }
-                return fallback;
-            }
-        } catch (error) {
-            console.error('Failed to load Daily Summary module:', error);
-            console.log('Creating emergency fallback daily summary...');
-            try {
-                return createFallbackDailySummary();
-            } catch (fallbackError) {
-                console.error('Even fallback creation failed:', fallbackError);
-                // Return absolute minimal fallback
-                return {
-                    generateDailySummary: async () => ({ summary: 'Unavailable', fallback: true }),
-                    aggregateDailyData: () => ({ hasData: false, totalEvents: 0 }),
-                    clearCache: () => {},
-                    getCachedSummary: () => null
-                };
-            }
-        }
-    }
-
     // Fallback Advanced AI implementation when module loading fails
     function createFallbackAdvancedAI() {
         return {
@@ -1071,38 +1045,6 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             getSensitivityMultiplier: () => 1.0,
             getMovementThreshold: () => 1000
-        };
-    }
-
-    // Fallback Daily Summary implementation when module loading fails
-    function createFallbackDailySummary() {
-        return {
-            generateDailySummary: async (targetDate = new Date()) => {
-                return {
-                    summary: 'Daily summary temporarily unavailable. Core monitoring functionality continues to work normally.',
-                    highlights: ['System operational'],
-                    insights: ['All core features available'],
-                    mood: 'neutral',
-                    fallback: true,
-                    date: targetDate.toISOString().split('T')[0]
-                };
-            },
-            aggregateDailyData: (targetDate = new Date()) => {
-                // Simple fallback - check if there's any history data for today
-                if (typeof historyData !== 'undefined' && historyData && historyData.length > 0) {
-                    const today = targetDate.toISOString().split('T')[0];
-                    const todayEvents = historyData.filter(entry => {
-                        return entry.timestamp && entry.timestamp.startsWith(today);
-                    });
-                    return {
-                        hasData: todayEvents.length > 0,
-                        totalEvents: todayEvents.length
-                    };
-                }
-                return { hasData: false, totalEvents: 0 };
-            },
-            getCachedSummary: () => null,
-            clearCache: () => {}
         };
     }
 
@@ -6113,6 +6055,70 @@ async function showDailySummary(targetDate = new Date()) {
             </div>
         `;
     }
+}
+
+
+// Performance optimization: Load Daily Summary module dynamically
+async function loadDailySummary() {
+    try {
+        if (window.moduleLoader && false) { // Temporarily disabled for compatibility
+            return await window.moduleLoader.loadDailySummaryModule();
+        } else {
+            console.log('Using optimized fallback daily summary');
+            const fallback = createFallbackDailySummary();
+            if (!fallback) {
+                throw new Error('Failed to create fallback daily summary');
+            }
+            return fallback;
+        }
+    } catch (error) {
+        console.error('Failed to load Daily Summary module:', error);
+        console.log('Creating emergency fallback daily summary...');
+        try {
+            return createFallbackDailySummary();
+        } catch (fallbackError) {
+            console.error('Even fallback creation failed:', fallbackError);
+            // Return absolute minimal fallback
+            return {
+                generateDailySummary: async () => ({ summary: 'Unavailable', fallback: true }),
+                aggregateDailyData: () => ({ hasData: false, totalEvents: 0 }),
+                clearCache: () => {},
+                getCachedSummary: () => null
+            };
+        }
+    }
+}
+
+// Fallback Daily Summary implementation when module loading fails
+function createFallbackDailySummary() {
+    return {
+        generateDailySummary: async (targetDate = new Date()) => {
+            return {
+                summary: 'Daily summary temporarily unavailable. Core monitoring functionality continues to work normally.',
+                highlights: ['System operational'],
+                insights: ['All core features available'],
+                mood: 'neutral',
+                fallback: true,
+                date: targetDate.toISOString().split('T')[0]
+            };
+        },
+        aggregateDailyData: (targetDate = new Date()) => {
+            // Simple fallback - check if there's any history data for today
+            if (typeof historyData !== 'undefined' && historyData && historyData.length > 0) {
+                const today = targetDate.toISOString().split('T')[0];
+                const todayEvents = historyData.filter(entry => {
+                    return entry.timestamp && entry.timestamp.startsWith(today);
+                });
+                return {
+                    hasData: todayEvents.length > 0,
+                    totalEvents: todayEvents.length
+                };
+            }
+            return { hasData: false, totalEvents: 0 };
+        },
+        getCachedSummary: () => null,
+        clearCache: () => {}
+    };
 }
 
 // Auto-generate daily summary when app loads (if there's data from today)
