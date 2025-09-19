@@ -818,6 +818,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (startCameraBtn) {
         startCameraBtn.addEventListener('click', startCamera);
     }
+
+    // Close camera button event listener
+    const closeCameraBtn = document.getElementById('close-camera');
+    if (closeCameraBtn) {
+        closeCameraBtn.addEventListener('click', closeCamera);
+    }
     // Event listeners updated to remove upload image functionality
 
     // Monitoring event listeners
@@ -1195,6 +1201,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize the camera
         initCamera();
+    }
+
+    // Close camera and stop the stream
+    function closeCamera() {
+        console.log('Closing camera...');
+
+        // Stop the current stream if it exists
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+
+        // Clear the video source
+        if (video) {
+            video.srcObject = null;
+        }
+
+        // Stop monitoring if it's active
+        if (isMonitoring) {
+            stopMonitoring();
+        }
+
+        // Show the camera feedback overlay with start button
+        cameraFeedback.style.display = 'flex';
+        cameraFeedback.innerHTML = `
+            <div class="text-center text-gray-400">
+                <div class="relative mb-4">
+                    <i class="fas fa-camera text-6xl opacity-50"></i>
+                </div>
+                <p class="text-lg font-medium mb-4">Ready to Monitor</p>
+                <p class="text-sm opacity-75 mb-6">Click the button below to start your camera</p>
+                <button id="start-camera-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center mx-auto">
+                    <i class="fas fa-video mr-2"></i>Start Camera
+                </button>
+            </div>
+        `;
+
+        // Re-attach the start camera button event listener
+        const newStartCameraBtn = document.getElementById('start-camera-btn');
+        if (newStartCameraBtn) {
+            newStartCameraBtn.addEventListener('click', startCamera);
+        }
     }
 
     // ENHANCED PERFORMANCE OPTIMIZATION: Advanced image compression with WebP support

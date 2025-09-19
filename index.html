@@ -18,9 +18,8 @@
     <meta name="theme-color" content="#4f46e5">
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://js.puter.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://api.puter.com https://puter.com; font-src 'self' https://cdnjs.cloudflare.com; media-src 'self' blob:; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://js.puter.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://api.puter.com https://puter.com wss://api.puter.com; font-src 'self' https://cdnjs.cloudflare.com; media-src 'self' blob:; worker-src 'self'; form-action 'self'; base-uri 'self'">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     
@@ -254,6 +253,9 @@
                         </div>
                         
                         <div id="camera-controls" class="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col space-y-2">
+                            <button id="close-camera" class="bg-red-600 text-white p-3 sm:p-3 rounded-full shadow-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 w-12 h-12 sm:w-auto sm:h-auto flex items-center justify-center" title="Close Camera">
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
                             <button id="voice-alerts-toggle" class="bg-green-600 text-white p-3 sm:p-3 rounded-full shadow-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 w-12 h-12 sm:w-auto sm:h-auto flex items-center justify-center" title="Toggle Voice Alerts">
                                 <i class="fas fa-volume-up text-sm"></i>
                             </button>
