@@ -1229,6 +1229,32 @@ document.addEventListener('DOMContentLoaded', function() {
         initCamera();
     }
 
+    // Show camera ready state (display start button)
+    function showCameraReadyState() {
+        console.log('Showing camera ready state');
+        cameraFeedback.style.display = 'flex';
+        // The HTML already contains the start button, so we just need to make sure it's visible
+    }
+
+    // Start camera when user clicks the start button
+    function startCamera() {
+        console.log('Starting camera initialization...');
+
+        // Show loading state
+        cameraFeedback.innerHTML = `
+            <div class="text-center text-gray-400">
+                <div class="relative mb-4">
+                    <i class="fas fa-camera text-6xl opacity-50 animate-pulse"></i>
+                </div>
+                <p class="text-lg font-medium">Initializing Camera...</p>
+                <p class="text-sm opacity-75">Please allow camera access when prompted</p>
+            </div>
+        `;
+
+        // Initialize the camera
+        initCamera();
+    }
+
     // ENHANCED PERFORMANCE OPTIMIZATION: Advanced image compression with WebP support
     function compressImageForAI(sourceCanvas, options = {}) {
         try {
