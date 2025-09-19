@@ -614,8 +614,12 @@ class OnboardingSystem {
     testCamera() {
         console.log('Testing camera for onboarding');
         // This would integrate with the existing camera system
-        if (window.initCamera) {
-            window.initCamera();
+        // Note: Camera initialization is now manual - user must click "Start Camera" button
+        console.log('Camera test: User must click "Start Camera" button to initialize camera');
+        // Show a message to user about manual camera start
+        const preview = document.getElementById('wizard-camera-preview');
+        if (preview) {
+            preview.innerHTML = '<div class="text-blue-600"><i class="fas fa-info-circle text-4xl mb-2"></i><p>Click "Start Camera" in the main view to test camera access</p></div>';
         }
     }
 
