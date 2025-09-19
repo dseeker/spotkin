@@ -1988,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Adding history entry to timeline:', entry); // Added log
             // Create timeline item
             const timelineItem = document.createElement('div');
-            timelineItem.className = 'timeline-item p-3 bg-white rounded-md shadow-sm mb-3';
+            timelineItem.className = 'timeline-item p-3 bg-gray-800 rounded-md shadow-sm mb-3';
 
             // Format the timestamp
             const timestamp = new Date(entry.timestamp);
@@ -2018,12 +2018,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (entry.hasPetsOrBabies && entry.objects.length > 0) {
                 objectsContent = `
                     <div class="mt-2">
-                        <h5 class="text-sm font-medium text-gray-700">Detected:</h5>
-                        <ul class="mt-1 text-sm text-gray-600">
+                        <h5 class="text-sm font-medium text-gray-300">Detected:</h5>
+                        <ul class="mt-1 text-sm text-gray-400">
                             ${entry.objects.map(obj => `
                                 <li class="flex justify-between">
                                     <span>${obj.type} - ${obj.state}</span>
-                                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100">${Math.round((obj.confidence || 0.0) * 100)}%</span>
+                                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">${Math.round((obj.confidence || 0.0) * 100)}%</span>
                                 </li>
                             `).join('')}
                         </ul>
@@ -2031,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 objectsContent = `
-                    <div class="mt-2 text-sm text-gray-600">
+                    <div class="mt-2 text-sm text-gray-400">
                         <p>No pets or babies detected in this scene.</p>
                     </div>
                 `;
@@ -2043,21 +2043,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="flex gap-3 items-start">
                         <!-- Thumbnail section (20%) -->
                         <div class="w-1/5 flex-shrink-0">
-                            <img src="${entry.thumbnail}" 
-                                 alt="Scene thumbnail" 
-                                 class="w-full aspect-square object-cover rounded-lg border-2 border-gray-200 shadow-sm"
+                            <img src="${entry.thumbnail}"
+                                 alt="Scene thumbnail"
+                                 class="w-full aspect-square object-cover rounded-lg border-2 border-gray-600 shadow-sm"
                                  loading="lazy">
                         </div>
                         
                         <!-- Content section (80%) -->
                         <div class="w-4/5">
                             <div class="flex justify-between items-start mb-2">
-                                <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
+                                <h4 class="text-sm font-bold text-gray-200">${timeString}</h4>
                                 <span class="${alertClass} text-xs">
                                     <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
                                 </span>
                             </div>
-                            <p class="text-sm text-gray-600">${entry.scene}</p>
+                            <p class="text-sm text-gray-400">${entry.scene}</p>
                             ${objectsContent}
                         </div>
                     </div>
@@ -2066,12 +2066,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Fallback layout without thumbnail (full width text)
                 timelineItem.innerHTML = `
                     <div class="flex justify-between items-start">
-                        <h4 class="text-sm font-bold text-gray-800">${timeString}</h4>
+                        <h4 class="text-sm font-bold text-gray-200">${timeString}</h4>
                         <span class="${alertClass} text-xs">
                             <i class="fas ${alertIcon} mr-1"></i>${entry.alert.type}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-600 mt-1">${entry.scene}</p>
+                    <p class="text-sm text-gray-400 mt-1">${entry.scene}</p>
                     ${objectsContent}
                 `;
             }
