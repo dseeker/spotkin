@@ -47,9 +47,14 @@ class SpotKinSecurity {
                 return this.generateFallbackKey();
             }
 
-            const keyMaterial = seed ? 
-                new TextEncoder().encode(seed) : 
-                window.crypto.getRandomValues(new Uint8Array(32));
+            let keyMaterial;
+            if (seed) {
+                const encoder = new TextEncoder();
+                const seedBuffer = encoder.encode(seed);
+                keyMaterial = await window.crypto.subtle.digest('SHA-256', seedBuffer);
+            } else {
+                keyMaterial = window.crypto.getRandomValues(new Uint8Array(32));
+            }
             
             const key = await window.crypto.subtle.importKey(
                 'raw',
