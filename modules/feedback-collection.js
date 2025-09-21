@@ -626,20 +626,126 @@ class FeedbackCollectionSystem {
         };
     }
 
-    // Send feedback (placeholder for actual implementation)
+    // Send feedback via email to support@endemicmedia.com
     async sendFeedback(feedbackData) {
-        // In a real implementation, this would send to your feedback API
         console.log('📝 Feedback submitted:', feedbackData);
-        
-        // Store locally for now
-        this.storeFeedbackLocally(feedbackData);
-        
-        // Simulate API call
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({ success: true, id: 'feedback_' + Date.now() });
-            }, 1000);
+
+        try {
+            // Store locally for backup
+            this.storeFeedbackLocally(feedbackData);
+
+            // Send via email
+            await this.sendFeedbackEmail(feedbackData);
+
+            return { success: true, id: 'feedback_' + Date.now() };
+        } catch (error) {
+            console.error('Failed to send feedback email:', error);
+
+            // Try alternative form submission service
+            try {
+                await this.submitToFormService(feedbackData);
+                return { success: true, id: 'feedback_' + Date.now() + '_form' };
+            } catch (formError) {
+                console.error('Form service also failed:', formError);
+                throw new Error('Unable to send feedback. Please try again later.');
+            }
+        }
+    }
+
+    // Send feedback email using mailto
+    async sendFeedbackEmail(feedbackData) {
+        const emailSubject = `SpotKin Feedback: ${feedbackData.type || 'General'} ${feedbackData.rating ? '(★' + feedbackData.rating + ')' : ''}`;
+
+        const emailBody = `
+New SpotKin Feedback Received
+================================
+
+Type: ${this.feedbackTypes[feedbackData.type]?.title || feedbackData.type}
+Rating: ${feedbackData.rating ? '★'.repeat(feedbackData.rating) + ' (' + feedbackData.rating + '/5)' : 'Not provided'}
+
+Description:
+${feedbackData.description || 'No description provided'}
+
+Additional Details:
+${Object.entries(feedbackData).filter(([key, value]) =>
+    !['type', 'description', 'email', 'metadata', 'sessionContext'].includes(key) && value
+).map(([key, value]) => `${key}: ${value}`).join('\n') || 'None'}
+
+User Information:
+Email: ${feedbackData.email || 'Not provided (anonymous)'}
+Timestamp: ${feedbackData.metadata?.timestamp || 'Unknown'}
+Page: ${feedbackData.metadata?.url || 'Unknown'}
+User Agent: ${feedbackData.metadata?.userAgent || 'Unknown'}
+
+Session Context:
+${feedbackData.sessionContext ? `
+- Session Duration: ${Math.round(feedbackData.sessionContext.sessionDuration / 1000)} seconds
+- Actions Count: ${feedbackData.sessionContext.actionsCount}
+- Errors Count: ${feedbackData.sessionContext.errorsCount}
+- Viewport: ${feedbackData.sessionContext.viewport?.width}x${feedbackData.sessionContext.viewport?.height}
+` : 'Session context not included'}
+
+================================
+
+This feedback was submitted through the SpotKin feedback system.
+${feedbackData.email ? 'You can reply directly to the user\'s email address.' : 'This is anonymous feedback - no reply address available.'}
+        `.trim();
+
+        // Create mailto link and attempt to open
+        const mailtoLink = `mailto:support@endemicmedia.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+        // Try to open email client
+        const link = document.createElement('a');
+        link.href = mailtoLink;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Wait a moment to see if email client opens
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Alternative form submission service
+    async submitToFormService(feedbackData) {
+        const formData = new FormData();
+        formData.append('_to', 'support@endemicmedia.com');
+        formData.append('_subject', `SpotKin Feedback: ${feedbackData.type || 'General'}`);
+        formData.append('_captcha', 'false');
+        formData.append('_template', 'basic');
+        formData.append('_next', window.location.href);
+
+        // Add feedback data
+        formData.append('feedback_type', feedbackData.type || 'general');
+        formData.append('rating', feedbackData.rating || 'Not provided');
+        formData.append('description', feedbackData.description || 'No description');
+        formData.append('email', feedbackData.email || 'Anonymous');
+        formData.append('timestamp', feedbackData.metadata?.timestamp || new Date().toISOString());
+        formData.append('url', feedbackData.metadata?.url || window.location.href);
+        formData.append('user_agent', feedbackData.metadata?.userAgent || navigator.userAgent);
+
+        // Add additional fields if present
+        Object.entries(feedbackData).forEach(([key, value]) => {
+            if (!['type', 'description', 'email', 'metadata', 'sessionContext'].includes(key) && value) {
+                formData.append(`additional_${key}`, value);
+            }
         });
+
+        const response = await fetch('https://formsubmit.co/ajax/support@endemicmedia.com', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Form service responded with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success !== 'true') {
+            throw new Error('Form service reported failure');
+        }
+
+        return result;
     }
 
     // Store feedback locally until it can be sent

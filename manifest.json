@@ -1,7 +1,7 @@
 {
-  "name": "SpotKin - AI Pet & Baby Monitor",
+  "name": "SpotKin - Instant Pet & Baby Monitor (No Download)",
   "short_name": "SpotKin",
-  "description": "AI-powered monitoring application for pets and babies with advanced scene analysis and safety alerts",
+  "description": "Instant browser-based monitoring for pets and babies. No download needed! Open your browser, point camera, get voice alerts. Perfect for pet-sitting, babysitting, quick errands. AI-powered monitoring with privacy-first design.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -10,9 +10,34 @@
   "scope": "./",
   "lang": "en",
   "categories": [
-    "productivity",
+    "lifestyle",
     "utilities",
-    "lifestyle"
+    "productivity",
+    "health",
+    "family"
+  ],
+  "keywords": [
+    "pet monitor",
+    "baby monitor",
+    "baby cam",
+    "pet cam",
+    "voice alerts",
+    "pet sitting",
+    "babysitting",
+    "no download",
+    "instant access",
+    "browser based",
+    "AI monitoring",
+    "temporary monitoring",
+    "privacy first",
+    "PWA",
+    "web app",
+    "surveillance",
+    "pet care",
+    "childcare",
+    "monitoring camera",
+    "pet watch",
+    "baby watch"
   ],
   "screenshots": [
     {
@@ -20,14 +45,14 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "SpotKin mobile interface showing camera view and analysis results"
+      "label": "Open SpotKin instantly - no download needed! Pet monitoring in 30 seconds"
     },
     {
       "src": "./images/screenshot-desktop.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "SpotKin desktop interface with monitoring zones and history"
+      "label": "AI-powered monitoring with voice alerts - perfect for pet-sitting and babysitting"
     }
   ],
   "icons": [
@@ -96,5 +121,60 @@
     "microphone": "Optional for voice alerts",
     "notifications": "Optional for critical alerts",
     "background-sync": "For offline data management"
+  },
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "app": {
+    "background": {
+      "scripts": ["service-worker.js"]
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Start Pet Monitoring",
+      "short_name": "Pet Monitor",
+      "description": "Instantly start monitoring your pet",
+      "url": "./?mode=pet",
+      "icons": [
+        {
+          "src": "images/shortcut-pet-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Start Baby Monitoring",
+      "short_name": "Baby Monitor",
+      "description": "Instantly start monitoring your baby",
+      "url": "./?mode=baby",
+      "icons": [
+        {
+          "src": "images/shortcut-baby-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Voice Alerts Guide",
+      "short_name": "Voice Setup",
+      "description": "Setup voice alerts tutorial",
+      "url": "./voice-alerts-guide.md",
+      "icons": [
+        {
+          "src": "images/shortcut-voice-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./share",
+    "method": "POST",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
   }
 }

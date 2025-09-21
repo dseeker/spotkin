@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotKin PWA Installation Guide - Install in 30 Seconds</title>
+    <meta name="description" content="Transform your browser into a powerful monitoring app in seconds! Complete guide to installing SpotKin PWA on any device.">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white text-center py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">SpotKin PWA Installation Guide</h1>
+            <p class="text-lg opacity-90">Transform your browser into a powerful monitoring app in 30 seconds!</p>
+            <a href="index.html" class="inline-block mt-3 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                ← Back to SpotKin
+            </a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+
+        <!-- Quick Start Section -->
+        <div class="bg-green-800 rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center">
+                🚀 Quick Start (30 seconds)
+            </h2>
+            <ol class="space-y-3 text-lg">
+                <li class="flex items-start">
+                    <span class="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">1</span>
+                    <span><strong>Open SpotKin</strong> in your browser: <a href="index.html" class="text-green-300 underline">Launch App</a></span>
+                </li>
+                <li class="flex items-start">
+                    <span class="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">2</span>
+                    <span><strong>Look for the install prompt</strong> - most browsers will show an "Install" or "Add to Home Screen" option</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">3</span>
+                    <span><strong>Click Install</strong> - SpotKin will be added to your device like a native app</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">4</span>
+                    <span><strong>Grant permissions</strong> when prompted for camera and microphone access</span>
+                </li>
+            </ol>
+            <p class="mt-4 text-xl text-center font-semibold text-green-200">That's it! SpotKin is now installed and ready to monitor.</p>
+        </div>
+
+        <!-- Device-Specific Installation -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                📱 Device-Specific Installation
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Android -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 text-green-400">Android (Chrome, Edge, Samsung Internet)</h3>
+                    <ol class="space-y-2 text-sm">
+                        <li>1. <strong>Open SpotKin</strong> in your browser</li>
+                        <li>2. <strong>Tap the menu (⋮)</strong> in the top-right corner</li>
+                        <li>3. <strong>Select "Add to Home screen"</strong> or "Install app"</li>
+                        <li>4. <strong>Tap "Add"</strong> when prompted</li>
+                        <li>5. <strong>Find SpotKin</strong> on your home screen - it now works like a native app!</li>
+                    </ol>
+                    <p class="mt-3 text-xs text-gray-400"><strong>Alternative:</strong> Look for the install banner at the bottom of your screen and tap "Install".</p>
+                </div>
+
+                <!-- iPhone/iPad -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 text-blue-400">iPhone/iPad (Safari)</h3>
+                    <ol class="space-y-2 text-sm">
+                        <li>1. <strong>Open SpotKin</strong> in Safari browser</li>
+                        <li>2. <strong>Tap the Share button</strong> (square with arrow pointing up)</li>
+                        <li>3. <strong>Scroll down</strong> and tap <strong>"Add to Home Screen"</strong></li>
+                        <li>4. <strong>Edit the name</strong> if desired (default: "SpotKin")</li>
+                        <li>5. <strong>Tap "Add"</strong> - SpotKin appears on your home screen</li>
+                    </ol>
+                    <p class="mt-3 text-xs text-gray-400"><strong>Note:</strong> Safari is the only iOS browser that fully supports PWA installation.</p>
+                </div>
+
+                <!-- Windows -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">Windows 10/11 (Chrome, Edge)</h3>
+                    <ol class="space-y-2 text-sm">
+                        <li>1. <strong>Open SpotKin</strong> in your browser</li>
+                        <li>2. <strong>Look for the install icon</strong> (⊕) in the address bar</li>
+                        <li>3. <strong>Click the install icon</strong> or use menu → "Install SpotKin"</li>
+                        <li>4. <strong>Click "Install"</strong> in the popup</li>
+                        <li>5. <strong>Launch from Start Menu</strong> or desktop shortcut</li>
+                    </ol>
+                </div>
+
+                <!-- macOS -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 text-yellow-400">macOS (Chrome, Safari, Edge)</h3>
+                    <ol class="space-y-2 text-sm">
+                        <li>1. <strong>Open SpotKin</strong> in your browser</li>
+                        <li>2. <strong>Chrome/Edge:</strong> Click install icon in address bar or menu → "Install SpotKin"</li>
+                        <li>3. <strong>Safari:</strong> File menu → "Add to Dock"</li>
+                        <li>4. <strong>Launch from Applications</strong> folder or Dock</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- Browser Compatibility -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-6">🔧 Browser Compatibility Check</h2>
+            <p class="mb-4 text-gray-300">SpotKin works best with modern browsers that support PWA features:</p>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-green-800 rounded-lg p-4">
+                    <h4 class="font-bold text-green-300 mb-2">✅ Fully Compatible</h4>
+                    <ul class="text-sm space-y-1">
+                        <li>Chrome 67+</li>
+                        <li>Edge 79+</li>
+                        <li>Safari 14.7+</li>
+                        <li>Samsung Internet 7.2+</li>
+                    </ul>
+                </div>
+
+                <div class="bg-yellow-800 rounded-lg p-4">
+                    <h4 class="font-bold text-yellow-300 mb-2">⚠️ Partially Compatible</h4>
+                    <ul class="text-sm space-y-1">
+                        <li>Firefox 44+ (Limited PWA)</li>
+                        <li>Opera 55+</li>
+                    </ul>
+                </div>
+
+                <div class="bg-red-800 rounded-lg p-4">
+                    <h4 class="font-bold text-red-300 mb-2">❌ Not Compatible</h4>
+                    <ul class="text-sm space-y-1">
+                        <li>Internet Explorer</li>
+                        <li>Chrome < 67</li>
+                        <li>Safari < 14.7</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Permissions Setup -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-6">🔐 Permission Setup</h2>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-bold text-red-400 mb-3">Camera Access (Required)</h4>
+                    <p class="text-sm mb-2">SpotKin needs camera access to monitor your space:</p>
+                    <ul class="text-xs space-y-1 text-gray-300">
+                        <li>• Allow camera when prompted during setup</li>
+                        <li>• If blocked: Click camera icon in address bar</li>
+                        <li>• Browser settings → Privacy → Camera → Allow</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-bold text-blue-400 mb-3">Microphone (For Voice Alerts)</h4>
+                    <p class="text-sm mb-2">Enable microphone for voice alert functionality:</p>
+                    <ul class="text-xs space-y-1 text-gray-300">
+                        <li>• Allow microphone when prompted</li>
+                        <li>• Test voice alerts in app settings</li>
+                        <li>• Browser settings → Privacy → Microphone</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-bold text-green-400 mb-3">Notifications (Recommended)</h4>
+                    <p class="text-sm mb-2">Get instant alerts in the background:</p>
+                    <ul class="text-xs space-y-1 text-gray-300">
+                        <li>• Allow notifications when prompted</li>
+                        <li>• Test notifications from app settings</li>
+                        <li>• Browser settings → Privacy → Notifications</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-6">🛠️ Troubleshooting Common Issues</h2>
+
+            <div class="space-y-4">
+                <details class="bg-gray-800 rounded-lg p-4">
+                    <summary class="cursor-pointer font-semibold text-yellow-400">"Install" Option Not Showing</summary>
+                    <div class="mt-3 text-sm space-y-2">
+                        <p><strong>Possible causes:</strong> Browser doesn't support PWAs, app already installed, not using HTTPS</p>
+                        <p><strong>Solutions:</strong></p>
+                        <ul class="list-disc ml-4 space-y-1">
+                            <li>Update your browser to latest version</li>
+                            <li>Try different browser (Chrome/Edge recommended)</li>
+                            <li>Clear browser cache and reload SpotKin</li>
+                            <li>Check URL - must be https://dseeker.github.io/spotkin/</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="bg-gray-800 rounded-lg p-4">
+                    <summary class="cursor-pointer font-semibold text-red-400">Camera Not Working</summary>
+                    <div class="mt-3 text-sm space-y-2">
+                        <p><strong>Common fixes:</strong></p>
+                        <ul class="list-disc ml-4 space-y-1">
+                            <li>Check permissions - look for camera icon in address bar</li>
+                            <li>Close other apps using camera (Zoom, Skype, etc.)</li>
+                            <li>Restart browser and try again</li>
+                            <li>Try different browser or device</li>
+                            <li>Check camera hardware - test with other apps</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="bg-gray-800 rounded-lg p-4">
+                    <summary class="cursor-pointer font-semibold text-blue-400">Voice Alerts Not Working</summary>
+                    <div class="mt-3 text-sm space-y-2">
+                        <p><strong>Troubleshooting steps:</strong></p>
+                        <ul class="list-disc ml-4 space-y-1">
+                            <li>Check microphone permissions in browser settings</li>
+                            <li>Test volume levels - increase device volume</li>
+                            <li>Try different voice in app settings</li>
+                            <li>Check browser compatibility - some have limited TTS support</li>
+                            <li>Test with headphones to rule out speaker issues</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-8 text-center">
+            <h2 class="text-2xl font-bold mb-4">🚀 Ready to Start Monitoring?</h2>
+            <p class="text-lg mb-6">No downloads. No accounts. No fuss. Just instant monitoring.</p>
+            <a href="index.html" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors inline-block">
+                Open SpotKin Now →
+            </a>
+            <p class="mt-4 text-sm opacity-75">Perfect for: Pet sitting, babysitting, quick errands, temporary monitoring needs</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-gray-400 text-sm">
+            <p>Questions? Check our <a href="index.html#help" class="text-blue-400 underline">FAQ</a> or contact support.</p>
+        </div>
+    </div>
+</body>
+</html>
