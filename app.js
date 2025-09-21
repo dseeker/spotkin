@@ -4344,7 +4344,7 @@ function testNotification() {
 class SetupWizard {
     constructor() {
         this.currentStep = 1;
-        this.totalSteps = 4;
+        this.totalSteps = 5;
         this.setupData = {
             monitorType: null,
             cameraPosition: null,
@@ -4439,22 +4439,30 @@ class SetupWizard {
     validateCurrentStep() {
         switch (this.currentStep) {
             case 1:
+                // Validate disclaimer agreement
+                const disclaimerCheckbox = document.getElementById('disclaimer-agreement');
+                if (!disclaimerCheckbox || !disclaimerCheckbox.checked) {
+                    this.showValidationError('Please read and accept the safety disclaimer to continue');
+                    return false;
+                }
+                break;
+            case 2:
                 if (!this.setupData.monitorType) {
                     this.showValidationError('Please select a monitoring type');
                     return false;
                 }
                 break;
-            case 2:
+            case 3:
                 // Camera setup is optional, just show warning if skipped
                 if (!this.setupData.cameraPosition) {
                     const proceed = confirm('Camera preview not set up. You can set this up later. Continue?');
                     return proceed;
                 }
                 break;
-            case 3:
+            case 4:
                 // Zones are optional
                 return true;
-            case 4:
+            case 5:
                 // Preferences have defaults
                 return true;
         }

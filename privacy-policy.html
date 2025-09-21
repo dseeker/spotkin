@@ -44,8 +44,8 @@
             <h1 class="text-3xl font-bold text-gray-800 mb-6">Privacy Policy</h1>
             
             <div class="text-sm text-gray-600 mb-8 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                <p><strong>Last Updated:</strong> December 2024</p>
-                <p><strong>Effective Date:</strong> December 2024</p>
+                <p><strong>Last Updated:</strong> January 2025</p>
+                <p><strong>Effective Date:</strong> January 2025</p>
             </div>
 
             <div class="prose max-w-none">
@@ -70,7 +70,7 @@
                     <h3 class="text-xl font-medium text-gray-800 mb-3">2.1 Camera and Visual Data</h3>
                     <ul class="list-disc list-inside text-gray-700 mb-4 space-y-2">
                         <li><strong>Camera Access:</strong> We access your device's camera only when you explicitly grant permission and activate monitoring</li>
-                        <li><strong>Image Processing:</strong> Images are processed locally on your device for AI analysis</li>
+                        <li><strong>Image Processing:</strong> Images are sent to secure AI services (Puter.js) for analysis when monitoring is active</li>
                         <li><strong>No Image Storage:</strong> We do not store, upload, or retain camera images or video footage</li>
                         <li><strong>Analysis Results:</strong> Only text-based analysis results (e.g., "baby sleeping peacefully") are temporarily stored locally</li>
                     </ul>
@@ -359,8 +359,9 @@
                 <a href="cookie-policy.html" class="hover:text-white transition-colors">Cookie Policy</a>
             </div>
             <p class="text-sm text-gray-400">
-                © 2024 SpotKin. Committed to your privacy and security.
+                © <span id="copyright-year"></span> SpotKin. Committed to your privacy and security.
             </p>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
         </div>
     </footer>
 

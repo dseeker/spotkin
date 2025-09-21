@@ -44,8 +44,8 @@
             <h1 class="text-3xl font-bold text-gray-800 mb-6">Terms of Service</h1>
             
             <div class="text-sm text-gray-600 mb-8 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                <p><strong>Last Updated:</strong> December 2024</p>
-                <p><strong>Effective Date:</strong> December 2024</p>
+                <p><strong>Last Updated:</strong> January 2025</p>
+                <p><strong>Effective Date:</strong> January 2025</p>
             </div>
 
             <div class="prose max-w-none">
@@ -430,8 +430,9 @@
                 <a href="cookie-policy.html" class="hover:text-white transition-colors">Cookie Policy</a>
             </div>
             <p class="text-sm text-gray-400">
-                © 2024 SpotKin. Committed to responsible AI monitoring.
+                © <span id="copyright-year"></span> SpotKin. Committed to responsible AI monitoring.
             </p>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
         </div>
     </footer>
 

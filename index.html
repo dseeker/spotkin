@@ -206,6 +206,38 @@
         </div>
     </section>
 
+    <!-- AI Disclaimer Section -->
+    <section class="py-12 bg-yellow-50 border-l-4 border-yellow-400">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-yellow-800 mb-3">Important AI Limitation Notice</h3>
+                        <div class="text-yellow-700 space-y-2">
+                            <p class="font-medium">
+                                SpotKin is a monitoring assistance tool that uses artificial intelligence to analyze camera feeds.
+                                <strong>AI analysis is not perfect</strong> and may produce false positives, false negatives, or misinterpret situations.
+                            </p>
+                            <div class="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mt-4">
+                                <p class="text-yellow-800 font-medium text-sm">
+                                    ⚠️ <strong>Never rely solely on SpotKin for safety or security.</strong> Always maintain appropriate direct supervision of children and pets.
+                                    SpotKin supplements but does not replace proper adult supervision or responsible pet care.
+                                </p>
+                            </div>
+                            <p class="text-sm">
+                                By proceeding to use SpotKin, you acknowledge that you understand these limitations and agree to use your own judgment
+                                for all safety decisions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Demo Section -->
     <section id="demo" class="demo-section py-20 bg-gradient-to-br from-gray-800 via-gray-900 to-indigo-900">
         <div class="container mx-auto px-4">
@@ -436,7 +468,8 @@
                     <a href="terms-of-service.html" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
                     <a href="cookie-policy.html" class="text-gray-400 hover:text-white transition-colors">Cookie Policy</a>
                 </div>
-                <p class="text-sm text-gray-400">&copy; 2024 SpotKin. All rights reserved. Built with privacy and security first.</p>
+                <p class="text-sm text-gray-400">&copy; <span id="copyright-year"></span> SpotKin. All rights reserved. Built with privacy and security first.</p>
+                <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
             </div>
         </div>
     </footer>
@@ -698,8 +731,44 @@
                 </div>
             </div>
 
-            <!-- Step 1: Welcome & Purpose -->
+            <!-- Step 1: Important Disclaimer -->
             <div id="setup-step-1" class="setup-step p-6">
+                <div class="text-center mb-6">
+                    <i class="fas fa-exclamation-triangle text-6xl text-yellow-500 mb-4"></i>
+                    <h3 class="text-2xl font-semibold mb-2 text-gray-800">Important Safety Notice</h3>
+                    <p class="text-gray-600">Please read and acknowledge before proceeding</p>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6">
+                    <div class="text-yellow-800 space-y-4">
+                        <p class="font-semibold text-lg">⚠️ AI Monitoring Limitations</p>
+                        <ul class="space-y-2 text-sm">
+                            <li>• <strong>AI analysis is not perfect</strong> and may produce false positives or miss important events</li>
+                            <li>• <strong>Never rely solely on SpotKin</strong> for safety or security of children and pets</li>
+                            <li>• <strong>Always maintain direct supervision</strong> - this tool supplements but does not replace proper care</li>
+                            <li>• <strong>Emergency situations require immediate response</strong> - do not depend only on AI alerts</li>
+                            <li>• <strong>Use your own judgment</strong> for all safety decisions regardless of AI analysis</li>
+                            <li>• <strong>Cloud AI processing:</strong> Images are sent to secure third-party AI services (Puter.js) for analysis</li>
+                        </ul>
+
+                        <div class="bg-yellow-100 border border-yellow-300 rounded p-4 mt-4">
+                            <p class="font-medium text-yellow-900">
+                                By proceeding, you acknowledge that you understand these limitations and will use SpotKin responsibly as a monitoring assistance tool only.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="disclaimer-agreement" class="mr-3 h-4 w-4 text-indigo-600">
+                    <label for="disclaimer-agreement" class="text-sm text-gray-700">
+                        I understand and agree to these limitations. I will maintain proper supervision and use my own judgment for safety decisions.
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 2: Welcome & Purpose -->
+            <div id="setup-step-2" class="setup-step p-6 hidden">
                 <div class="text-center mb-6">
                     <div class="text-6xl mb-4">👶🐾</div>
                     <h3 class="text-xl font-semibold mb-2">What would you like to monitor?</h3>
@@ -746,8 +815,8 @@
                 </div>
             </div>
 
-            <!-- Step 2: Camera Setup -->
-            <div id="setup-step-2" class="setup-step p-6 hidden">
+            <!-- Step 3: Camera Setup -->
+            <div id="setup-step-3" class="setup-step p-6 hidden">
                 <div class="text-center mb-6">
                     <i class="fas fa-camera text-5xl text-indigo-600 mb-4"></i>
                     <h3 class="text-xl font-semibold mb-2">Camera Setup</h3>
@@ -936,6 +1005,7 @@
                 <button id="help-tab-features" data-tab="features" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Features</button>
                 <button id="help-tab-setup" data-tab="setup" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Setup Guide</button>
                 <button id="help-tab-troubleshooting" data-tab="troubleshooting" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">Troubleshooting</button>
+                <button id="help-tab-safety" data-tab="safety" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium bg-yellow-50 text-yellow-700">⚠️ Safety</button>
                 <button id="help-tab-faq" data-tab="faq" class="help-tab px-6 py-3 border-b-2 border-transparent text-gray-500 font-medium">FAQ</button>
             </div>
 
@@ -1186,6 +1256,66 @@
                     </div>
                 </div>
 
+                <!-- Safety Tab -->
+                <div id="help-content-safety" class="help-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>
+                        Important Safety Information
+                    </h3>
+
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 mb-6">
+                        <h4 class="font-bold text-red-800 text-lg mb-3">⚠️ Critical Safety Notice</h4>
+                        <div class="text-red-700 space-y-2 text-sm">
+                            <p class="font-semibold">SpotKin is a monitoring assistance tool only. It is NOT a substitute for proper adult supervision or responsible pet care.</p>
+
+                            <h5 class="font-semibold mt-4 mb-2">AI Limitations:</h5>
+                            <ul class="space-y-1 ml-4">
+                                <li>• AI analysis is not perfect and may produce false positives or miss important events</li>
+                                <li>• Technology can fail, lose connection, or malfunction at any time</li>
+                                <li>• Processing delays may occur, alerts may not be immediate</li>
+                                <li>• Environmental factors (lighting, angles, obstructions) affect accuracy</li>
+                            </ul>
+
+                            <h5 class="font-semibold mt-4 mb-2">Your Responsibilities:</h5>
+                            <ul class="space-y-1 ml-4">
+                                <li>• Always maintain appropriate direct supervision of children and pets</li>
+                                <li>• Never rely solely on SpotKin for safety or security decisions</li>
+                                <li>• Use your own judgment for all safety-related decisions</li>
+                                <li>• Ensure you can respond immediately to emergencies</li>
+                                <li>• Regularly check on subjects being monitored</li>
+                            </ul>
+
+                            <h5 class="font-semibold mt-4 mb-2">Emergency Procedures:</h5>
+                            <ul class="space-y-1 ml-4">
+                                <li>• Always have direct access to emergency contacts</li>
+                                <li>• Know emergency procedures for your specific situation</li>
+                                <li>• Do not depend on technology alerts for emergency response</li>
+                                <li>• Maintain backup monitoring methods when possible</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-yellow-800 mb-2">Legal Disclaimer</h4>
+                        <p class="text-yellow-700 text-sm">
+                            SpotKin and its developers are not liable for any incidents, injuries, or damages that may occur while using this monitoring tool.
+                            Users assume all responsibility for the safety and well-being of subjects being monitored.
+                        </p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">Best Practices</h4>
+                        <ul class="text-blue-700 text-sm space-y-1">
+                            <li>• Use SpotKin as a supplement to, not replacement for, direct supervision</li>
+                            <li>• Test the system regularly to ensure it's working properly</li>
+                            <li>• Position cameras for optimal coverage of monitoring areas</li>
+                            <li>• Keep devices charged and connected to reliable internet</li>
+                            <li>• Review privacy policy and terms of service regularly</li>
+                            <li>• Stay within reasonable distance for immediate response</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- FAQ Tab -->
                 <div id="help-content-faq" class="help-content hidden">
                     <h3 class="text-xl font-semibold mb-4 flex items-center">
@@ -1397,12 +1527,7 @@
             console.log('🎉 PWA was successfully installed!');
             hidePWAInstallButton();
             
-            // Track installation (optional analytics)
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'pwa_install', {
-                    'event_category': 'engagement'
-                });
-            }
+            // PWA installation completed
         });
         
         // Show update notification when new version is available

@@ -88,5 +88,13 @@
       "protocol": "web+spotkin",
       "url": "./?handler=%s"
     }
-  ]
+  ],
+  "privacy_policy": "./privacy-policy.html",
+  "terms_of_service": "./terms-of-service.html",
+  "permissions": {
+    "camera": "Required for AI monitoring functionality",
+    "microphone": "Optional for voice alerts",
+    "notifications": "Optional for critical alerts",
+    "background-sync": "For offline data management"
+  }
 }
