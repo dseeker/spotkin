@@ -1,10 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="24" cy="24" r="22" fill="#4F46E5" />
-  <circle cx="24" cy="24" r="10" fill="white" />
-  <circle cx="24" cy="24" r="5" fill="#4F46E5" />
-  <path d="M24 2C36.15 2 46 11.85 46 24" stroke="white" stroke-width="2" />
-  <path d="M24 2C11.85 2 2 11.85 2 24" stroke="white" stroke-width="2" />
-  <path d="M24 46C11.85 46 2 36.15 2 24" stroke="white" stroke-width="2" />
-  <path d="M24 46C36.15 46 46 36.15 46 24" stroke="white" stroke-width="2" />
+  <!-- Caring gradient background -->
+  <defs>
+    <linearGradient id="careGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F3F4F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main caring eye with gentle gradient -->
+  <circle cx="24" cy="24" r="22" fill="url(#careGradient)" />
+
+  <!-- Protective eyelashes/caring rays -->
+  <path d="M24 6L25 10L23 10Z" fill="white" opacity="0.8" />
+  <path d="M37 14L35 17L33 15Z" fill="white" opacity="0.8" />
+  <path d="M37 34L35 31L33 33Z" fill="white" opacity="0.8" />
+  <path d="M24 42L25 38L23 38Z" fill="white" opacity="0.8" />
+  <path d="M11 34L13 31L15 33Z" fill="white" opacity="0.8" />
+  <path d="M11 14L13 17L15 15Z" fill="white" opacity="0.8" />
+
+  <!-- Caring eye iris -->
+  <circle cx="24" cy="24" r="11" fill="url(#eyeGradient)" />
+
+  <!-- Gentle pupil with caring sparkle -->
+  <circle cx="24" cy="24" r="6" fill="#4F46E5" />
+  <circle cx="26" cy="22" r="1.5" fill="white" opacity="0.9" />
+
+  <!-- Subtle heartbeat monitoring lines -->
+  <path d="M8 24L12 20L16 28L20 16" stroke="white" stroke-width="1.5" fill="none" opacity="0.6" />
+  <path d="M28 32L32 28L36 36L40 24" stroke="white" stroke-width="1.5" fill="none" opacity="0.6" />
 </svg>
