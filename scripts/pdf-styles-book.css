@@ -1,0 +1,396 @@
+/* PDF Book Styling for SpotKin Resources */
+
+/* Page setup - simplified for better PDF compatibility */
+@page {
+    size: A4;
+    margin: 2.5cm 2cm 2.5cm 2cm;
+}
+
+/* Body and base typography - using system fonts for reliability */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #222;
+    background-color: white;
+    margin: 0;
+    padding: 20px;
+    text-align: justify;
+    orphans: 3;
+    widows: 3;
+}
+
+/* Cover page styling - simplified for PDF compatibility */
+.cover-page {
+    page-break-after: always;
+    text-align: center;
+    padding: 100px 40px;
+    background-color: #2c3e50;
+    color: white;
+    margin: -20px;
+    min-height: 80vh;
+}
+
+.cover-title {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 42pt;
+    font-weight: bold;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.cover-subtitle {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18pt;
+    font-weight: normal;
+    margin-bottom: 40px;
+    font-style: italic;
+    color: #ecf0f1;
+}
+
+.cover-author {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14pt;
+    font-weight: normal;
+    margin-bottom: 20px;
+    color: #bdc3c7;
+}
+
+.cover-date {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    font-weight: normal;
+    margin-top: 60px;
+    color: #bdc3c7;
+}
+
+/* Table of Contents */
+.table-of-contents {
+    page-break-before: always;
+    page-break-after: always;
+    margin-bottom: 40px;
+    background-color: white;
+    color: #222;
+}
+
+.toc-title {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 24pt;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+    page-break-after: avoid;
+}
+
+.toc-entry {
+    margin-bottom: 8px;
+    font-size: 11pt;
+    border-bottom: 1px dotted #ccc;
+    padding: 4px 0;
+    color: #222;
+}
+
+.toc-entry:last-child {
+    border-bottom: none;
+}
+
+/* Headers with book-style formatting */
+h1 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 28pt;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    margin: 60px 0 40px 0;
+    page-break-before: always;
+    page-break-after: avoid;
+    text-transform: uppercase;
+    background-color: white;
+}
+
+h1:first-of-type {
+    page-break-before: auto;
+}
+
+h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18pt;
+    font-weight: bold;
+    color: #34495e;
+    margin: 30px 0 20px 0;
+    page-break-after: avoid;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 8px;
+    background-color: white;
+}
+
+h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14pt;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 25px 0 15px 0;
+    page-break-after: avoid;
+    background-color: white;
+}
+
+h4 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    font-weight: bold;
+    color: #34495e;
+    margin: 20px 0 12px 0;
+    page-break-after: avoid;
+    font-style: italic;
+    background-color: white;
+}
+
+h5, h6 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    font-weight: bold;
+    color: #555;
+    margin: 15px 0 10px 0;
+    page-break-after: avoid;
+    background-color: white;
+}
+
+/* Paragraphs with book spacing */
+p {
+    margin-bottom: 18px;
+    text-indent: 0;
+    line-height: 1.5;
+    color: #222;
+    background-color: white;
+}
+
+/* Lists with better spacing */
+ul, ol {
+    margin: 20px 0;
+    padding-left: 30px;
+    line-height: 1.6;
+    color: #222;
+    background-color: white;
+}
+
+li {
+    margin-bottom: 8px;
+    color: #222;
+}
+
+li p {
+    text-indent: 0;
+    margin-bottom: 8px;
+    color: #222;
+}
+
+/* Blockquotes with elegant styling */
+blockquote {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: italic;
+    font-size: 11pt;
+    margin: 25px 0;
+    padding: 20px 30px;
+    border-left: 4px solid #3498db;
+    background-color: #f8f9fa;
+    page-break-inside: avoid;
+    color: #444;
+}
+
+blockquote p {
+    text-indent: 0;
+    margin-bottom: 12px;
+    color: #444;
+}
+
+/* Code blocks with professional styling */
+code {
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 10pt;
+    background-color: #f1f1f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #c0392b;
+}
+
+pre {
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 9pt;
+    background-color: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 20px 0;
+    overflow-x: auto;
+    line-height: 1.5;
+    page-break-inside: avoid;
+    color: #2c3e50;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+    color: #2c3e50;
+}
+
+/* Tables with book formatting */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    page-break-inside: avoid;
+    color: #222;
+}
+
+th {
+    background-color: #2c3e50;
+    color: white;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #34495e;
+}
+
+td {
+    padding: 10px 8px;
+    border: 1px solid #ddd;
+    line-height: 1.4;
+    color: #222;
+    background-color: white;
+}
+
+tr:nth-child(even) td {
+    background-color: #f9f9f9;
+}
+
+/* Links */
+a {
+    color: #3498db;
+    text-decoration: none;
+    border-bottom: 1px dotted #3498db;
+}
+
+a:hover {
+    border-bottom: 1px solid #3498db;
+}
+
+/* Emphasis and strong */
+em {
+    font-style: italic;
+    color: #2c3e50;
+}
+
+strong {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Special elements */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #ccc, transparent);
+    margin: 40px 0;
+    page-break-after: avoid;
+}
+
+/* Page break utilities */
+.page-break {
+    page-break-before: always;
+}
+
+.page-break-after {
+    page-break-after: always;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}
+
+/* Chapter/section numbering */
+body {
+    counter-reset: chapter section subsection;
+}
+
+h1 {
+    counter-increment: chapter;
+    counter-reset: section;
+}
+
+h1::before {
+    content: "Chapter " counter(chapter) ": ";
+    font-size: 14pt;
+    font-weight: 300;
+    color: #7f8c8d;
+    display: block;
+    margin-bottom: 10px;
+}
+
+h2 {
+    counter-increment: section;
+    counter-reset: subsection;
+}
+
+h3 {
+    counter-increment: subsection;
+}
+
+/* Footnotes */
+.footnote {
+    font-size: 9pt;
+    color: #666;
+    border-top: 1px solid #ddd;
+    margin-top: 30px;
+    padding-top: 10px;
+}
+
+/* Checklist styling for book format */
+input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+}
+
+/* Print optimizations */
+@media print {
+    body {
+        font-size: 11pt;
+        line-height: 1.7;
+    }
+
+    h1 { font-size: 24pt; }
+    h2 { font-size: 16pt; }
+    h3 { font-size: 13pt; }
+    h4 { font-size: 11pt; }
+
+    .cover-title { font-size: 42pt; }
+    .cover-subtitle { font-size: 16pt; }
+}
+
+/* Special styling for SpotKin content */
+.spotkin-highlight {
+    background-color: #e8f4f8;
+    border-left: 4px solid #3498db;
+    padding: 15px 20px;
+    margin: 20px 0;
+    font-family: 'Source Sans Pro', Arial, sans-serif;
+    page-break-inside: avoid;
+}
+
+.pro-tip {
+    background-color: #f0f8f0;
+    border: 1px solid #27ae60;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+    font-size: 11pt;
+    page-break-inside: avoid;
+}
+
+.pro-tip::before {
+    content: "💡 Pro Tip: ";
+    font-weight: 600;
+    color: #27ae60;
+}

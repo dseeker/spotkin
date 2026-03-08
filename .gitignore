@@ -2,3 +2,6 @@ node_modules/
 /cypress/screenshots
 /reports
 package-lock.json
+logs/
+*.log
+*.code-workspace

@@ -17,7 +17,11 @@
     "validate-manifest": "node scripts/validate-pwa.js",
     "generate-icons": "pwa-asset-generator images/favicon.svg images --manifest=manifest.json --icon-only",
     "audit:pwa": "npm run lighthouse:pwa && node scripts/pwa-audit.js",
-    "build": "esbuild app.js --bundle --outfile=bundle.js"
+    "build": "esbuild app.js --bundle --outfile=bundle.js",
+    "convert-to-pdf": "node scripts/convert-resources-to-pdf.js",
+    "convert-to-pdf:default": "node scripts/convert-resources-to-pdf.js --style=default",
+    "convert-to-pdf:book": "node scripts/convert-resources-to-pdf.js --style=book",
+    "convert-to-pdf:all": "npm run convert-to-pdf:default && npm run convert-to-pdf:book"
   },
   "keywords": [
     "ai",
@@ -36,6 +40,7 @@
     "cypress": "^14.5.0",
     "esbuild": "^0.25.9",
     "lighthouse": "^12.2.1",
+    "markdown-pdf": "^10.0.0",
     "puppeteer": "^24.8.2",
     "pwa-asset-generator": "^6.3.2",
     "start-server-and-test": "^2.0.12",
