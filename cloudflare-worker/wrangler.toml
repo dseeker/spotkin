@@ -1,0 +1,25 @@
+# Cloudflare Worker Configuration for SpotKin
+# Includes: TURN proxy + AI image classification
+
+name = "spotkin-backend"
+main = "quick-start-worker.js"
+compatibility_date = "2024-01-01"
+
+# Enable Workers AI
+[ai]
+binding = "AI"
+
+# Environment variables (set via dashboard or CLI)
+[vars]
+# These are safe to expose - no secrets here
+ENVIRONMENT = "production"
+
+# Secrets to set via wrangler:
+# wrangler secret put CLOUDFLARE_API_TOKEN
+# Then paste your Cloudflare API token when prompted
+# 
+# This single token needs permissions for:
+# - Workers Scripts:Edit (deploy workers)
+# - Account:Read (account info)
+# - Workers AI (run AI models)
+# - TURN (generate credentials)

@@ -1,0 +1,113 @@
+name: Setup Cloudflare Resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Setup action to perform'
+        required: true
+        default: 'full-setup'
+        type: choice
+        options:
+          - full-setup
+          - create-turn-key
+          - verify-token
+          - reset-secrets
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    name: Setup Cloudflare Resources
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install -g wrangler
+
+      - name: Verify Cloudflare Token
+        if: github.event.inputs.action == 'verify-token' || github.event.inputs.action == 'full-setup'
+        run: |
+          echo "Verifying Cloudflare API token..."
+          
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+          
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Token is valid"
+            echo "$RESPONSE" | jq '.result'
+          else
+            echo "❌ Token verification failed"
+            echo "$RESPONSE" | jq '.'
+            exit 1
+          fi
+
+      - name: Create TURN Key (if needed)
+        if: github.event.inputs.action == 'create-turn-key' || github.event.inputs.action == 'full-setup'
+        run: |
+          echo "Checking for existing TURN key..."
+          
+          # List existing TURN keys
+          KEYS=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/turn_keys" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" 2>/dev/null || echo '{"result":[]}')
+          
+          if echo "$KEYS" | jq -e '.result | length > 0' > /dev/null 2>&1; then
+            echo "✅ TURN key already exists"
+            echo "$KEYS" | jq '.result[] | {id: .id, name: .name, created: .created}'
+            
+            # Extract first key ID
+            KEY_ID=$(echo "$KEYS" | jq -r '.result[0].id')
+            echo "TURN_KEY_ID=$KEY_ID" >> $GITHUB_ENV
+          else
+            echo "🆕 Creating new TURN key..."
+            
+            NEW_KEY=$(curl -s -X POST \
+              "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/turn_keys" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d '{"name": "SpotKin Device Bridge"}')
+            
+            if echo "$NEW_KEY" | grep -q '"success":true'; then
+              echo "✅ TURN key created successfully"
+              KEY_ID=$(echo "$NEW_KEY" | jq -r '.result.id')
+              echo "TURN_KEY_ID=$KEY_ID" >> $GITHUB_ENV
+              
+              # Update the worker file with new key ID
+              echo "📝 Update your worker configuration with:"
+              echo "TURN_KEY_ID: $KEY_ID"
+            else
+              echo "❌ Failed to create TURN key"
+              echo "$NEW_KEY" | jq '.'
+              exit 1
+            fi
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Summary
+        run: |
+          echo "## Cloudflare Setup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **Setup Complete**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ -n "$TURN_KEY_ID" ]; then
+              echo "**TURN Key ID**: \`$TURN_KEY_ID\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **Action Required**: Update \`cloudflare-worker/quick-start-worker.js\` with this TURN_KEY_ID" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ **Setup Failed**" >> $GITHUB_STEP_SUMMARY
+          fi

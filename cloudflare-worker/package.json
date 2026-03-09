@@ -1,0 +1,36 @@
+{
+  "name": "spotkin-cloudflare-backend",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers backend for SpotKin - TURN proxy + AI classification",
+  "main": "quick-start-worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "logs": "wrangler tail",
+    "setup": "wrangler secret put CLOUDFLARE_API_TOKEN",
+    "test:health": "curl -s http://localhost:8787/health | jq .",
+    "test:turn": "curl -s -X POST http://localhost:8787/turn | jq .",
+    "format": "prettier --write *.js",
+    "lint": "eslint *.js"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "webrtc",
+    "turn",
+    "ai",
+    "spotkin",
+    "monitoring"
+  ],
+  "author": "SpotKin",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1583,6 +1583,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     aiResult.temporalAnalysis = temporalAnalysis;
                     displayResults(aiResult);
                     
+                    // DEVICE BRIDGE INTEGRATION
+                    // After AI analysis completes, forward result to any connected viewer
+                    if (window.deviceBridge?.isConnected()) {
+                        window.deviceBridge.sendAIResult(aiResult);
+                    }
+                    
                     // Add to history with thumbnail
                     addToHistory(aiResult, canvas);
 
@@ -1787,6 +1793,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add visual indicator to camera container
         document.getElementById('camera-container').classList.add('camera-active');
+        
+        // DEVICE BRIDGE: Show FAB and notify connected viewers
+        window.deviceBridgeUI?.showFab();
+        window.deviceBridge?.sendStatusUpdate({ monitoring: true });
     }
 
     // Stop the monitoring process
@@ -1804,6 +1814,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Remove visual indicator from camera container
         document.getElementById('camera-container').classList.remove('camera-active');
+        
+        // DEVICE BRIDGE: Hide FAB and notify connected viewers
+        window.deviceBridgeUI?.hideFab();
+        window.deviceBridge?.sendStatusUpdate({ monitoring: false });
         
         // NOTIFICATION INTEGRATION: Send monitoring stopped notification
         sendMonitoringNotification('stopped', 'Monitoring has been stopped');
@@ -3384,6 +3398,21 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(async () => {
         await initializeFeedbackSystem();
     }, 3000);
+    
+    // Initialize Device Bridge (non-critical - does not block monitoring)
+    window.deviceBridge = null;
+    window.deviceBridgeUI = null;
+    
+    if (typeof DeviceBridgeManager !== 'undefined' && typeof DeviceBridgeUIController !== 'undefined') {
+        // Read tier from user preferences (premium tier TBD - defaults to 'free')
+        const userTier = userPreferences?.tier ?? 'free';
+        window.deviceBridge = new DeviceBridgeManager(userTier);
+        window.deviceBridgeUI = new DeviceBridgeUIController(window.deviceBridge);
+        window.deviceBridgeUI.initialize();
+        console.log('✅ Device bridge initialized (tier:', userTier, ')');
+    } else {
+        console.warn('⚠️ Device bridge scripts not loaded');
+    }
     
     console.log('✅ SpotKin application fully initialized');
 });
