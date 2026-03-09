@@ -4,6 +4,7 @@
 name = "spotkin-backend"
 main = "quick-start-worker.js"
 compatibility_date = "2025-03-01"
+account_id = "7b7855d26b7129e4a6e98654b79a82b9"
 
 # Enable Workers AI
 [ai]
