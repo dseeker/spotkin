@@ -20,11 +20,6 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cloudflare-worker
-          
-      - name: Set Worker Secret
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: cloudflare-worker
-          command: secret put CLOUDFLARE_API_TOKEN --value '${{ secrets.CLOUDFLARE_API_TOKEN }}'
+          wranglerVersion: 'latest'
