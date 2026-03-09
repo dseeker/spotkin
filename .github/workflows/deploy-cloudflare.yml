@@ -8,85 +8,25 @@ on:
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
 
-env:
-  WORKER_NAME: spotkin-backend
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy Cloudflare Worker
+    name: Deploy Worker
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Worker
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: ./cloudflare-worker
-          command: deploy
-
+          workingDirectory: cloudflare-worker
+          
       - name: Set Worker Secret
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: ./cloudflare-worker
+          workingDirectory: cloudflare-worker
           command: secret put CLOUDFLARE_API_TOKEN
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Get Worker URL
-        id: get-url
-        run: |
-          # Worker URL follows naming convention
-          WORKER_URL="https://${{ env.WORKER_NAME }}.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
-          echo "WORKER_URL=$WORKER_URL" >> $GITHUB_ENV
-          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
-          echo "Worker URL: $WORKER_URL"
-
-      - name: Verify Deployment
-        run: |
-          echo "Testing deployment..."
-          sleep 5  # Wait for propagation
-          
-          # Test health endpoint
-          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.WORKER_URL }}/health" || echo "000")
-          
-          if [ "$HEALTH_STATUS" = "200" ]; then
-            echo "✅ Health check passed"
-            curl -s "${{ env.WORKER_URL }}/health"
-          else
-            echo "⚠️ Health check returned: $HEALTH_STATUS (may need more time)"
-          fi
-
-      - name: Comment on Commit
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const workerUrl = '${{ env.WORKER_URL }}';
-            
-            await github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: `🚀 **Cloudflare Worker Deployed**\n\n` +
-                    `- **URL**: ${workerUrl}\n` +
-                    `- **Health**: ${workerUrl}/health\n` +
-                    `- **TURN**: POST ${workerUrl}/turn\n` +
-                    `- **AI**: POST ${workerUrl}/classify`
-            });
-
-      - name: Summary
-        if: always()
-        run: |
-          echo "## Cloudflare Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Worker**: ${{ env.WORKER_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Endpoints**:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.WORKER_URL }}/health\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.WORKER_URL }}/turn\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.WORKER_URL }}/classify\`" >> $GITHUB_STEP_SUMMARY
